@@ -3,6 +3,7 @@ import { Box, TextField, Button, Typography, Avatar, Paper } from '@mui/material
 import SendIcon from '@mui/icons-material/Send';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import api from '../../api';
+import '../../App.css';
 
 export default function ChatInterface({ agentId }) {
     const [phone, setPhone] = useState('');

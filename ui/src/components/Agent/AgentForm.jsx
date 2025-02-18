@@ -25,7 +25,7 @@ export default function AgentForm() {
             }
         };
         loadAgent();
-    }, []);
+    }, [id]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -109,9 +109,19 @@ export default function AgentForm() {
                         />
                     </Box>
 
-                    <Button type="submit" variant="contained" size="large" sx={{ px: 5, py: 1.5, borderRadius: 2 }}>
-                        Save Agent
-                    </Button>
+                    <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+                        <Button type="submit" variant="contained" size="large" sx={{ px: 5, py: 1.5, borderRadius: 2 }}>
+                            Save Agent
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            size="large"
+                            sx={{ px: 5, py: 1.5, borderRadius: 2 }}
+                            onClick={() => navigate('/agents')}
+                        >
+                            Back to Dashboard
+                        </Button>
+                    </Box>
                 </Box>
             </Card>
         </Box>

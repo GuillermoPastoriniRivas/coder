@@ -8,12 +8,12 @@ export default createTheme({
       contrastText: '#fff'
     },
     secondary: {
-      main: '#f1f0f0',      // Gris claro
+      main: '#e5e5ea',      // Gris claro actualizado
       contrastText: '#000'
     },
     background: {
-      default: '#f5f5f5',   // Fondo suave
-      paper: '#ffffff'      // Superficies blancas
+      default: '#ffffff',   // Fondo blanco
+      paper: '#f8f9fa'      // Superficies ligeramente grises
     },
     text: {
       primary: '#333333',   // Gris oscuro
@@ -56,7 +56,8 @@ export default createTheme({
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {
-            borderRadius: '20px'
+            borderRadius: '20px',
+            bgcolor: 'background.default'
           }
         }
       }
