@@ -44,68 +44,46 @@ export default function ChatInterface({ agentId }) {
     }, [conversation]);
 
     return (
-        <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
+        <Box className="chat-container">
             {/* Phone Input Header */}
-            <Paper
-                sx={{
-                    p: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    borderRadius: 0,
-                    boxShadow: 1,
-                    gap: 2
-                }}
-            >
-                <TextField
-                    label="Phone Number"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    InputProps={{
-                        endAdornment: (
-                            <Button variant="contained" onClick={loadConversation} disabled={!phone} sx={{ ml: 1 }}>
-                                Load Chat
-                            </Button>
-                        )
-                    }}
-                    sx={{ flex: 1 }}
-                />
-                <Avatar sx={{ bgcolor: 'primary.main' }}>
+            <Paper className="chat-header" elevation={1}>
+                <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
                     <SmartToyIcon />
                 </Avatar>
+                <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                    Chat with Agent
+                </Typography>
+                <TextField
+                    label="Phone Number"
+                    variant="outlined"
+                    size="small"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    sx={{ width: '150px' }}
+                />
+                <Button variant="contained" onClick={loadConversation} disabled={!phone} sx={{ ml: 2 }}>
+                    Load
+                </Button>
             </Paper>
 
             {/* Chat Messages */}
-            <Box sx={{ flex: 1, p: 3, overflow: 'auto', bgcolor: 'background.paper' }}>
-                <Box sx={{ maxWidth: 800, mx: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    {conversation.map((msg, index) => (
-                        <Box
-                            key={index}
-                            sx={{
-                                alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                                maxWidth: '70%'
-                            }}
-                        >
-                            <Paper
-                                sx={{
-                                    p: 2,
-                                    bgcolor: msg.role === 'user' ? 'primary.light' : 'background.paper',
-                                    borderRadius: msg.role === 'user' ? '12px 12px 0 12px' : '12px 12px 12px 0',
-                                    boxShadow: 1
-                                }}
-                            >
-                                <Typography>{msg.content}</Typography>
-                                <Typography variant="caption" color="textSecondary">
-                                    {new Date(msg.timestamp).toLocaleTimeString()}
-                                </Typography>
-                            </Paper>
-                        </Box>
-                    ))}
-                    <div ref={messagesEndRef} />
-                </Box>
+            <Box className="chat-messages">
+                {conversation.map((msg, index) => (
+                    <Box
+                        key={index}
+                        className={`chat-message ${msg.role === 'user' ? 'user' : 'assistant'}`}
+                    >
+                        <Typography variant="body1">{msg.content}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            {new Date(msg.timestamp).toLocaleTimeString()}
+                        </Typography>
+                    </Box>
+                ))}
+                <div ref={messagesEndRef} />
             </Box>
 
             {/* Message Input */}
-            <Paper sx={{ p: 2, borderRadius: 0, boxShadow: 3 }}>
+            <Paper className="chat-input" elevation={1}>
                 <TextField
                     fullWidth
                     variant="outlined"
@@ -113,15 +91,16 @@ export default function ChatInterface({ agentId }) {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                    InputProps={{
-                        sx: { borderRadius: 2 },
-                        endAdornment: (
-                            <Button variant="contained" onClick={handleSend} disabled={!message || !phone} endIcon={<SendIcon />} sx={{ ml: 1, px: 3, borderRadius: 2 }}>
-                                Send
-                            </Button>
-                        )
-                    }}
                 />
+                <Button
+                    variant="contained"
+                    onClick={handleSend}
+                    disabled={!message || !phone}
+                    endIcon={<SendIcon />}
+                    sx={{ ml: 2 }}
+                >
+                    Send
+                </Button>
             </Paper>
         </Box>
     );

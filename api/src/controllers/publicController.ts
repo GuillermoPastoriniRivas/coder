@@ -5,9 +5,9 @@ export const publicController = {
   getPublicAgent: async (req: Request, res: Response) => {
     try {
       const { publicId } = req.params;
-      
+
       const agent = await Agent.findOne({ publicId })
-        .select('-owner -modelConfig.apiKey -__v') 
+        .select('-owner -modelConfig.apiKey -__v')
         .lean();
 
       if (!agent) {

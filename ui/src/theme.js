@@ -3,37 +3,40 @@ import { createTheme } from '@mui/material/styles';
 export default createTheme({
   palette: {
     primary: {
-      main: '#2563eb',      // Azul vibrante
-      light: '#93c5fd',     // Azul claro
+      main: '#0084ff',      // Azul vibrante similar a OpenAI
+      light: '#66b3ff',     // Azul claro
       contrastText: '#fff'
     },
     secondary: {
-      main: '#4f46e5',      // Índigo
-      light: '#c7d2fe'
+      main: '#f1f0f0',      // Gris claro
+      contrastText: '#000'
     },
     background: {
-      default: '#f8fafc',   // Fondo suave
+      default: '#f5f5f5',   // Fondo suave
       paper: '#ffffff'      // Superficies blancas
     },
     text: {
-      primary: '#1e293b',   // Gris oscuro
-      secondary: '#64748b'  // Gris medio
+      primary: '#333333',   // Gris oscuro
+      secondary: '#555555'  // Gris medio
     }
   },
   typography: {
     fontFamily: [
       'Inter',
-      '-apple-system',
-      'BlinkMacSystemFont',
-      '"Segoe UI"',
       'Roboto',
-      '"Helvetica Neue"',
+      'Helvetica',
       'Arial',
       'sans-serif'
     ].join(','),
     h4: {
       fontWeight: 700,
+      color: '#333333',
       letterSpacing: '-0.5px'
+    },
+    body1: {
+      fontSize: '16px',
+      lineHeight: '1.5',
+      color: '#555555'
     },
     button: {
       textTransform: 'none',
@@ -44,20 +47,25 @@ export default createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: '8px',
-          padding: '8px 16px'
+          borderRadius: '20px',
+          padding: '10px 20px'
         }
       }
     },
-    MuiCard: {
+    MuiTextField: {
       styleOverrides: {
         root: {
-          borderRadius: '12px',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-          transition: 'transform 0.2s',
-          '&:hover': {
-            transform: 'translateY(-2px)'
+          '& .MuiOutlinedInput-root': {
+            borderRadius: '20px'
           }
+        }
+      }
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          padding: '16px',
+          backgroundColor: '#ffffff'
         }
       }
     }

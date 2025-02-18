@@ -6,7 +6,7 @@ import ChatInterface from './ChatInterface';
 export default function PublicChatInterface() {
     const { publicId } = useParams();
     const [agentId, setAgentId] = useState(null);
-  
+
     useEffect(() => {
       const fetchAgent = async () => {
         const response = await api.getPublicAgent(publicId);
@@ -14,8 +14,8 @@ export default function PublicChatInterface() {
       };
       fetchAgent();
     }, [publicId]);
-  
+
     if (!agentId) return <div>Loading...</div>;
-  
+
     return <ChatInterface agentId={agentId} />;
-  }
+}
