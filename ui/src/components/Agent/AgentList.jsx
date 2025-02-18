@@ -35,7 +35,7 @@ export default function AgentList() {
         <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
             {/* Header con título y botón Nuevo Agente */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                <Typography variant="h4" sx={{ fontWeight: 700, color: 'text.primary' }}>Mis Agentes</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 600, color: 'text.primary' }}>Crea tus propios Agentes IA</Typography>
                 <Button 
                     component={Link} 
                     to="/agents/new" 
@@ -66,7 +66,7 @@ export default function AgentList() {
                 </Grid2>
                 <Grid2 item xs={12} sm={6} md={3}>
                     <Card sx={{ p: 2, textAlign: 'center', height: '100%', transform: 'none', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
-                        <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>3. Interactuar con el agente</Typography>
+                        <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>3. Interactuar</Typography>
                         <Typography variant="body2" color="text.secondary">
                             Abre la interfaz de chat para comenzar a conversar con tu agente y aprovechar sus capacidades.
                         </Typography>
@@ -74,7 +74,7 @@ export default function AgentList() {
                 </Grid2>
                 <Grid2 item xs={12} sm={6} md={3}>
                     <Card sx={{ p: 2, textAlign: 'center', height: '100%', transform: 'none', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
-                        <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>4. Compartir tu agente</Typography>
+                        <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>4. Compartir</Typography>
                         <Typography variant="body2" color="text.secondary">
                             Copia el enlace público de tu agente para que otros puedan interactuar con él fácilmente.
                         </Typography>
