@@ -10,8 +10,13 @@ export function AuthProvider({ children }) {
     setEmail(email);
   };
 
+  const logout = () => {
+    localStorage.removeItem('userEmail');
+    setEmail('');
+  };
+
   return (
-    <AuthContext.Provider value={{ email, login }}>
+    <AuthContext.Provider value={{ email, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

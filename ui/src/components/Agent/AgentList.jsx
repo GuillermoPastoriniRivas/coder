@@ -47,10 +47,9 @@ export default function AgentList() {
                 </Button>
             </Box>
 
-            {/* Pasos para usar la aplicación en columnas */}
             <Grid2 container spacing={3} sx={{ mb: '60px', flexWrap: 'nowrap',  }}>
                 <Grid2 item xs={12} sm={6} md={3}>
-                    <Card sx={{ p: 2, textAlign: 'center', height: '100%', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
+                    <Card sx={{ p: 2, textAlign: 'center', height: '100%', transform: 'none', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
                         <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>1. Crear un nuevo agente</Typography>
                         <Typography variant="body2" color="text.secondary">
                             Haz clic en "Nuevo Agente" para iniciar la creación de un agente personalizado que se adapte a tus necesidades.
@@ -58,7 +57,7 @@ export default function AgentList() {
                     </Card>
                 </Grid2>
                 <Grid2 item xs={12} sm={6} md={3}>
-                    <Card sx={{ p: 2, textAlign: 'center', height: '100%', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
+                    <Card sx={{ p: 2, textAlign: 'center', height: '100%', transform: 'none', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
                         <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>2. Configurar el agente</Typography>
                         <Typography variant="body2" color="text.secondary">
                             Define la información básica, el prompt del sistema y la base de conocimientos para personalizar el comportamiento de tu agente.
@@ -66,7 +65,7 @@ export default function AgentList() {
                     </Card>
                 </Grid2>
                 <Grid2 item xs={12} sm={6} md={3}>
-                    <Card sx={{ p: 2, textAlign: 'center', height: '100%', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
+                    <Card sx={{ p: 2, textAlign: 'center', height: '100%', transform: 'none', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
                         <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>3. Interactuar con el agente</Typography>
                         <Typography variant="body2" color="text.secondary">
                             Abre la interfaz de chat para comenzar a conversar con tu agente y aprovechar sus capacidades.
@@ -74,7 +73,7 @@ export default function AgentList() {
                     </Card>
                 </Grid2>
                 <Grid2 item xs={12} sm={6} md={3}>
-                    <Card sx={{ p: 2, textAlign: 'center', height: '100%', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
+                    <Card sx={{ p: 2, textAlign: 'center', height: '100%', transform: 'none', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
                         <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>4. Compartir tu agente</Typography>
                         <Typography variant="body2" color="text.secondary">
                             Copia el enlace público de tu agente para que otros puedan interactuar con él fácilmente.
