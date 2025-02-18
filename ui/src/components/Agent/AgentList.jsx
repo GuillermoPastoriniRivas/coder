@@ -33,8 +33,9 @@ export default function AgentList() {
 
     return (
         <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
+            {/* Header con título y botón Nuevo Agente */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                <Typography variant="h4" sx={{ fontWeight: 700, color: 'text.primary' }}>My Agents</Typography>
+                <Typography variant="h4" sx={{ fontWeight: 700, color: 'text.primary' }}>Mis Agentes</Typography>
                 <Button 
                     component={Link} 
                     to="/agents/new" 
@@ -42,14 +43,52 @@ export default function AgentList() {
                     startIcon={<AddCircleIcon />} 
                     sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
                 >
-                    New Agent
+                    Nuevo Agente
                 </Button>
             </Box>
+
+            {/* Pasos para usar la aplicación en columnas */}
+            <Grid2 container spacing={3} sx={{ mb: '60px', flexWrap: 'nowrap',  }}>
+                <Grid2 item xs={12} sm={6} md={3}>
+                    <Card sx={{ p: 2, textAlign: 'center', height: '100%', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
+                        <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>1. Crear un nuevo agente</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            Haz clic en "Nuevo Agente" para iniciar la creación de un agente personalizado que se adapte a tus necesidades.
+                        </Typography>
+                    </Card>
+                </Grid2>
+                <Grid2 item xs={12} sm={6} md={3}>
+                    <Card sx={{ p: 2, textAlign: 'center', height: '100%', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
+                        <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>2. Configurar el agente</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            Define la información básica, el prompt del sistema y la base de conocimientos para personalizar el comportamiento de tu agente.
+                        </Typography>
+                    </Card>
+                </Grid2>
+                <Grid2 item xs={12} sm={6} md={3}>
+                    <Card sx={{ p: 2, textAlign: 'center', height: '100%', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
+                        <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>3. Interactuar con el agente</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            Abre la interfaz de chat para comenzar a conversar con tu agente y aprovechar sus capacidades.
+                        </Typography>
+                    </Card>
+                </Grid2>
+                <Grid2 item xs={12} sm={6} md={3}>
+                    <Card sx={{ p: 2, textAlign: 'center', height: '100%', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
+                        <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>4. Compartir tu agente</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            Copia el enlace público de tu agente para que otros puedan interactuar con él fácilmente.
+                        </Typography>
+                    </Card>
+                </Grid2>
+            </Grid2>
+
+            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 700, color: 'text.primary' }}>Lista de agentes</Typography>
 
             <Grid2 container spacing={3}>
                 {loading ? (
                     Array.from({ length: 3 }).map((_, index) => (
-                        <Grid2 item xs={12} sm={6} md={4} key={index}>
+                        <Grid2 item xs={12} sm={6} lg={3} key={index}>
                             <Card sx={{ height: '100%' }}>
                                 <CardContent>
                                     <Skeleton variant="text" width="60%" height={40} />
@@ -61,7 +100,7 @@ export default function AgentList() {
                     ))
                 ) : (
                     agents.map((agent) => (
-                        <Grid2 item xs={12} sm={6} md={4} key={agent._id}>
+                        <Grid2 item xs={12} sm={6} lg={3} key={agent._id}>
                             <Card sx={{ 
                                 cursor: 'pointer', 
                                 height: '100%',
@@ -82,7 +121,7 @@ export default function AgentList() {
                                         {agent.description}
                                     </Typography>
                                     <Chip
-                                        label={`${agent.tools.filter((t) => t.enabled).length} Tools enabled`}
+                                        label={`${agent.tools.filter((t) => t.enabled).length} Herramientas activas`}
                                         size="small"
                                         sx={{ bgcolor: 'primary.light', color: 'primary.dark', fontWeight: 500 }}
                                     />
@@ -106,7 +145,7 @@ export default function AgentList() {
                                         startIcon={<LinkIcon />}
                                         sx={{ textTransform: 'none', fontWeight: 500 }}
                                     >
-                                        Copy Link
+                                        Copiar Enlace
                                     </Button>
                                     <Button 
                                         size="small" 
@@ -116,7 +155,7 @@ export default function AgentList() {
                                         }}
                                         sx={{ textTransform: 'none', fontWeight: 500 }}
                                     >
-                                        Open Chat
+                                        Abrir Chat
                                     </Button>
                                 </Box>
                             </Card>
