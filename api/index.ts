@@ -1,0 +1,33 @@
+import express, { Express, Request, Response } from 'express';
+import { connectToMongoDB } from './src/config/mongoose';
+import { postChat, postCall } from './src/controllers/chatController';
+import { agentController } from './src/controllers/agentController';
+import cors from 'cors';
+import { publicController } from './src/controllers/publicController';
+
+
+const app: Express = express();
+app.use(express.json());
+
+app.use(cors());
+
+app.get('/', (req: Request, res: Response) => {
+    res.send('Agent Server');
+});
+
+app.post('/chat', postChat);
+app.post('/call', postCall);
+
+app.post('/agents', agentController.createAgent);
+app.put('/agents/:id', agentController.updateAgent);
+app.get('/agents/:id', agentController.getAgent);
+app.get('/agents', agentController.getAgents);
+
+app.get('/public/:publicId', publicController.getPublicAgent);
+
+const PORT = process.env.PORT || 5000;                                                  
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
+
+connectToMongoDB();                                                  

@@ -10,55 +10,10 @@ import { MongoClient } from 'mongodb';
 import { z } from 'zod';
 import axios from 'axios';
 import 'dotenv/config';
+import { conversationRepository } from '../repositories/conversationRepository';
+import { agentService } from '../services/agentService';
 
-
-// OLD
-// interface Conversation {
-//     phone: string;
-//     owner: string;
-//     messages: Message[];
-// }
-
-// interface Message {
-//     role: 'user' | 'assistant' | 'system';
-//     content: string;
-//     timestamp: Date;
-// }
-
-// interface Agent {
-//     owner: string;
-//     description: string;
-// }
-
-// NEW
-interface Conversation {
-    phone: string;
-    agent: Agent; 
-    messages: Message[];
-}
-
-interface Message {
-    role: 'user' | 'assistant' | 'system';
-    content: string;
-    timestamp: Date;
-}
-
-interface Agent {
-    name: string; //unique
-    owner: string;
-    context: string;
-    tools: Tool[];
-    openAI: OpenAI;
-}
-
-interface Tool {
-    name: string; //unique
-}
-
-interface OpenAI {
-    apiKey: string; 
-    model: string;
-}
+const client = new MongoClient(process.env.MONGODB_ATLAS_URI as string);
 
 const getAvailableSlotsTool = tool(
   async () => {
@@ -80,6 +35,7 @@ const getAvailableSlotsTool = tool(
 
 const confirmDateTool = tool(
   async ({ slot }: { slot: string }) => {
+      console.log(`Confirming appointment for slot: ${slot}`);
       return `Confirming appointment for slot: ${slot}`;
   },
   {
@@ -95,7 +51,7 @@ const setAppointmentTool = tool(
   async ({ slot, user }: { slot: string; user: string }) => {
       // const response = await axios.post("https://api.example.com/set-appointment", { slot, user });
       // return response.data;
-
+        console.log('Appointment saved successfully')
       return { message: 'Appointment saved successfully' };
   },
   {
@@ -108,26 +64,29 @@ const setAppointmentTool = tool(
   }
 );
 
-export async function callAgent(client: MongoClient, query: string, phone: string, owner: string) {
-    const dbName = 'xenio';
-    const db = client.db(dbName);
-    const conversationsCollection = db.collection<Conversation>('conversations');
-    const configCollection = db.collection<Agent>('agentConfigs');
+const toolsRegistry: Record<string, any> = {
+    get_available_slots: getAvailableSlotsTool,
+    confirm_date: confirmDateTool,
+    set_appointment: setAppointmentTool
+};
 
-    const agentConfig = (await configCollection.findOne({ owner })) || {
-        description:
-            'You are an AI assistant that helps with scheduling appointments. Use the tools available to check slots, confirm appointments, and set them. You should kindly guide the user through the process of scheduling appointments.'
+export async function callAgent(query: string, phone: string, agentId: string, isPublic = false) {
+
+    const agentConfig = isPublic ? await agentService.getAgentPublicConfiguration(agentId) : await agentService.getAgentConfiguration(agentId);
+    
+    const fullContext = `${agentConfig.prompt}\nKnowledge Base:\n${agentConfig.knowledge}`;
+    
+    const enabledTools = agentConfig.tools
+        .map(t => toolsRegistry[t.name])
+        .filter(t => t);
+
+    const conversation = {
+        phone,
+        agentId,
+        messages: [{ role: 'user', content: query, timestamp: new Date() }]
     };
 
-    const tools = [getAvailableSlotsTool, confirmDateTool, setAppointmentTool];
-
-    const message: Message = {
-        role: 'user',
-        content: query,
-        timestamp: new Date()
-    };
-
-    await conversationsCollection.updateOne({ phone, owner }, { $push: { messages: message } }, { upsert: true });
+    await conversationRepository.upsertConversation(conversation);
 
     const GraphState = Annotation.Root({
         messages: Annotation<BaseMessage[]>({
@@ -135,18 +94,18 @@ export async function callAgent(client: MongoClient, query: string, phone: strin
         })
     });
 
-    const toolNode = new ToolNode<typeof GraphState.State>(tools);
+    const toolNode = new ToolNode<typeof GraphState.State>(enabledTools);
 
     const model = new ChatOpenAI({
-        model: 'gpt-4o-mini',
-        temperature: 0
-    }).bindTools(tools);
+        model: agentConfig?.modelConfig?.model || 'gpt-4o-mini',
+        temperature: agentConfig?.modelConfig?.temperature || 0
+    }).bindTools(enabledTools);
 
     async function callModel(state: typeof GraphState.State) {
-        const prompt = ChatPromptTemplate.fromMessages([['system', `${agentConfig.description} | Available tools: {tool_names}.`], new MessagesPlaceholder('messages')]);
+        const prompt = ChatPromptTemplate.fromMessages([['system', `${fullContext} | Available tools: {tool_names}.`], new MessagesPlaceholder('messages')]);
 
         const formattedPrompt = await prompt.formatMessages({
-            tool_names: tools.map((tool) => tool.name).join(', '),
+            tool_names: enabledTools.map((tool) => tool.name).join(', '),
             messages: state.messages
         });
 
@@ -169,7 +128,7 @@ export async function callAgent(client: MongoClient, query: string, phone: strin
         return lastMessage.tool_calls?.length ? 'tools' : '__end__';
     }
 
-    const checkpointer = new MongoDBSaver({ client, dbName });
+    const checkpointer = new MongoDBSaver({ client, dbName: 'xenio' });
 
     const app = workflow.compile({ checkpointer });
 
@@ -182,7 +141,12 @@ export async function callAgent(client: MongoClient, query: string, phone: strin
 
     const responseContent = finalState.messages[finalState.messages.length - 1].content;
 
-    await conversationsCollection.updateOne({ phone, owner }, { $push: { messages: { role: 'assistant', content: responseContent, timestamp: new Date() } } });
+    const response = {
+        phone,
+        agentId,
+        messages: [{ role: 'assistant', content: responseContent, timestamp: new Date() }]
+    };
+    await conversationRepository.upsertConversation(response);
 
     return responseContent;
 }
