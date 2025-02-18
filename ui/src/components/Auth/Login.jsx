@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Box, Typography, Button, TextField } from '@mui/material';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
+    const { login } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        localStorage.setItem('userEmail', email);
+        login(email);
         navigate('/agents');
     };
 
