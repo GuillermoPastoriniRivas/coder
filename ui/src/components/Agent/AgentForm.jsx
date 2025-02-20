@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, Box, Typography, TextField, Button, Divider } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
+import Select from 'react-select';
 import api from '../../api';
 
 export default function AgentForm() {
@@ -12,16 +13,26 @@ export default function AgentForm() {
         name: '',
         description: '',
         prompt: '',
-        knowledge: ''
+        knowledge: '',
+        tools: []
     });
+
+    const toolOptions = [
+        { value: 'get_available_slots', label: 'Get Available Slots' },
+        { value: 'confirm_date', label: 'Confirm Date' },
+        { value: 'set_appointment', label: 'Set Appointment' }
+    ];
 
     useEffect(() => {
         const loadAgent = async () => {
             if (id) {
                 const response = await api.getAgent(id);
                 const agent = response.data;
-                console.log(agent)
-                setFormData(agent);
+                console.log(agent);
+                setFormData({
+                    ...agent,
+                    tools: agent.tools || []
+                });
             }
         };
         loadAgent();
@@ -106,6 +117,25 @@ export default function AgentForm() {
                             sx={{
                                 '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: 'background.default' }
                             }}
+                        />
+                    </Box>
+
+                    <Box sx={{ mb: 4 }}>
+                        <Typography variant="h6" gutterBottom>
+                            Tools
+                        </Typography>
+                        <Divider sx={{ mb: 3 }} />
+                        <Select
+                            isMulti
+                            name="tools"
+                            options={toolOptions}
+                            className="basic-multi-select"
+                            classNamePrefix="select"
+                            value={toolOptions.filter(option => formData.tools.some(tool => tool.name === option.value))}
+                            onChange={(selectedOptions) => setFormData({
+                                ...formData,
+                                tools: selectedOptions ? selectedOptions.map(option => ({ name: option.value, enabled: true })) : []
+                            })}
                         />
                     </Box>
 

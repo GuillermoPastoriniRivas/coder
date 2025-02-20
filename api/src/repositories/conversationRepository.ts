@@ -11,5 +11,9 @@ export const conversationRepository = {
 
     async getConversations() {
         return await Conversation.find({});
+    },
+
+    async getConversation(agentId: string, phone: string) {
+        return await Conversation.findOne({ agentId, phone });
     }
 };
