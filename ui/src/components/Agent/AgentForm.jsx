@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Card, Box, Typography, TextField, Button, Divider } from '@mui/material';
+import { Card, Box, Typography, TextField, Button, Divider, Grid } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import Select from 'react-select';
 import api from '../../api';
@@ -58,98 +58,131 @@ export default function AgentForm() {
     };
 
     return (
-        <Box sx={{ p: 3, maxWidth: 800, mx: 'auto' }}>
+        <Box sx={{ p: 3, maxWidth: '100%', height: '90vh', overflowY: 'auto', mx: 'auto' }}>
             <Card sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, gap: 2 }}>
                     <SettingsIcon fontSize="large" color="primary" />
-                    <Typography variant="h4">{id ? 'Edit Agent' : 'Create Agent'}</Typography>
+                    <Typography variant="h4" sx={{ fontSize: '1.8rem', fontWeight: 700 }}>
+                        {id ? 'Editar Agente' : 'Crear Agente'}
+                    </Typography>
                 </Box>
 
                 <Box component="form" onSubmit={handleSubmit}>
-                    <Box sx={{ mb: 4 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Basic Information
-                        </Typography>
-                        <Divider sx={{ mb: 3 }} />
-                        <TextField
-                            fullWidth
-                            label="Agent Name"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            sx={{ mb: 2 }}
-                            required
-                        />
-                        <TextField
-                            fullWidth
-                            label="Description"
-                            multiline
-                            rows={2}
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        />
-                    </Box>
+                    <Grid container spacing={4}>
+                        {/* Left Column */}
+                        <Grid item xs={12} md={6}>
+                            <Box sx={{ mb: 3 }}>
+                                <Typography variant="h6" gutterBottom sx={{ fontSize: '1.2rem', fontWeight: 600 }}>
+                                    Información Básica
+                                </Typography>
+                                <Divider sx={{ mb: 2 }} />
+                                <TextField
+                                    fullWidth
+                                    label="Nombre del Agente"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    sx={{ mb: 2, '& .MuiInputBase-input': { fontSize: '1rem' } }}
+                                    required
+                                />
+                                <TextField
+                                    fullWidth
+                                    label="Descripción"
+                                    multiline
+                                    rows={4}
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    sx={{ '& .MuiInputBase-input': { fontSize: '1rem' } }}
+                                />
+                            </Box>
 
-                    <Box sx={{ mb: 4 }}>
-                        <Typography variant="h6" gutterBottom>
-                            AI Configuration
-                        </Typography>
-                        <Divider sx={{ mb: 3 }} />
-                        <TextField
-                            fullWidth
-                            multiline
-                            rows={4}
-                            label="System Prompt"
-                            value={formData.prompt}
-                            onChange={(e) => setFormData({ ...formData, prompt: e.target.value })}
-                            required
-                            sx={{
-                                mb: 2,
-                                '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: 'background.default' }
-                            }}
-                        />
-                        <TextField
-                            fullWidth
-                            multiline
-                            rows={6}
-                            label="Knowledge Base (one per line)"
-                            value={formData.knowledge}
-                            onChange={(e) => setFormData({ ...formData, knowledge: e.target.value })}
-                            sx={{
-                                '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: 'background.default' }
-                            }}
-                        />
-                    </Box>
+                            <Box sx={{ mb: 3 }}>
+                                <Typography variant="h6" gutterBottom sx={{ fontSize: '1.2rem', fontWeight: 600 }}>
+                                    Herramientas
+                                </Typography>
+                                <Divider sx={{ mb: 2 }} />
+                                <Select
+                                    isMulti
+                                    name="tools"
+                                    options={toolOptions}
+                                    className="basic-multi-select"
+                                    classNamePrefix="select"
+                                    value={toolOptions.filter(option => formData.tools.some(tool => tool.name === option.value))}
+                                    onChange={(selectedOptions) => setFormData({
+                                        ...formData,
+                                        tools: selectedOptions ? selectedOptions.map(option => ({ name: option.value, enabled: true })) : []
+                                    })}
+                                    styles={{
+                                        control: (provided) => ({
+                                            ...provided,
+                                            borderRadius: '8px',
+                                            padding: '4px',
+                                            fontSize: '1rem'
+                                        }),
+                                        menu: (provided) => ({
+                                            ...provided,
+                                            borderRadius: '8px',
+                                            fontSize: '1rem'
+                                        }),
+                                        multiValue: (provided) => ({
+                                            ...provided,
+                                            fontSize: '0.9rem'
+                                        }),
+                                        option: (provided, state) => ({
+                                            ...provided,
+                                            backgroundColor: state.isFocused ? '#f0f0f0' : 'white',
+                                            color: 'black'
+                                        })
+                                    }}
+                                />
+                            </Box>
+                        </Grid>
 
-                    <Box sx={{ mb: 4 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Tools
-                        </Typography>
-                        <Divider sx={{ mb: 3 }} />
-                        <Select
-                            isMulti
-                            name="tools"
-                            options={toolOptions}
-                            className="basic-multi-select"
-                            classNamePrefix="select"
-                            value={toolOptions.filter(option => formData.tools.some(tool => tool.name === option.value))}
-                            onChange={(selectedOptions) => setFormData({
-                                ...formData,
-                                tools: selectedOptions ? selectedOptions.map(option => ({ name: option.value, enabled: true })) : []
-                            })}
-                        />
-                    </Box>
+                        {/* Right Column */}
+                        <Grid item xs={12} md={6}>
+                            <Box sx={{ mb: 3 }}>
+                                <Typography variant="h6" gutterBottom sx={{ fontSize: '1.2rem', fontWeight: 600 }}>
+                                    Configuración de IA
+                                </Typography>
+                                <Divider sx={{ mb: 2 }} />
+                                <TextField
+                                    fullWidth
+                                    multiline
+                                    rows={6}
+                                    label="Prompt del Sistema"
+                                    value={formData.prompt}
+                                    onChange={(e) => setFormData({ ...formData, prompt: e.target.value })}
+                                    required
+                                    sx={{
+                                        mb: 2,
+                                        '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: 'background.default', fontSize: '1rem' }
+                                    }}
+                                />
+                                <TextField
+                                    fullWidth
+                                    multiline
+                                    rows={8}
+                                    label="Base de Conocimientos (una por línea)"
+                                    value={formData.knowledge}
+                                    onChange={(e) => setFormData({ ...formData, knowledge: e.target.value })}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: 'background.default', fontSize: '1rem' }
+                                    }}
+                                />
+                            </Box>
+                        </Grid>
+                    </Grid>
 
-                    <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-                        <Button type="submit" variant="contained" size="large" sx={{ px: 5, py: 1.5, borderRadius: 2 }}>
-                            Save Agent
+                    <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
+                        <Button type="submit" variant="contained" size="large" sx={{ px: 5, py: 1.5, borderRadius: 2, fontSize: '1rem', fontWeight: 600 }}>
+                            Guardar Agente
                         </Button>
                         <Button
                             variant="outlined"
                             size="large"
-                            sx={{ px: 5, py: 1.5, borderRadius: 2 }}
+                            sx={{ px: 5, py: 1.5, borderRadius: 2, fontSize: '1rem', fontWeight: 600 }}
                             onClick={() => navigate('/agents')}
                         >
-                            Back to Dashboard
+                            Volver al Tablero
                         </Button>
                     </Box>
                 </Box>
