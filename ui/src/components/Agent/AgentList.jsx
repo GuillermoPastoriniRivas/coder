@@ -29,12 +29,12 @@ export default function AgentList() {
     const copyPublicLink = (publicId) => {
         const publicUrl = `${window.location.origin}/public/${publicId}`;
         navigator.clipboard.writeText(publicUrl);
-        // Puedes agregar un snackbar/notificaci\u00f3n aqu\u00ed si lo deseas
+        // Puedes agregar un snackbar/notificación aquí si lo deseas
     };
 
     return (
         <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
-            {/* Header con t\u00edtulo y bot\u00f3n Nuevo Agente */}
+            {/* Header con título y botón Nuevo Agente */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                 <Typography variant="h5" sx={{ fontWeight: 600, color: 'text.primary' }}>Crea tus propios Agentes IA</Typography>
                 <Button 
@@ -59,7 +59,7 @@ export default function AgentList() {
                     }}>
                         <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>1. Crear un nuevo agente</Typography>
                         <Typography variant="body2" color="text.secondary">
-                            Haz clic en "Nuevo Agente" para iniciar la creaci\u00f3n de un agente personalizado que se adapte a tus necesidades.
+                            Haz clic en "Nuevo Agente" para iniciar la creación de un agente personalizado que se adapte a tus necesidades.
                         </Typography>
                     </Card>
                 </Grid2>
@@ -73,7 +73,7 @@ export default function AgentList() {
                     }}>
                         <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>2. Configurar el agente</Typography>
                         <Typography variant="body2" color="text.secondary">
-                            Define la informaci\u00f3n b\u00e1sica, el prompt del sistema y la base de conocimientos para personalizar el comportamiento de tu agente.
+                            Define la información básica, el prompt del sistema y la base de conocimientos para personalizar el comportamiento de tu agente.
                         </Typography>
                     </Card>
                 </Grid2>
@@ -101,7 +101,7 @@ export default function AgentList() {
                     }}>
                         <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>4. Compartir</Typography>
                         <Typography variant="body2" color="text.secondary">
-                            Copia el enlace p\u00fablico de tu agente para que otros puedan interactuar con \u00e9l f\u00e1cilmente.
+                            Copia el enlace público de tu agente para que otros puedan interactuar con el fácilmente.
                         </Typography>
                     </Card>
                 </Grid2>

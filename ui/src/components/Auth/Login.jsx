@@ -12,8 +12,13 @@ export default function Login() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        login(email);
-        navigate('/agents');
+        try {
+            await login(email, password);
+            navigate('/agents');
+        } catch (error) {
+            console.error('Login failed:', error);
+            // Puedes agregar manejo de errores aquí
+        }
     };
 
     return (
@@ -21,7 +26,7 @@ export default function Login() {
             <Box sx={{ mt: 8, p: 4, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 3, textAlign: 'center' }}>
                 <LockOpenIcon sx={{ fontSize: 50, color: 'primary.main', mb: 2 }} />
                 <Typography variant="h4" sx={{ mb: 3 }}>
-                    Welcome Back
+                    Bienvenido de Nuevo
                 </Typography>
 
                 <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
@@ -39,7 +44,7 @@ export default function Login() {
                     <TextField
                         fullWidth
                         margin="normal"
-                        label="Password"
+                        label="Contraseña"
                         type="password"
                         required
                         value={password}
@@ -48,7 +53,7 @@ export default function Login() {
                     />
 
                     <Button type="submit" fullWidth variant="contained" size="large" sx={{ mt: 3, py: 1.5, borderRadius: 2 }}>
-                        Continue
+                        Continuar
                     </Button>
                 </Box>
             </Box>

@@ -34,5 +34,18 @@ export const agentService = {
             ...agent,
             tools: agent.tools.filter(t => t.enabled)
         };
+    },
+
+    // Account
+    async getAccount(email: string) {
+        const account = await agentRepository.getAccountByEmail(email);
+        if (!account) throw new Error('Account not found');
+        return account;
+    },
+
+    async updateAccount(email: string, updateData: any) {
+        const updatedAccount = await agentRepository.updateAccountByEmail(email, updateData);
+        if (!updatedAccount) throw new Error('Failed to update account');
+        return updatedAccount;
     }
 };

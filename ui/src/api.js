@@ -19,5 +19,9 @@ export default {
   sendMessage: (messageData) => API.post('/call', messageData),
   
   // Public
-  getPublicAgent: (publicId) => API.get(`/public/${publicId}`)
+  getPublicAgent: (publicId) => API.get(`/public/${publicId}`),
+
+  // Account
+  getAccount: () => API.get('/account'),
+  updateAccount: (accountData) => API.put('/account', accountData)
 };

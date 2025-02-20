@@ -27,6 +27,9 @@ app.get('/public/:publicId', publicController.getPublicAgent);
 
 app.get('/conversations/:agentId/:phone', getConversation);
 
+app.get('/account', agentController.getAccount);
+app.put('/account', agentController.updateAccount);
+
 const PORT = process.env.PORT || 5000;                                                  
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

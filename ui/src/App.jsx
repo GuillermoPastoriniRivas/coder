@@ -5,7 +5,8 @@ import AgentList from './components/Agent/AgentList';
 import AgentForm from './components/Agent/AgentForm';
 import ChatInterface from './components/Chat/ChatInterface';
 import PublicChatInterface from './components/Chat/PublicChatInterface';
-// import AccountSettings from './components/AccountSettings/AccountSettings'; // Asegúrate de crear este componente cuando esté listo
+import AccountSettings from './components/AccountSettings.jsx';
+import Menu from './components/Menu.jsx';
 import { useAuth } from './context/AuthContext';
 import React from 'react';
 import './App.css';
@@ -30,26 +31,7 @@ function MainApp() {
   return (
     <div className="App">
       {email && (
-        <AppBar position="static">
-          <Toolbar sx={{ justifyContent: 'space-between' }}>
-            <Typography variant="h6" component="div" sx={{ marginRight: 2 }}>
-              Mi Aplicación
-            </Typography>
-            <Box  sx={{display: 'flex'}}>
-              <Box sx={{mr: '30px'}}>
-                <Button color="inherit" component={Link} to="/">
-                  Inicio
-                </Button>
-                <Button color="inherit" component={Link} to="/account-settings">
-                  Mi Cuenta
-                </Button>
-              </Box>
-              <Button color="inherit" onClick={handleLogout}>
-                Cerrar Sesión
-              </Button>
-            </Box>
-          </Toolbar>
-        </AppBar>
+        <Menu />
       )}
       <Box>
         <Routes>
@@ -65,7 +47,7 @@ function MainApp() {
               <Route path="/agents/:id" element={<AgentForm />} />
               <Route path="/chat/:agentId" element={<ChatInterface />} />
               <Route path="/public/:publicId" element={<PublicChatInterface />} />
-              {/* <Route path="/account-settings" element={<AccountSettings />} /> */}
+              <Route path="/account" element={<AccountSettings />} />
               {/* Agregar ruta para Precios si es necesario */}
               {/* <Route path="/precios" element={<Precios />} /> */}
             </>
