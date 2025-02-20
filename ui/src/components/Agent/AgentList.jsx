@@ -4,6 +4,7 @@ import { Grid2, Card, CardContent, Typography, Button, Box, Chip, IconButton, Sk
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import LinkIcon from '@mui/icons-material/Link';
 import api from '../../api';
+import '../../App.css';
 
 export default function AgentList() {
     const [agents, setAgents] = useState([]);
@@ -28,12 +29,12 @@ export default function AgentList() {
     const copyPublicLink = (publicId) => {
         const publicUrl = `${window.location.origin}/public/${publicId}`;
         navigator.clipboard.writeText(publicUrl);
-        // Puedes agregar un snackbar/notificación aquí si lo deseas
+        // Puedes agregar un snackbar/notificaci\u00f3n aqu\u00ed si lo deseas
     };
 
     return (
         <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
-            {/* Header con título y botón Nuevo Agente */}
+            {/* Header con t\u00edtulo y bot\u00f3n Nuevo Agente */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                 <Typography variant="h5" sx={{ fontWeight: 600, color: 'text.primary' }}>Crea tus propios Agentes IA</Typography>
                 <Button 
@@ -41,7 +42,7 @@ export default function AgentList() {
                     to="/agents/new" 
                     variant="contained" 
                     startIcon={<AddCircleIcon />} 
-                    sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+                    sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, backgroundColor: '#1976d2', '&:hover': { backgroundColor: '#115293' } }}
                 >
                     Nuevo Agente
                 </Button>
@@ -49,23 +50,41 @@ export default function AgentList() {
 
             <Grid2 container spacing={3} sx={{ mb: '60px', flexWrap: 'nowrap',  }}>
                 <Grid2 item xs={12} sm={6} md={3}>
-                    <Card sx={{ p: 2, textAlign: 'center', height: '100%', transform: 'none', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
+                    <Card sx={{ 
+                        p: 2, 
+                        textAlign: 'center', 
+                        height: '100%', 
+                        boxShadow: 3, 
+                        borderRadius: 3 
+                    }}>
                         <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>1. Crear un nuevo agente</Typography>
                         <Typography variant="body2" color="text.secondary">
-                            Haz clic en "Nuevo Agente" para iniciar la creación de un agente personalizado que se adapte a tus necesidades.
+                            Haz clic en "Nuevo Agente" para iniciar la creaci\u00f3n de un agente personalizado que se adapte a tus necesidades.
                         </Typography>
                     </Card>
                 </Grid2>
                 <Grid2 item xs={12} sm={6} md={3}>
-                    <Card sx={{ p: 2, textAlign: 'center', height: '100%', transform: 'none', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
+                    <Card sx={{ 
+                        p: 2, 
+                        textAlign: 'center', 
+                        height: '100%', 
+                        boxShadow: 3, 
+                        borderRadius: 3 
+                    }}>
                         <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>2. Configurar el agente</Typography>
                         <Typography variant="body2" color="text.secondary">
-                            Define la información básica, el prompt del sistema y la base de conocimientos para personalizar el comportamiento de tu agente.
+                            Define la informaci\u00f3n b\u00e1sica, el prompt del sistema y la base de conocimientos para personalizar el comportamiento de tu agente.
                         </Typography>
                     </Card>
                 </Grid2>
                 <Grid2 item xs={12} sm={6} md={3}>
-                    <Card sx={{ p: 2, textAlign: 'center', height: '100%', transform: 'none', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
+                    <Card sx={{ 
+                        p: 2, 
+                        textAlign: 'center', 
+                        height: '100%', 
+                        boxShadow: 3, 
+                        borderRadius: 3 
+                    }}>
                         <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>3. Interactuar</Typography>
                         <Typography variant="body2" color="text.secondary">
                             Abre la interfaz de chat para comenzar a conversar con tu agente y aprovechar sus capacidades.
@@ -73,10 +92,16 @@ export default function AgentList() {
                     </Card>
                 </Grid2>
                 <Grid2 item xs={12} sm={6} md={3}>
-                    <Card sx={{ p: 2, textAlign: 'center', height: '100%', transform: 'none', '&:hover': { transform: 'none', boxShadow: 'none' } }}>
+                    <Card sx={{ 
+                        p: 2, 
+                        textAlign: 'center', 
+                        height: '100%', 
+                        boxShadow: 3, 
+                        borderRadius: 3 
+                    }}>
                         <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>4. Compartir</Typography>
                         <Typography variant="body2" color="text.secondary">
-                            Copia el enlace público de tu agente para que otros puedan interactuar con él fácilmente.
+                            Copia el enlace p\u00fablico de tu agente para que otros puedan interactuar con \u00e9l f\u00e1cilmente.
                         </Typography>
                     </Card>
                 </Grid2>
@@ -88,7 +113,7 @@ export default function AgentList() {
                 {loading ? (
                     Array.from({ length: 3 }).map((_, index) => (
                         <Grid2 item xs={12} sm={6} lg={3} key={index}>
-                            <Card sx={{ height: '100%' }}>
+                            <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 3 }}>
                                 <CardContent>
                                     <Skeleton variant="text" width="60%" height={40} />
                                     <Skeleton variant="text" width="80%" height={20} sx={{ mb: 2 }} />
@@ -106,11 +131,8 @@ export default function AgentList() {
                                 display: 'flex',
                                 flexDirection: 'column',
                                 justifyContent: 'space-between',
-                                transition: 'transform 0.2s, box-shadow 0.2s',
-                                '&:hover': { 
-                                    transform: 'translateY(-4px)',
-                                    boxShadow: 6
-                                }
+                                boxShadow: 3,
+                                borderRadius: 3
                             }}>
                                 <CardContent onClick={() => navigate(`/agents/${agent._id}`)}>
                                     <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: 'text.primary' }}>
@@ -133,7 +155,8 @@ export default function AgentList() {
                                     p: 2,
                                     borderTop: 1,
                                     borderColor: 'divider',
-                                    bgcolor: 'background.paper'
+                                    bgcolor: 'background.paper',
+                                    borderRadius: '0 0 16px 16px'
                                 }}>
                                     <Button 
                                         size="small" 
@@ -142,7 +165,14 @@ export default function AgentList() {
                                             copyPublicLink(agent.publicId);
                                         }}
                                         startIcon={<LinkIcon />}
-                                        sx={{ textTransform: 'none', fontWeight: 500 }}
+                                        sx={{ 
+                                            textTransform: 'none', 
+                                            fontWeight: 500, 
+                                            bgcolor: '#1976d2', 
+                                            color: '#fff',
+                                            '&:hover': { bgcolor: '#115293' },
+                                            borderRadius: 2
+                                        }}
                                     >
                                         Copiar Enlace
                                     </Button>
@@ -152,7 +182,14 @@ export default function AgentList() {
                                             e.stopPropagation();
                                             window.open(`/public/${agent.publicId}`, '_blank');
                                         }}
-                                        sx={{ textTransform: 'none', fontWeight: 500 }}
+                                        sx={{ 
+                                            textTransform: 'none', 
+                                            fontWeight: 500, 
+                                            bgcolor: '#4caf50', 
+                                            color: '#fff',
+                                            '&:hover': { bgcolor: '#357a38' },
+                                            borderRadius: 2
+                                        }}
                                     >
                                         Abrir Chat
                                     </Button>

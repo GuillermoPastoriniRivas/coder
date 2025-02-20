@@ -8,6 +8,7 @@ import PublicChatInterface from './components/Chat/PublicChatInterface';
 // import AccountSettings from './components/AccountSettings/AccountSettings'; // Asegúrate de crear este componente cuando esté listo
 import { useAuth } from './context/AuthContext';
 import React from 'react';
+import './App.css';
 
 function App() {
   return (

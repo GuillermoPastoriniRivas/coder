@@ -4,6 +4,7 @@ import { Card, Box, Typography, TextField, Button, Divider, Grid } from '@mui/ma
 import SettingsIcon from '@mui/icons-material/Settings';
 import Select from 'react-select';
 import api from '../../api';
+import '../../App.css';
 
 export default function AgentForm() {
     const { id } = useParams();
@@ -59,7 +60,7 @@ export default function AgentForm() {
 
     return (
         <Box sx={{ p: 3, maxWidth: '100%', height: '90vh', overflowY: 'auto', mx: 'auto' }}>
-            <Card sx={{ p: 3 }}>
+            <Card sx={{ p: 3, boxShadow: 3, borderRadius: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, gap: 2 }}>
                     <SettingsIcon fontSize="large" color="primary" />
                     <Typography variant="h4" sx={{ fontSize: '1.8rem', fontWeight: 700 }}>
@@ -173,13 +174,13 @@ export default function AgentForm() {
                     </Grid>
 
                     <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
-                        <Button type="submit" variant="contained" size="large" sx={{ px: 5, py: 1.5, borderRadius: 2, fontSize: '1rem', fontWeight: 600 }}>
+                        <Button type="submit" variant="contained" size="large" sx={{ px: 5, py: 1.5, borderRadius: 2, fontSize: '1rem', fontWeight: 600, backgroundColor: '#1976d2', '&:hover': { backgroundColor: '#115293' } }}>
                             Guardar Agente
                         </Button>
                         <Button
                             variant="outlined"
                             size="large"
-                            sx={{ px: 5, py: 1.5, borderRadius: 2, fontSize: '1rem', fontWeight: 600 }}
+                            sx={{ px: 5, py: 1.5, borderRadius: 2, fontSize: '1rem', fontWeight: 600, borderColor: '#1976d2', color: '#1976d2', '&:hover': { borderColor: '#115293', color: '#115293' } }}
                             onClick={() => navigate('/agents')}
                         >
                             Volver al Tablero
