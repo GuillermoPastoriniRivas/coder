@@ -15,5 +15,16 @@ export const authController = {
             console.error('Login error:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
+        
+    },
+    async signUp(req: Request, res: Response) {
+        try {
+            const { email, password, username } = req.body;
+            const account = await authService.registerUser(email, password, username);
+            res.status(201).json({ message: 'Account created successfully', account });
+        } catch (error) {
+            console.error('SignUp error:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
     }
 };

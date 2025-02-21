@@ -59,4 +59,40 @@ describe('AuthController', () => {
             expect(jsonMock).toHaveBeenCalledWith({ error: 'Internal server error' });
         });
     });
+
+    describe('signUp', () => {
+        it('should create a new account when data is valid', async () => {
+            req.body = { email: 'newuser@example.com', password: 'password123', username: 'newuser' };
+            const mockedAccount = { email: 'newuser@example.com', username: 'newuser', _id: '12345' };
+            (authService.registerUser as jest.Mock).mockResolvedValue(mockedAccount);
+
+            await authController.signUp(req as Request, res as Response);
+
+            expect(authService.registerUser).toHaveBeenCalledWith('newuser@example.com', 'password123', 'newuser');
+            expect(statusMock).toHaveBeenCalledWith(201);
+            expect(jsonMock).toHaveBeenCalledWith({ message: 'Account created successfully', account: mockedAccount });
+        });
+
+        it('should return 500 when an error occurs during sign up', async () => {
+            req.body = { email: 'newuser@example.com', password: 'password123', username: 'newuser' };
+            (authService.registerUser as jest.Mock).mockRejectedValue(new Error('Database error'));
+
+            await authController.signUp(req as Request, res as Response);
+
+            expect(authService.registerUser).toHaveBeenCalledWith('newuser@example.com', 'password123', 'newuser');
+            expect(statusMock).toHaveBeenCalledWith(500);
+            expect(jsonMock).toHaveBeenCalledWith({ error: 'Internal server error' });
+        });
+
+        it('should handle existing email error', async () => {
+            req.body = { email: 'existing@example.com', password: 'password123', username: 'existinguser' };
+            (authService.registerUser as jest.Mock).mockRejectedValue(new Error('Account with this email already exists'));
+
+            await authController.signUp(req as Request, res as Response);
+
+            expect(authService.registerUser).toHaveBeenCalledWith('existing@example.com', 'password123', 'existinguser');
+            expect(statusMock).toHaveBeenCalledWith(500);
+            expect(jsonMock).toHaveBeenCalledWith({ error: 'Internal server error' });
+        });
+    });
 });

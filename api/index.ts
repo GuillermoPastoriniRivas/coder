@@ -4,9 +4,9 @@ import { postChat, postCall, getConversation } from './src/controllers/chatContr
 import { agentController } from './src/controllers/agentController';
 import cors from 'cors';
 import { publicController } from './src/controllers/publicController';
-import { authController } from './src/controllers/authController';
+import authRoutes from './src/routes/authRoutes'; // Added import for authRoutes
 import { authMiddleware } from './src/middleware/authMiddleware';
-
+import { authController } from './src/controllers/authController';
 const app: Express = express();
 app.use(express.json());
 
@@ -16,8 +16,10 @@ app.get('/', (req: Request, res: Response) => {
     res.send('Agent Server');
 });
 
-// Authentication Routes
-app.post('/auth/login', authController.login);
+app.post('/signup', authController.signUp);
+
+// You can add more auth-related routes here (e.g., login)
+app.post('/login', authController.login);
 
 // Protected Routes
 app.post('/chat', postChat);

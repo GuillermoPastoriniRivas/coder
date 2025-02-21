@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material'; 
 import Login from './components/Auth/Login';
+import SignUp from './components/Auth/SignUp';
 import AgentList from './components/Agent/AgentList';
 import AgentForm from './components/Agent/AgentForm';
 import ChatInterface from './components/Chat/ChatInterface';
@@ -40,6 +41,7 @@ function MainApp() {
             <>
               <Route path="/" element={<Login />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<SignUp />} />
             </>
           ) : (
             <>

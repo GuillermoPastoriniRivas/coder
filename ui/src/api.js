@@ -26,5 +26,9 @@ export default {
   updateAccount: (accountData) => API.put('/account', accountData),       
 
   // Purchase Tokens
-  purchaseTokens: (tokens) => API.post('/purchase-tokens', { tokens })    
+  purchaseTokens: (tokens) => API.post('/purchase-tokens', { tokens }),    
+
+  // Account
+  createAccount: (accountData) => API.post('/signup', accountData),
+  login: (loginData) => API.post('/login', loginData),
 };

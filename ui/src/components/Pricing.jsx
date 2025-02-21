@@ -4,7 +4,7 @@ import api from '../api';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 
 export default function Pricing() {
-    const [selectedPlan, setSelectedPlan] = useState(null);
+    // const [selectedPlan, setSelectedPlan] = useState(null);
     const [open, setOpen] = useState(false);
     const [message, setMessage] = useState('');
     const [severity, setSeverity] = useState('success');
@@ -76,7 +76,6 @@ export default function Pricing() {
               
             </Box>
 
-            {/* Sección de Saldo */}
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 6 }}>
                 <AccountBalanceWalletIcon color="primary" sx={{ mr: 1, fontSize: 40 }} />
                 <Typography variant="h6" sx={{ fontWeight: 500 }}>

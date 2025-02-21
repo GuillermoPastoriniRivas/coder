@@ -1,19 +1,48 @@
-import { accountRepository } from '../repositories/accountRepository';
+import { User } from '../models/User';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
-const JWT_EXPIRES_IN = '1h';
 
 export const authService = {
-    async authenticateUser(email: string, password: string): Promise<string | null> {
-        const account = await accountRepository.getAccountByEmail(email);
-        if (!account) return null;
+    registerUser: async (email: string, password: string, username: string) => {
+        // Check if user already exists
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            throw new Error('Account with this email already exists');
+        }
 
-        const isPasswordValid = await bcrypt.compare(password, account.password);
-        if (!isPasswordValid) return null;
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        const token = jwt.sign({ email: account.email, id: account._id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+        // Create new user
+        const newUser = new User({
+            email,
+            password: hashedPassword,
+            username,
+        });
+
+        await newUser.save();
+
+        return newUser;
+    },
+
+    authenticateUser: async (email: string, password: string) => {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return null;
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return null;
+        }
+
+        // Generate JWT
+        const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, {
+            expiresIn: '24h',
+        });
+
         return token;
-    }
+    },
 };

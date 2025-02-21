@@ -1,39 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { Container, Box, Typography, Button, TextField, Link } from '@mui/material';
-import LockOpenIcon from '@mui/icons-material/LockOpen';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { useAuth } from '../../context/AuthContext';
 
-export default function Login() {
+export default function SignUp() {
     const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
-    const { email: authEmail, login } = useAuth();
-
-    useEffect(() => {
-        if (authEmail) {
-            navigate('/signup');
-        }
-    }, [authEmail, navigate]);
+    const { signUp } = useAuth();
+    const [error, setError] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await login(email, password);
+            await signUp(email, password, username);
             navigate('/agents');
         } catch (error) {
-            console.error('Login failed:', error);
-            // Puedes agregar manejo de errores aquí
+            console.error('SignUp failed:', error);
+            setError('Failed to create account. Please try again.');
         }
     };
 
     return (
         <Container maxWidth="xs">
             <Box sx={{ mt: 8, p: 4, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 3, textAlign: 'center' }}>
-                <LockOpenIcon sx={{ fontSize: 50, color: 'primary.main', mb: 2 }} />
+                <PersonAddIcon sx={{ fontSize: 50, color: 'primary.main', mb: 2 }} />
                 <Typography variant="h4" sx={{ mb: 3 }}>
-                    Bienvenido de Nuevo
+                    Crear Nueva Cuenta
                 </Typography>
+
+                {error && (
+                    <Typography variant="body1" color="error" sx={{ mb: 2 }}>
+                        {error}
+                    </Typography>
+                )}
 
                 <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
                     <TextField
@@ -50,6 +52,17 @@ export default function Login() {
                     <TextField
                         fullWidth
                         margin="normal"
+                        label="Nombre de Usuario"
+                        type="text"
+                        required
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        InputProps={{ sx: { borderRadius: 2 } }}
+                    />
+
+                    <TextField
+                        fullWidth
+                        margin="normal"
                         label="Contraseña"
                         type="password"
                         required
@@ -59,13 +72,13 @@ export default function Login() {
                     />
 
                     <Button type="submit" fullWidth variant="contained" size="large" sx={{ mt: 3, py: 1.5, borderRadius: 2 }}>
-                        Continuar
+                        Registrarse
                     </Button>
                 </Box>
 
                 <Typography variant="body2" sx={{ mt: 2 }}>
-                    <Link component={RouterLink} to="/signup">
-                        No tienes una cuenta, crea una aqui
+                    <Link component={RouterLink} to="/login">
+                        Ya tienes una cuenta, inicia sesion aqui
                     </Link>
                 </Typography>
             </Box>
