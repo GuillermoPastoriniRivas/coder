@@ -49,8 +49,8 @@ export default function AgentList() {
                         borderRadius: 3,
                         textTransform: 'none',
                         fontWeight: 600,
-                        backgroundColor: '#1976d2',
-                        '&:hover': { backgroundColor: '#115293' },
+                        backgroundColor: 'primary.main',
+                        '&:hover': { backgroundColor: 'primary.dark' },
                         paddingX: 3,
                         paddingY: 1.5,
                         boxShadow: 3
@@ -61,8 +61,8 @@ export default function AgentList() {
             </Box>
 
             {/* Sección de Pasos */}
-            <Box container spacing={3} sx={{ mb: '90px', flexWrap: 'nowrap',  }}>
-                <Grid2 container spacing={4} sx={{flexWrap: 'nowrap',  }}>
+            <Box container spacing={3} sx={{ mb: '90px', flexWrap: 'nowrap' }}>
+                <Grid2 container spacing={4} sx={{ flexWrap: 'nowrap' }}>
                     <Grid2 item xs={12} sm={6} md={3}>
                         <Card
                             sx={{
@@ -73,9 +73,10 @@ export default function AgentList() {
                                 borderRadius: 2,
                                 transition: 'transform 0.3s, box-shadow 0.3s',
                                 '&:hover': {
-                                    transform: 'translateY(-5px)',
+                                    transform: 'translateY(-1px)',
                                     boxShadow: 6
-                                }
+                                },
+                                backgroundColor: 'background.paper'
                             }}
                         >
                             <InfoIcon color="primary" sx={{ fontSize: 40, mb: 2 }} />
@@ -97,9 +98,10 @@ export default function AgentList() {
                                 borderRadius: 2,
                                 transition: 'transform 0.3s, box-shadow 0.3s',
                                 '&:hover': {
-                                    transform: 'translateY(-5px)',
+                                    transform: 'translateY(-1px)',
                                     boxShadow: 6
-                                }
+                                },
+                                backgroundColor: 'background.paper'
                             }}
                         >
                             <InfoIcon color="secondary" sx={{ fontSize: 40, mb: 2 }} />
@@ -123,7 +125,8 @@ export default function AgentList() {
                                 '&:hover': {
                                     transform: 'translateY(-1px)',
                                     boxShadow: 6
-                                }
+                                },
+                                backgroundColor: 'background.paper'
                             }}
                         >
                             <InfoIcon color="success" sx={{ fontSize: 40, mb: 2 }} />
@@ -147,7 +150,8 @@ export default function AgentList() {
                                 '&:hover': {
                                     transform: 'translateY(-1px)',
                                     boxShadow: 6
-                                }
+                                },
+                                backgroundColor: 'background.paper'
                             }}
                         >
                             <InfoIcon color="warning" sx={{ fontSize: 40, mb: 2 }} />
@@ -163,119 +167,120 @@ export default function AgentList() {
             </Box>
 
             {/* Lista de Agentes */}
-            <Box sx={{ mb: 4,  mt: 6 }}>
+            <Box sx={{ mb: 4, mt: 6 }}>
                 <Typography variant="h5" sx={{ mt: 6, mb: 4, fontWeight: 700, color: 'text.primary' }}>
                     Lista de Agentes
                 </Typography>
                 <Grid2 container spacing={4}>
-                    {loading
-                        ? Array.from({ length: 4 }).map((_, index) => (
-                              <Grid2 item xs={12} sm={6} lg={3} key={index}>
-                                  <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
-                                      <CardContent>
-                                          <Skeleton variant="text" width="80%" height={30} />
-                                          <Skeleton variant="text" width="60%" height={20} sx={{ mt: 1 }} />
-                                          <Skeleton variant="rectangular" width="100%" height={150} sx={{ mt: 2 }} />
-                                      </CardContent>
-                                  </Card>
-                              </Grid2>
-                          ))
-                        : agents.length > 0 ? (
-                            agents.map((agent) => (
-                                <Grid2 item xs={12} sm={6} lg={3} key={agent._id}>
-                                    <Card
+                    {loading ? (
+                        Array.from({ length: 4 }).map((_, index) => (
+                            <Grid2 item xs={12} sm={6} lg={3} key={index}>
+                                <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
+                                    <CardContent>
+                                        <Skeleton variant="text" width="80%" height={30} />
+                                        <Skeleton variant="text" width="60%" height={20} sx={{ mt: 1 }} />
+                                        <Skeleton variant="rectangular" width="100%" height={150} sx={{ mt: 2 }} />
+                                    </CardContent>
+                                </Card>
+                            </Grid2>
+                        ))
+                    ) : agents.length > 0 ? (
+                        agents.map((agent) => (
+                            <Grid2 item xs={12} sm={6} lg={3} key={agent._id}>
+                                <Card
+                                    sx={{
+                                        cursor: 'pointer',
+                                        height: '100%',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        justifyContent: 'space-between',
+                                        boxShadow: 3,
+                                        borderRadius: 2,
+                                        transition: 'transform 0.3s, box-shadow 0.3s',
+                                        '&:hover': {
+                                            transform: 'translateY(-1px)',
+                                            boxShadow: 6
+                                        },
+                                        backgroundColor: 'background.paper'
+                                    }}
+                                >
+                                    <CardContent onClick={() => navigate(`/agents/${agent._id}`)}>
+                                        <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, color: 'text.primary' }}>
+                                            {agent.name}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                            {agent.description}
+                                        </Typography>
+                                        <Chip
+                                            label={`${agent.tools.filter((t) => t.enabled).length} Herramientas activas`}
+                                            size="small"
+                                            sx={{ bgcolor: 'primary.light', color: 'primary.dark', fontWeight: 500 }}
+                                        />
+                                    </CardContent>
+
+                                    <Box
                                         sx={{
-                                            cursor: 'pointer',
-                                            height: '100%',
                                             display: 'flex',
-                                            flexDirection: 'column',
                                             justifyContent: 'space-between',
-                                            boxShadow: 3,
-                                            borderRadius: 2,
-                                            transition: 'transform 0.3s, box-shadow 0.3s',
-                                            '&:hover': {
-                                                transform: 'translateY(-5px)',
-                                                boxShadow: 6
-                                            }
+                                            alignItems: 'center',
+                                            p: 2,
+                                            borderTop: 1,
+                                            borderColor: 'divider',
+                                            bgcolor: 'background.paper',
+                                            borderBottomLeftRadius: 2,
+                                            borderBottomRightRadius: 2
                                         }}
                                     >
-                                        <CardContent onClick={() => navigate(`/agents/${agent._id}`)}>
-                                            <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, color: 'text.primary' }}>
-                                                {agent.name}
-                                            </Typography>
-                                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                                {agent.description}
-                                            </Typography>
-                                            <Chip
-                                                label={`${agent.tools.filter((t) => t.enabled).length} Herramientas activas`}
+                                        <Tooltip title="Copiar enlace público">
+                                            <Button
                                                 size="small"
-                                                sx={{ bgcolor: 'primary.light', color: 'primary.dark', fontWeight: 500 }}
-                                            />
-                                        </CardContent>
-
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center',
-                                                p: 2,
-                                                borderTop: 1,
-                                                borderColor: 'divider',
-                                                bgcolor: 'background.paper',
-                                                borderBottomLeftRadius: 2,
-                                                borderBottomRightRadius: 2
-                                            }}
-                                        >
-                                            <Tooltip title="Copiar enlace público">
-                                                <Button
-                                                    size="small"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        copyPublicLink(agent.publicId);
-                                                    }}
-                                                    startIcon={<LinkIcon />}
-                                                    sx={{
-                                                        textTransform: 'none',
-                                                        fontWeight: 500,
-                                                        bgcolor: '#1976d2',
-                                                        color: '#fff',
-                                                        '&:hover': { bgcolor: '#115293' },
-                                                        borderRadius: 2
-                                                    }}
-                                                >
-                                                    Copiar Enlace
-                                                </Button>
-                                            </Tooltip>
-                                            <Tooltip title="Abrir Chat">
-                                                <Button
-                                                    size="small"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        window.open(`/public/${agent.publicId}`, '_blank');
-                                                    }}
-                                                    sx={{
-                                                        textTransform: 'none',
-                                                        fontWeight: 500,
-                                                        bgcolor: '#4caf50',
-                                                        color: '#fff',
-                                                        '&:hover': { bgcolor: '#357a38' },
-                                                        borderRadius: 2
-                                                    }}
-                                                >
-                                                    Abrir Chat
-                                                </Button>
-                                            </Tooltip>
-                                        </Box>
-                                    </Card>
-                                </Grid2>
-                            ))
-                        ) : (
-                            <Grid2 item xs={12}>
-                                <Typography variant="body1" color="text.secondary" align="center">
-                                    No tienes agentes creados. Comienza creando uno nuevo.
-                                </Typography>
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    copyPublicLink(agent.publicId);
+                                                }}
+                                                startIcon={<LinkIcon />}
+                                                sx={{
+                                                    textTransform: 'none',
+                                                    fontWeight: 500,
+                                                    bgcolor: 'primary.main',
+                                                    color: '#fff',
+                                                    '&:hover': { bgcolor: 'primary.dark' },
+                                                    borderRadius: 2
+                                                }}
+                                            >
+                                                Copiar Enlace
+                                            </Button>
+                                        </Tooltip>
+                                        <Tooltip title="Abrir Chat">
+                                            <Button
+                                                size="small"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    window.open(`/public/${agent.publicId}`, '_blank');
+                                                }}
+                                                sx={{
+                                                    textTransform: 'none',
+                                                    fontWeight: 500,
+                                                    bgcolor: 'success.main',
+                                                    color: '#fff',
+                                                    '&:hover': { bgcolor: 'success.dark' },
+                                                    borderRadius: 2
+                                                }}
+                                            >
+                                                Abrir Chat
+                                            </Button>
+                                        </Tooltip>
+                                    </Box>
+                                </Card>
                             </Grid2>
-                        )}
+                        ))
+                    ) : (
+                        <Grid2 item xs={12}>
+                            <Typography variant="body1" color="text.secondary" align="center">
+                                No tienes agentes creados. Comienza creando uno nuevo.
+                            </Typography>
+                        </Grid2>
+                    )}
                 </Grid2>
             </Box>
 
@@ -284,9 +289,10 @@ export default function AgentList() {
                 <Typography variant="h5" sx={{ mt: 6, mb: 4, fontWeight: 700, color: 'text.primary' }}>
                     Cómo Interactuar con tu Agente usando la API
                 </Typography>
-                <Card sx={{ p: { xs: 2, md: 4 }, boxShadow: 3, borderRadius: 2 }}>
+                <Card sx={{ p: { xs: 2, md: 4 }, boxShadow: 3, borderRadius: 2, backgroundColor: 'background.paper' }}>
                     <Typography variant="body1" sx={{ mb: 2 }}>
-                        Puedes integrar tu agente IA en otras aplicaciones o servicios utilizando nuestras llamadas a la API. A continuación, te mostramos cómo hacerlo con ejemplos prácticos y pasos sencillos:
+                        Puedes integrar tu agente IA en otras aplicaciones o servicios utilizando nuestras llamadas a la API. A continuación, te mostramos cómo hacerlo con ejemplos
+                        prácticos y pasos sencillos:
                     </Typography>
                     <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
                         1. Obtener el enlace público de tu agente
@@ -309,15 +315,18 @@ export default function AgentList() {
                     <Box component="div" sx={{ mb: 2, ml: 2 }}>
                         <Typography variant="body2" component="span" sx={{ fontWeight: 600 }}>
                             phone:
-                        </Typography> Tu número de teléfono
+                        </Typography>{' '}
+                        Tu número de teléfono
                         <br />
                         <Typography variant="body2" component="span" sx={{ fontWeight: 600 }}>
                             message:
-                        </Typography> El mensaje que quieres enviar al agente
+                        </Typography>{' '}
+                        El mensaje que quieres enviar al agente
                         <br />
                         <Typography variant="body2" component="span" sx={{ fontWeight: 600 }}>
                             agentId:
-                        </Typography> El ID de tu agente
+                        </Typography>{' '}
+                        El ID de tu agente
                     </Box>
                     <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
                         3. Manejar la respuesta de la API

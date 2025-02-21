@@ -27,13 +27,16 @@ export default function AgentForm() {
     useEffect(() => {
         const loadAgent = async () => {
             if (id) {
-                const response = await api.getAgent(id);
-                const agent = response.data;
-                console.log(agent);
-                setFormData({
-                    ...agent,
-                    tools: agent.tools || []
-                });
+                try {
+                    const response = await api.getAgent(id);
+                    const agent = response.data;
+                    setFormData({
+                        ...agent,
+                        tools: agent.tools || []
+                    });
+                } catch (error) {
+                    console.error('Error fetching agent:', error);
+                }
             }
         };
         loadAgent();
@@ -60,7 +63,7 @@ export default function AgentForm() {
 
     return (
         <Box sx={{ p: 3, maxWidth: '100%', height: '90vh', overflowY: 'auto', mx: 'auto' }}>
-            <Card sx={{ p: 3, boxShadow: 3, borderRadius: 3 }}>
+            <Card sx={{ p: 4, boxShadow: 4, borderRadius: 3, backgroundColor: 'background.paper' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, gap: 2 }}>
                     <SettingsIcon fontSize="large" color="primary" />
                     <Typography variant="h4" sx={{ fontSize: '1.8rem', fontWeight: 700 }}>
@@ -82,7 +85,7 @@ export default function AgentForm() {
                                     label="Nombre del Agente"
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    sx={{ mb: 2, '& .MuiInputBase-input': { fontSize: '1rem' } }}
+                                    sx={{ mb: 2 }}
                                     required
                                 />
                                 <TextField
@@ -92,7 +95,7 @@ export default function AgentForm() {
                                     rows={4}
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    sx={{ '& .MuiInputBase-input': { fontSize: '1rem' } }}
+                                    sx={{ mb: 2 }}
                                 />
                             </Box>
 
@@ -107,11 +110,13 @@ export default function AgentForm() {
                                     options={toolOptions}
                                     className="basic-multi-select"
                                     classNamePrefix="select"
-                                    value={toolOptions.filter(option => formData.tools.some(tool => tool.name === option.value))}
-                                    onChange={(selectedOptions) => setFormData({
-                                        ...formData,
-                                        tools: selectedOptions ? selectedOptions.map(option => ({ name: option.value, enabled: true })) : []
-                                    })}
+                                    value={toolOptions.filter((option) => formData.tools.some((tool) => tool.name === option.value))}
+                                    onChange={(selectedOptions) =>
+                                        setFormData({
+                                            ...formData,
+                                            tools: selectedOptions ? selectedOptions.map((option) => ({ name: option.value, enabled: true })) : []
+                                        })
+                                    }
                                     styles={{
                                         control: (provided) => ({
                                             ...provided,
@@ -134,6 +139,7 @@ export default function AgentForm() {
                                             color: 'black'
                                         })
                                     }}
+                                    placeholder="Selecciona herramientas..."
                                 />
                             </Box>
                         </Grid>
@@ -154,8 +160,7 @@ export default function AgentForm() {
                                     onChange={(e) => setFormData({ ...formData, prompt: e.target.value })}
                                     required
                                     sx={{
-                                        mb: 2,
-                                        '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: 'background.default', fontSize: '1rem' }
+                                        mb: 2
                                     }}
                                 />
                                 <TextField
@@ -166,21 +171,43 @@ export default function AgentForm() {
                                     value={formData.knowledge}
                                     onChange={(e) => setFormData({ ...formData, knowledge: e.target.value })}
                                     sx={{
-                                        '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: 'background.default', fontSize: '1rem' }
+                                        mb: 2
                                     }}
                                 />
                             </Box>
                         </Grid>
                     </Grid>
 
-                    <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
-                        <Button type="submit" variant="contained" size="large" sx={{ px: 5, py: 1.5, borderRadius: 2, fontSize: '1rem', fontWeight: 600, backgroundColor: '#1976d2', '&:hover': { backgroundColor: '#115293' } }}>
+                    <Box sx={{ mt: 4, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            size="large"
+                            sx={{
+                                px: 5,
+                                py: 1.5,
+                                borderRadius: 2,
+                                fontSize: '1rem',
+                                fontWeight: 600,
+                                backgroundColor: 'primary.main',
+                                '&:hover': { backgroundColor: 'primary.dark' }
+                            }}
+                        >
                             Guardar Agente
                         </Button>
                         <Button
                             variant="outlined"
                             size="large"
-                            sx={{ px: 5, py: 1.5, borderRadius: 2, fontSize: '1rem', fontWeight: 600, borderColor: '#1976d2', color: '#1976d2', '&:hover': { borderColor: '#115293', color: '#115293' } }}
+                            sx={{
+                                px: 5,
+                                py: 1.5,
+                                borderRadius: 2,
+                                fontSize: '1rem',
+                                fontWeight: 600,
+                                borderColor: 'primary.main',
+                                color: 'primary.main',
+                                '&:hover': { borderColor: 'primary.dark', color: 'primary.dark' }
+                            }}
                             onClick={() => navigate('/agents')}
                         >
                             Volver al Tablero
