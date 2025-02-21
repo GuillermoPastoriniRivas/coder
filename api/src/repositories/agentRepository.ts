@@ -3,24 +3,27 @@ import { Account } from '../models/account';
 
 export const agentRepository = {
     async createAgent(agentData: any) {
-        const agent = new Agent(agentData);
-        return await agent.save();
+        return await Agent.create(agentData);
     },
 
     async updateAgent(agentId: string, updateData: any) {
         return await Agent.findByIdAndUpdate(agentId, updateData, { new: true });
     },
 
-    async listAgents(owner: string) {
-        return await Agent.find({ owner });
-    },
-
     async getAgentById(agentId: string) {
-        return await Agent.findById(agentId);
+        return await Agent.findById(agentId)
+            .populate('tools')
+            .lean();
     },
 
     async getAgentByPublicId(publicId: string) {
-        return await Agent.findOne({ publicId });
+        return await Agent.findOne({ publicId })
+            .populate('tools')
+            .lean();
+    },
+
+    async listAgents(owner: string) {
+        return await Agent.find({ owner }).lean();
     },
 
     // Account
