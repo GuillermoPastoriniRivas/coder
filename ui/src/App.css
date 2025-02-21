@@ -8,7 +8,7 @@
   --font-weight-light: 300;
   --font-weight-regular: 400;
   --font-weight-bold: 700;
-  --border-radius: 8px;
+  --border-radius: 12px;
   --transition-speed: 0.3s;
   --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -26,7 +26,7 @@ body {
   padding: 0;
   overflow: hidden;
   background-color: var(--color-background);
-  overflow-y: auto; 
+  overflow-y: auto;
 }
 
 .App-logo {
@@ -212,4 +212,21 @@ body {
 .MuiChip-root {
   font-weight: var(--font-weight-regular);
   border-radius: var(--border-radius);
+}
+
+/* New Styles for Saldo Display */
+.saldo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.saldo-icon {
+  margin-right: 8px;
+}
+
+.saldo-text {
+  font-size: 1.25rem;
+  font-weight: 500;
 }

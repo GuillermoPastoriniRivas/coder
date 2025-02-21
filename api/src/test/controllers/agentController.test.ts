@@ -115,13 +115,13 @@ describe('AgentController', () => {
             expect(jsonMock).toHaveBeenCalledWith(mockAgents);
         });
 
-        it('should return 401 when owner query is missing', async () => {
+        it('should return 400 when owner query is missing', async () => {
             req.query = {};
 
             await agentController.getAgents(req as Request, res as Response);
 
             expect(agentService.getAgents).not.toHaveBeenCalled();
-            expect(statusMock).toHaveBeenCalledWith(401);
+            expect(statusMock).toHaveBeenCalledWith(400);
             expect(jsonMock).toHaveBeenCalledWith({ error: 'Bad Request' });
         });
 
@@ -133,7 +133,7 @@ describe('AgentController', () => {
 
             expect(agentService.getAgents).toHaveBeenCalledWith('owner1');
             expect(statusMock).toHaveBeenCalledWith(404);
-            expect(jsonMock).toHaveBeenCalledWith({ error: 'Agent not found' });
+            expect(jsonMock).toHaveBeenCalledWith({ error: 'Agents not found' });
         });
     });
 
