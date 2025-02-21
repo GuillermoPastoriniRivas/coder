@@ -18,8 +18,8 @@ const client = new MongoClient(process.env.MONGODB_ATLAS_URI as string);
 const getAvailableSlotsTool = tool(
   async () => {
       // const response = await axios.get("https://api.example.com/get-available-slots");
-      // return response.data;
-
+      // return response.data;  
+        console.log("Fetch Available Slots")
       return JSON.stringify([
           { time: '10:00', date: '2024-12-02' },
           { time: '11:00', date: '2024-12-02' },
@@ -51,7 +51,7 @@ const setAppointmentTool = tool(
   async ({ slot, user }: { slot: string; user: string }) => {
       // const response = await axios.post("https://api.example.com/set-appointment", { slot, user });
       // return response.data;
-        console.log('Appointment saved successfully')
+        console.log('Appointment saved successfully', slot)
       return { message: 'Appointment saved successfully' };
   },
   {
