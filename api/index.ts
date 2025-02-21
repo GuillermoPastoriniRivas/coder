@@ -20,20 +20,20 @@ app.get('/', (req: Request, res: Response) => {
 app.post('/auth/login', authController.login);
 
 // Protected Routes
-app.post('/chat', authMiddleware, postChat);
-app.post('/call', authMiddleware, postCall);
+app.post('/chat', postChat);
+app.post('/call', postCall);
 
-app.post('/agents', authMiddleware, agentController.createAgent);
-app.put('/agents/:id', authMiddleware, agentController.updateAgent);
-app.get('/agents/:id', authMiddleware, agentController.getAgent);
-app.get('/agents', authMiddleware, agentController.getAgents);
+app.post('/agents', agentController.createAgent);
+app.put('/agents/:id', agentController.updateAgent);
+app.get('/agents/:id', agentController.getAgent);
+app.get('/agents', agentController.getAgents);
 
 app.get('/public/:publicId', publicController.getPublicAgent);
 
-app.get('/conversations/:agentId/:phone', authMiddleware, getConversation);
+app.get('/conversations/:agentId/:phone', getConversation);
 
-app.get('/account', authMiddleware, agentController.getAccount);
-app.put('/account', authMiddleware, agentController.updateAccount);
+app.get('/account', agentController.getAccount);
+app.put('/account', agentController.updateAccount);
 
 const PORT = process.env.PORT || 5000;                                                  
 app.listen(PORT, () => {
