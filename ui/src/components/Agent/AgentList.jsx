@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Grid2, Card, CardContent, Typography, Button, Box, Chip, Skeleton, Tooltip } from '@mui/material';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import LinkIcon from '@mui/icons-material/Link';
+import EditIcon from '@mui/icons-material/Edit';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import api from '../../api';
 import '../../App.css';
 import InfoIcon from '@mui/icons-material/Info';
@@ -30,6 +32,11 @@ export default function AgentList() {
     const copyPublicLink = (publicId) => {
         const publicUrl = `${window.location.origin}/public/${publicId}`;
         navigator.clipboard.writeText(publicUrl);
+        // Puedes agregar un snackbar/notificación aquí si lo deseas
+    };
+
+    const copyID = (id) => {
+        navigator.clipboard.writeText(id);
         // Puedes agregar un snackbar/notificación aquí si lo deseas
     };
 
@@ -80,12 +87,12 @@ export default function AgentList() {
                             }}
                         >
                             <InfoIcon color="primary" sx={{ fontSize: 40, mb: 2 }} />
-                            <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
-                                1. Crear un Agente
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                Inicia la creación de un agente personalizado adaptado a tus necesidades haciendo clic en "Nuevo Agente".
-                            </Typography>
+                                <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
+                                    1. Crear un Agente
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Inicia la creación de un agente personalizado adaptado a tus necesidades haciendo clic en "Nuevo Agente".
+                                </Typography>
                         </Card>
                     </Grid2>
                     <Grid2 item xs={12} sm={6} md={3}>
@@ -105,12 +112,12 @@ export default function AgentList() {
                             }}
                         >
                             <InfoIcon color="secondary" sx={{ fontSize: 40, mb: 2 }} />
-                            <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
-                                2. Configurar el Agente
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                Define la información básica, el prompt del sistema y las herramientas para personalizar el comportamiento de tu agente.
-                            </Typography>
+                                <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
+                                    2. Configurar el Agente
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Define la información básica, el prompt del sistema y las herramientas para personalizar el comportamiento de tu agente.
+                                </Typography>
                         </Card>
                     </Grid2>
                     <Grid2 item xs={12} sm={6} md={3}>
@@ -130,12 +137,12 @@ export default function AgentList() {
                             }}
                         >
                             <InfoIcon color="success" sx={{ fontSize: 40, mb: 2 }} />
-                            <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
-                                3. Interactuar
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                Comienza a conversar con tu agente a través de la interfaz de chat y aprovecha sus capacidades.
-                            </Typography>
+                                <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
+                                    3. Interactuar
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Comienza a conversar con tu agente a través de la interfaz de chat y aprovecha sus capacidades.
+                                </Typography>
                         </Card>
                     </Grid2>
                     <Grid2 item xs={12} sm={6} md={3}>
@@ -155,12 +162,12 @@ export default function AgentList() {
                             }}
                         >
                             <InfoIcon color="warning" sx={{ fontSize: 40, mb: 2 }} />
-                            <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
-                                4. Compartir
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                Comparte el enlace público de tu agente para que otros puedan interactuar con él fácilmente.
-                            </Typography>
+                                <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
+                                    4. Compartir
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Comparte el enlace público de tu agente para que otros puedan interactuar con él fácilmente.
+                                </Typography>
                         </Card>
                     </Grid2>
                 </Grid2>
@@ -189,7 +196,6 @@ export default function AgentList() {
                             <Grid2 item xs={12} sm={6} lg={3} key={agent._id}>
                                 <Card
                                     sx={{
-                                        cursor: 'pointer',
                                         height: '100%',
                                         display: 'flex',
                                         flexDirection: 'column',
@@ -204,9 +210,12 @@ export default function AgentList() {
                                         backgroundColor: 'background.paper'
                                     }}
                                 >
-                                    <CardContent onClick={() => navigate(`/agents/${agent._id}`)}>
+                                    <CardContent>
                                         <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, color: 'text.primary' }}>
                                             {agent.name}
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                                            ID: {agent._id}
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                                             {agent.description}
@@ -221,8 +230,8 @@ export default function AgentList() {
                                     <Box
                                         sx={{
                                             display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
+                                            flexDirection: 'column',
+                                            gap: 1,
                                             p: 2,
                                             borderTop: 1,
                                             borderColor: 'divider',
@@ -231,45 +240,86 @@ export default function AgentList() {
                                             borderBottomRightRadius: 2
                                         }}
                                     >
-                                        <Tooltip title="Copiar enlace público">
-                                            <Button
-                                                size="small"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    copyPublicLink(agent.publicId);
-                                                }}
-                                                startIcon={<LinkIcon />}
-                                                sx={{
-                                                    textTransform: 'none',
-                                                    fontWeight: 500,
-                                                    bgcolor: 'primary.main',
-                                                    color: '#fff',
-                                                    '&:hover': { bgcolor: 'primary.dark' },
-                                                    borderRadius: 2
-                                                }}
-                                            >
-                                                Copiar Enlace
-                                            </Button>
-                                        </Tooltip>
-                                        <Tooltip title="Abrir Chat">
-                                            <Button
-                                                size="small"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    window.open(`/public/${agent.publicId}`, '_blank');
-                                                }}
-                                                sx={{
-                                                    textTransform: 'none',
-                                                    fontWeight: 500,
-                                                    bgcolor: 'success.main',
-                                                    color: '#fff',
-                                                    '&:hover': { bgcolor: 'success.dark' },
-                                                    borderRadius: 2
-                                                }}
-                                            >
-                                                Abrir Chat
-                                            </Button>
-                                        </Tooltip>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+                                        <Tooltip title="Copiar ID">
+                                                <Button
+                                                    size="small"
+                                                    startIcon={<ContentCopyIcon />}
+                                                    variant="outlined"
+                                                    color="secondary"
+                                                    onClick={() => copyID(agent._id)}
+                                                    sx={{
+                                                        flex: 1,
+                                                        textTransform: 'none',
+                                                        fontWeight: 500,
+                                                        borderRadius: 2
+                                                    }}
+                                                >
+                                                    Copiar ID
+                                                </Button>
+                                            </Tooltip>
+                                            <Tooltip title="Editar Agente">
+                                                <Button
+                                                    size="small"
+                                                    startIcon={<EditIcon />}
+                                                    variant="outlined"
+                                                    color="primary"
+                                                    onClick={() => navigate(`/agents/${agent._id}`)}
+                                                    sx={{
+                                                        flex: 1,
+                                                        textTransform: 'none',
+                                                        fontWeight: 500,
+                                                        borderRadius: 2
+                                                    }}
+                                                >
+                                                    Editar
+                                                </Button>
+                                            </Tooltip>
+                                            
+                                        </Box>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+                                            <Tooltip title="Copiar enlace público">
+                                                <Button
+                                                    size="small"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        copyPublicLink(agent.publicId);
+                                                    }}
+                                                    startIcon={<LinkIcon />}
+                                                    sx={{
+                                                        flex: 1,
+                                                        textTransform: 'none',
+                                                        fontWeight: 500,
+                                                        bgcolor: 'primary.main',
+                                                        color: '#fff',
+                                                        '&:hover': { bgcolor: 'primary.dark' },
+                                                        borderRadius: 2
+                                                    }}
+                                                >
+                                                    Copiar Enlace
+                                                </Button>
+                                            </Tooltip>
+                                            <Tooltip title="Abrir Chat">
+                                                <Button
+                                                    size="small"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        window.open(`/public/${agent.publicId}`, '_blank');
+                                                    }}
+                                                    sx={{
+                                                        flex: 1,
+                                                        textTransform: 'none',
+                                                        fontWeight: 500,
+                                                        bgcolor: 'success.main',
+                                                        color: '#fff',
+                                                        '&:hover': { bgcolor: 'success.dark' },
+                                                        borderRadius: 2
+                                                    }}
+                                                >
+                                                    Abrir Chat
+                                                </Button>
+                                            </Tooltip>
+                                        </Box>
                                     </Box>
                                 </Card>
                             </Grid2>
