@@ -6,6 +6,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';        
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import PricingIcon from '@mui/icons-material/AttachMoney';
+import DescriptionIcon from '@mui/icons-material/Description';
 
 export default function Menu() {
     const { email, logout } = useAuth();
@@ -29,6 +30,9 @@ export default function Menu() {
                         </Button>
                         <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/pricing" startIcon={<PricingIcon />}>
                             Precios
+                        </Button>
+                        <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/docs" startIcon={<DescriptionIcon />}>
+                            Docs
                         </Button>
                         <Button sx={{ mr: 2 }} color="inherit" onClick={handleLogout} startIcon={<ExitToAppIcon />}>
                             Cerrar Sesión

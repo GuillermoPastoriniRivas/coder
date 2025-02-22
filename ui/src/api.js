@@ -31,4 +31,9 @@ export default {
   // Account
   createAccount: (accountData) => API.post('/signup', accountData),
   login: (loginData) => API.post('/login', loginData),
+
+  // Widget
+  initializeWidget: (agentId, phone) => API.post('/widget/init', { agentId, phone }),
+  sendWidgetMessage: (agentId, phone, message) => API.post('/widget/message', { agentId, phone, message }),
+  getWidgetConversation: (agentId, phone) => API.get(`/widget/conversations/${agentId}/${phone}`),
 };

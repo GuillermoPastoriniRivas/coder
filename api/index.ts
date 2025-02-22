@@ -4,9 +4,9 @@ import { postChat, postCall, getConversation } from './src/controllers/chatContr
 import { agentController } from './src/controllers/agentController';
 import cors from 'cors';
 import { publicController } from './src/controllers/publicController';
-import authRoutes from './src/routes/authRoutes'; // Added import for authRoutes
 import { authMiddleware } from './src/middleware/authMiddleware';
 import { authController } from './src/controllers/authController';
+import { widgetController } from './src/controllers/widgetController'; // Added import for widgetController
 const app: Express = express();
 app.use(express.json());
 
@@ -33,6 +33,11 @@ app.get('/agents', agentController.getAgents);
 app.get('/public/:publicId', publicController.getPublicAgent);
 
 app.get('/conversations/:agentId/:phone', getConversation);
+
+// Widget Routes
+app.post('/widget/init', widgetController.initializeWidget);
+app.post('/widget/message', widgetController.sendMessage);
+app.get('/widget/conversations/:agentId/:phone', widgetController.getConversation);
 
 app.get('/account', agentController.getAccount);
 app.put('/account', agentController.updateAccount);

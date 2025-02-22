@@ -5,10 +5,12 @@ import SignUp from './components/Auth/SignUp';
 import AgentList from './components/Agent/AgentList';
 import AgentForm from './components/Agent/AgentForm';
 import ChatInterface from './components/Chat/ChatInterface';
-import PublicChatInterface from './components/Chat/PublicChatInterface';  
+import PublicChatInterface from './components/Chat/PublicChatInterface';
+import Widget from './components/Chat/Widget'; 
 import AccountSettings from './components/AccountSettings.jsx';
 import Menu from './components/Menu.jsx';
 import Pricing from './components/Pricing.jsx';
+import Docs from './components/Docs.jsx';
 import { useAuth } from './context/AuthContext';
 import React from 'react';
 import './App.css';
@@ -50,8 +52,10 @@ function MainApp() {
               <Route path="/agents/:id" element={<AgentForm />} />        
               <Route path="/chat/:agentId" element={<ChatInterface />} /> 
               <Route path="/public/:publicId" element={<PublicChatInterface />} />
+              <Route path="/widget/:agentId" element={<Widget />} />
               <Route path="/account" element={<AccountSettings />} />     
               <Route path="/pricing" element={<Pricing />} />
+              <Route path="/docs" element={<Docs />} />
             </>
           )}
           {/* Ruta por defecto */}
