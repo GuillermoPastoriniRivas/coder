@@ -3,11 +3,12 @@ import { useParams } from 'react-router-dom';
 import api from '../../api';
 import ChatInterface from './ChatInterface';
 import '../../App.css';
+import './Widget.css';
 
 export default function Widget() {
     const { agentId } = useParams();
     const [agent, setAgent] = useState(null);
-    const [isOpen, setIsOpen] = useState(false); // Widget initially closed
+    const [isOpen, setIsOpen] = useState(false);
 
     useEffect(() => {
         const fetchAgent = async () => {
@@ -29,17 +30,20 @@ export default function Widget() {
 
     return (
         <>
-            {isOpen && (
-                <div className="widget-container">
+            {isOpen ? (
+                <div className="widget-iframe-container">
+                    <div className="widget-iframe-wrapper">
                     <ChatInterface agentId={agentId} />
-                    <button className="widget-close-button" onClick={toggleWidget}>
-                        &times;
-                    </button>
+                        <button className="widget-close-button" onClick={toggleWidget}>
+                            &times;
+                        </button>
+                    </div>
                 </div>
+            ) : (
+                <button className="widget-open-bubble" onClick={toggleWidget}>
+                    &#128172;
+                </button>
             )}
-            <button className="widget-open-bubble" onClick={toggleWidget}>
-                &#128172;
-            </button>
         </>
     );
 }

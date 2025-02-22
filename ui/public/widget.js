@@ -14,12 +14,12 @@
     iframe.src = `http://localhost:3005/widget/${agentId}`;
     iframe.style.position = 'fixed';
     iframe.style.bottom = '20px';
+    iframe.style.background = 'none';
     iframe.style.right = '20px';
-    iframe.style.width = '400px';
+    iframe.style.width = '410px';
     iframe.style.height = '80%';
     iframe.style.border = 'none';
     iframe.style.borderRadius = '8px';
-    iframe.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
     iframe.style.zIndex = '1000';
 
     // Agregar el iframe al cuerpo del documento

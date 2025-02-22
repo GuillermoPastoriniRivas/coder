@@ -34,8 +34,6 @@ body {
   font-family: var(--font-family);
   font-weight: var(--font-weight-regular);
   color: var(--color-text);
-  background: url(../img/body-bg.png) no-repeat center;
-  background-size: cover;
 }
 
 h1,
@@ -753,7 +751,6 @@ button:focus {
   margin-left: 2px;
 }
 
-/*========= blog_categorie_area css ===========*/
 .blog_categorie_area {
   padding-bottom: 80px;
 }
@@ -804,7 +801,6 @@ button:focus {
   background: rgba(68, 88, 220, 0.85);
 }
 
-/*============ blog_left_sidebar css ==============*/
 .blog_item {
   margin-bottom: 40px;
 }
@@ -1029,7 +1025,6 @@ button:focus {
   color: #cccccc;
 }
 .blog_right_sidebar .newsletter_widget .form-control:focus {
-  outline: none;
   box-shadow: none;
 }
 .blog_right_sidebar .newsletter_widget .bbtns {
@@ -1809,10 +1804,6 @@ button:focus {
   left: 19px;
 }
 
-.single-element-widget {
-  margin-bottom: 30px;
-}
-
 .primary-switch {
   width: 35px;
   height: 17px;
@@ -2307,7 +2298,7 @@ button:focus {
 }
 
 .chat-input button:hover {
-  background-color: darken(var(--color-primary), 10%);
+  background-color: #3751a0; /* Darker shade of primary color */
   transform: translateY(-1px);
 }
 
@@ -2315,6 +2306,7 @@ button:focus {
 @media (max-width: 600px) {
   .chat-container {
     padding: 10px;
+    width: 100%;
   }
 
   .chat-header {
@@ -2392,4 +2384,23 @@ button:focus {
 .saldo-text {
   font-size: 1.25rem;
   font-weight: 500;
+}
+
+/* Widget Closed State - Bubble in Bottom Right */
+.widget-open-bubble {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background-color: var(--color-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.widget-open-bubble:hover {
+    background-color: #3751a0; /* Darker shade of primary color */
+    transform: scale(1.05);
 }

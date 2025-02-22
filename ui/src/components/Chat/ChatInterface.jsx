@@ -47,7 +47,7 @@ export default function ChatInterface({ agentId }) {
     return (
         <Box className="chat-container">
             {/* Phone Input Header */}
-            <Paper className="chat-header" elevation={1}>
+            <Paper className="chat-header" elevation={1} sx={{display: 'flex', flexDirection: 'row'}}>
                 <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
                     <SmartToyIcon />
                 </Avatar>
