@@ -28,14 +28,14 @@ export default function Login() {
     };
 
     return (
-        <Container maxWidth="xs">
-            <Box sx={{ mt: 8, p: 4, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 3, textAlign: 'center' }}>
-                <LockOpenIcon sx={{ fontSize: 50, color: 'primary.main', mb: 2 }} />
-                <Typography variant="h4" sx={{ mb: 3 }}>
+        <Container maxWidth="xs" className="section_gap_top">
+            <Box className="white_bg box-shadow border-radius p-25 text-center mb-50">
+                <LockOpenIcon className="icon-large primary-color mb-15" />
+                <Typography variant="h4" className="main-title mb-25">
                     Bienvenido de Nuevo
                 </Typography>
 
-                <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+                <Box component="form" onSubmit={handleSubmit} className="form-container">
                     <TextField
                         fullWidth
                         margin="normal"
@@ -44,7 +44,7 @@ export default function Login() {
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        InputProps={{ sx: { borderRadius: 2 } }}
+                        className="single-input mb-15"
                     />
 
                     <TextField
@@ -55,16 +55,16 @@ export default function Login() {
                         required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        InputProps={{ sx: { borderRadius: 2 } }}
+                        className="single-input mb-25"
                     />
 
-                    <Button type="submit" fullWidth variant="contained" size="large" sx={{ mt: 3, py: 1.5, borderRadius: 2 }}>
+                    <Button type="submit" fullWidth className="primary_btn"  sx={{marginTop: '1rem', color: 'white'}}>
                         Continuar
                     </Button>
                 </Box>
 
-                <Typography variant="body2" sx={{ mt: 2 }}>
-                    <Link component={RouterLink} to="/signup">
+                <Typography variant="body2" sx={{marginTop: '30px'}}>
+                    <Link component={RouterLink} to="/signup" className="link-style">
                         No tienes una cuenta, crea una aqui
                     </Link>
                 </Typography>

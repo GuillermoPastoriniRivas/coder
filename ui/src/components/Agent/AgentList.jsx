@@ -37,13 +37,13 @@ export default function AgentList() {
 
     const copyID = (id) => {
         navigator.clipboard.writeText(id);
-        // Puedes agregar un snackbar/notificación aquí si lo deseas
+        // Puedes agregar un snackbar/notificación aqu\í si lo deseas
     };
 
     return (
-        <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1400, mx: 'auto' }}>
+        <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1400, mx: 'auto' }} className="agent-list-container">
             {/* Header con título y botón Nuevo Agente */}
-            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: 'center', mb: 4 }} className="agent-list-header">
                 <Typography variant="h4" sx={{ fontWeight: 700, color: 'text.primary', mb: { xs: 2, sm: 0 } }}>
                     Crea y Gestiona tus Agentes IA
                 </Typography>
@@ -62,16 +62,18 @@ export default function AgentList() {
                         paddingY: 1.5,
                         boxShadow: 3
                     }}
+                    className="nuevo-agente-button"
                 >
                     Nuevo Agente
                 </Button>
             </Box>
 
             {/* Sección de Pasos */}
-            <Box container spacing={3} sx={{ mb: '90px', flexWrap: 'nowrap' }}>
+            <Box container spacing={3} sx={{ mb: '90px', flexWrap: 'nowrap' }} className="agent-steps">
                 <Grid2 container spacing={4} sx={{ flexWrap: 'nowrap' }}>
                     <Grid2 item xs={12} sm={6} md={3}>
                         <Card
+                            className="step-card"
                             sx={{
                                 p: 3,
                                 textAlign: 'center',
@@ -87,16 +89,17 @@ export default function AgentList() {
                             }}
                         >
                             <InfoIcon color="primary" sx={{ fontSize: 40, mb: 2 }} />
-                                <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
-                                    1. Crear un Agente
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    Inicia la creación de un agente personalizado adaptado a tus necesidades haciendo clic en "Nuevo Agente".
-                                </Typography>
+                            <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
+                                1. Crear un Agente
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                Inicia la creación de un agente personalizado adaptado a tus necesidades haciendo clic en "Nuevo Agente".
+                            </Typography>
                         </Card>
                     </Grid2>
                     <Grid2 item xs={12} sm={6} md={3}>
                         <Card
+                            className="step-card"
                             sx={{
                                 p: 3,
                                 textAlign: 'center',
@@ -112,16 +115,17 @@ export default function AgentList() {
                             }}
                         >
                             <InfoIcon color="secondary" sx={{ fontSize: 40, mb: 2 }} />
-                                <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
-                                    2. Configurar el Agente
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    Define la información básica, el prompt del sistema y las herramientas para personalizar el comportamiento de tu agente.
-                                </Typography>
+                            <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
+                                2. Configurar el Agente
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                Define la información básica, el prompt del sistema y las herramientas para personalizar el comportamiento de tu agente.
+                            </Typography>
                         </Card>
                     </Grid2>
                     <Grid2 item xs={12} sm={6} md={3}>
                         <Card
+                            className="step-card"
                             sx={{
                                 p: 3,
                                 textAlign: 'center',
@@ -137,16 +141,17 @@ export default function AgentList() {
                             }}
                         >
                             <InfoIcon color="success" sx={{ fontSize: 40, mb: 2 }} />
-                                <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
-                                    3. Interactuar
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    Comienza a conversar con tu agente a través de la interfaz de chat y aprovecha sus capacidades.
-                                </Typography>
+                            <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
+                                3. Interactuar
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                Comienza a conversar con tu agente a través de la interfaz de chat y aprovecha sus capacidades.
+                            </Typography>
                         </Card>
                     </Grid2>
                     <Grid2 item xs={12} sm={6} md={3}>
                         <Card
+                            className="step-card"
                             sx={{
                                 p: 3,
                                 textAlign: 'center',
@@ -162,27 +167,27 @@ export default function AgentList() {
                             }}
                         >
                             <InfoIcon color="warning" sx={{ fontSize: 40, mb: 2 }} />
-                                <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
-                                    4. Compartir
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    Comparte el enlace público de tu agente para que otros puedan interactuar con él fácilmente.
-                                </Typography>
+                            <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
+                                4. Compartir
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                Comparte el enlace público de tu agente para que otros puedan interactuar con él fácilmente.
+                            </Typography>
                         </Card>
                     </Grid2>
                 </Grid2>
             </Box>
 
             {/* Lista de Agentes */}
-            <Box sx={{ mb: 4, mt: 6 }}>
-                <Typography variant="h5" sx={{ mt: 6, mb: 4, fontWeight: 700, color: 'text.primary' }}>
+            <Box sx={{ mb: 4, mt: 6 }} className="agent-list-section">
+                <Typography variant="h5" sx={{ mt: 6, mb: 4, fontWeight: 700, color: 'text.primary' }} className="agent-list-title">
                     Lista de Agentes
                 </Typography>
                 <Grid2 container spacing={4}>
                     {loading ? (
                         Array.from({ length: 4 }).map((_, index) => (
                             <Grid2 item xs={12} sm={6} lg={3} key={index}>
-                                <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }}>
+                                <Card sx={{ height: '100%', boxShadow: 3, borderRadius: 2 }} className="agent-skeleton-card">
                                     <CardContent>
                                         <Skeleton variant="text" width="80%" height={30} />
                                         <Skeleton variant="text" width="60%" height={20} sx={{ mt: 1 }} />
@@ -209,21 +214,23 @@ export default function AgentList() {
                                         },
                                         backgroundColor: 'background.paper'
                                     }}
+                                    className="agent-card"
                                 >
                                     <CardContent>
-                                        <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, color: 'text.primary' }}>
+                                        <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, color: 'text.primary' }} className="agent-name">
                                             {agent.name}
                                         </Typography>
-                                        <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                                        <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }} className="agent-id">
                                             ID: {agent._id}
                                         </Typography>
-                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }} className="agent-description">
                                             {agent.description}
                                         </Typography>
                                         <Chip
                                             label={`${agent.tools.filter((t) => t.enabled).length} Herramientas activas`}
                                             size="small"
                                             sx={{ bgcolor: 'primary.light', color: 'primary.dark', fontWeight: 500 }}
+                                            className="agent-tools-chip"
                                         />
                                     </CardContent>
 
@@ -239,9 +246,10 @@ export default function AgentList() {
                                             borderBottomLeftRadius: 2,
                                             borderBottomRightRadius: 2
                                         }}
+                                        className="agent-card-actions"
                                     >
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
-                                        <Tooltip title="Copiar ID">
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }} className="agent-action-buttons">
+                                            <Tooltip title="Copiar ID">
                                                 <Button
                                                     size="small"
                                                     startIcon={<ContentCopyIcon />}
@@ -254,6 +262,7 @@ export default function AgentList() {
                                                         fontWeight: 500,
                                                         borderRadius: 2
                                                     }}
+                                                    className="copy-id-button"
                                                 >
                                                     Copiar ID
                                                 </Button>
@@ -271,13 +280,14 @@ export default function AgentList() {
                                                         fontWeight: 500,
                                                         borderRadius: 2
                                                     }}
+                                                    className="edit-agent-button"
                                                 >
                                                     Editar
                                                 </Button>
                                             </Tooltip>
                                             
                                         </Box>
-                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }} className="agent-action-buttons">
                                             <Tooltip title="Copiar enlace público">
                                                 <Button
                                                     size="small"
@@ -295,6 +305,7 @@ export default function AgentList() {
                                                         '&:hover': { bgcolor: 'primary.dark' },
                                                         borderRadius: 2
                                                     }}
+                                                    className="copy-link-button"
                                                 >
                                                     Copiar Enlace
                                                 </Button>
@@ -315,6 +326,7 @@ export default function AgentList() {
                                                         '&:hover': { bgcolor: 'success.dark' },
                                                         borderRadius: 2
                                                     }}
+                                                    className="open-chat-button"
                                                 >
                                                     Abrir Chat
                                                 </Button>
@@ -326,7 +338,7 @@ export default function AgentList() {
                         ))
                     ) : (
                         <Grid2 item xs={12}>
-                            <Typography variant="body1" color="text.secondary" align="center">
+                            <Typography variant="body1" color="text.secondary" align="center" className="no-agents-message">
                                 No tienes agentes creados. Comienza creando uno nuevo.
                             </Typography>
                         </Grid2>

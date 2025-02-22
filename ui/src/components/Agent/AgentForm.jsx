@@ -62,21 +62,21 @@ export default function AgentForm() {
     };
 
     return (
-        <Box sx={{ p: 3, maxWidth: '100%', height: '90vh', overflowY: 'auto', mx: 'auto' }}>
-            <Card sx={{ p: 4, boxShadow: 4, borderRadius: 3, backgroundColor: 'background.paper' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, gap: 2 }}>
+        <Box sx={{ p: 3, maxWidth: '100%', height: '90vh', overflowY: 'auto', mx: 'auto' }} className="agent-form-container">
+            <Card sx={{ p: 4, boxShadow: 4, borderRadius: 3, backgroundColor: 'background.paper' }} className="agent-form-card">
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, gap: 2 }} className="agent-form-header">
                     <SettingsIcon fontSize="large" color="primary" />
-                    <Typography variant="h4" sx={{ fontSize: '1.8rem', fontWeight: 700 }}>
+                    <Typography variant="h4" sx={{ fontSize: '1.8rem', fontWeight: 700 }} className="agent-form-title">
                         {id ? 'Editar Agente' : 'Crear Agente'}
                     </Typography>
                 </Box>
 
-                <Box component="form" onSubmit={handleSubmit}>
+                <Box component="form" onSubmit={handleSubmit} className="agent-form">
                     <Grid container spacing={4}>
                         {/* Left Column */}
-                        <Grid item xs={12} md={6}>
-                            <Box sx={{ mb: 3 }}>
-                                <Typography variant="h6" gutterBottom sx={{ fontSize: '1.2rem', fontWeight: 600 }}>
+                        <Grid item xs={12} md={6} className="agent-form-left">
+                            <Box sx={{ mb: 3 }} className="basic-info-section">
+                                <Typography variant="h6" gutterBottom sx={{ fontSize: '1.2rem', fontWeight: 600 }} className="basic-info-title">
                                     Información Básica
                                 </Typography>
                                 <Divider sx={{ mb: 2 }} />
@@ -87,6 +87,7 @@ export default function AgentForm() {
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     sx={{ mb: 2 }}
                                     required
+                                    className="agent-name-input single-input"
                                 />
                                 <TextField
                                     fullWidth
@@ -96,11 +97,12 @@ export default function AgentForm() {
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     sx={{ mb: 2 }}
+                                    className="agent-description-input single-textarea"
                                 />
                             </Box>
 
-                            <Box sx={{ mb: 3 }}>
-                                <Typography variant="h6" gutterBottom sx={{ fontSize: '1.2rem', fontWeight: 600 }}>
+                            <Box sx={{ mb: 3 }} className="tools-section">
+                                <Typography variant="h6" gutterBottom sx={{ fontSize: '1.2rem', fontWeight: 600 }} className="tools-title">
                                     Herramientas
                                 </Typography>
                                 <Divider sx={{ mb: 2 }} />
@@ -140,14 +142,15 @@ export default function AgentForm() {
                                         })
                                     }}
                                     placeholder="Selecciona herramientas..."
+                                    className="agent-tools-select"
                                 />
                             </Box>
                         </Grid>
 
                         {/* Right Column */}
-                        <Grid item xs={12} md={6}>
-                            <Box sx={{ mb: 3 }}>
-                                <Typography variant="h6" gutterBottom sx={{ fontSize: '1.2rem', fontWeight: 600 }}>
+                        <Grid item xs={12} md={6} className="agent-form-right">
+                            <Box sx={{ mb: 3 }} className="ia-configuration-section">
+                                <Typography variant="h6" gutterBottom sx={{ fontSize: '1.2rem', fontWeight: 600 }} className="ia-configuration-title">
                                     Configuración de IA
                                 </Typography>
                                 <Divider sx={{ mb: 2 }} />
@@ -162,6 +165,7 @@ export default function AgentForm() {
                                     sx={{
                                         mb: 2
                                     }}
+                                    className="system-prompt-input single-textarea"
                                 />
                                 <TextField
                                     fullWidth
@@ -173,12 +177,13 @@ export default function AgentForm() {
                                     sx={{
                                         mb: 2
                                     }}
+                                    className="knowledge-base-input single-textarea"
                                 />
                             </Box>
                         </Grid>
                     </Grid>
 
-                    <Box sx={{ mt: 4, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                    <Box sx={{ mt: 4, display: 'flex', gap: 2, flexWrap: 'wrap' }} className="form-buttons">
                         <Button
                             type="submit"
                             variant="contained"
@@ -192,6 +197,7 @@ export default function AgentForm() {
                                 backgroundColor: 'primary.main',
                                 '&:hover': { backgroundColor: 'primary.dark' }
                             }}
+                            className="save-agent-button primary_btn"
                         >
                             Guardar Agente
                         </Button>
@@ -209,6 +215,7 @@ export default function AgentForm() {
                                 '&:hover': { borderColor: 'primary.dark', color: 'primary.dark' }
                             }}
                             onClick={() => navigate('/agents')}
+                            className="back-button white_bg_btn"
                         >
                             Volver al Tablero
                         </Button>

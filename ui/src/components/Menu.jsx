@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material'; 
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -7,10 +7,27 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import PricingIcon from '@mui/icons-material/AttachMoney';
 import DescriptionIcon from '@mui/icons-material/Description';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import api from '../api';
 
 export default function Menu() {
     const { email, logout } = useAuth();
     const navigate = useNavigate();
+    const [balance, setBalance] = useState(0);
+
+    useEffect(() => {
+        fetchBalance();
+    }, []);
+
+    const fetchBalance = async () => {
+        try {
+            const response = await api.getAccount();
+            setBalance(response.data.balance);
+        } catch (error) {
+            console.error('Error fetching balance:', error);
+            setBalance(0);
+        }
+    };
 
     const handleLogout = () => {
         logout();
@@ -19,22 +36,27 @@ export default function Menu() {
     return (
         <AppBar position="static">
             <Toolbar sx={{ justifyContent: 'space-between' }}>
-                <Typography variant="h6">Langchain UI</Typography>        
-                <Box sx={{ display: 'flex' }}>
+                <Typography variant="h6" sx={{ color: 'white' }}>Langchain UI</Typography>        
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <       Box className="saldo-container">
+                        <Typography variant="body1" className="saldo-text">
+                            Saldo: ${balance}
+                        </Typography>
+                    </Box>
                     <Box sx={{ mr: '30px' }}>
-                        <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/" startIcon={<HomeIcon />}>
+                        <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/">
                             Inicio
                         </Button>
-                        <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/account" startIcon={<AccountCircleIcon />}>
+                        <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/account">
                             Mi Cuenta
                         </Button>
-                        <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/pricing" startIcon={<PricingIcon />}>
+                        <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/pricing">
                             Precios
                         </Button>
-                        <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/docs" startIcon={<DescriptionIcon />}>
+                        <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/docs">
                             Docs
                         </Button>
-                        <Button sx={{ mr: 2 }} color="inherit" onClick={handleLogout} startIcon={<ExitToAppIcon />}>
+                        <Button sx={{ mr: 2 }} color="inherit" onClick={handleLogout}>
                             Cerrar Sesión
                         </Button>
                     </Box>
