@@ -11,12 +11,12 @@
 
     // Crear el iframe del widget
     var iframe = document.createElement('iframe');
-    iframe.src = `${window.location.origin}/widget/${agentId}`;
+    iframe.src = `http://localhost:3005/widget/${agentId}`;
     iframe.style.position = 'fixed';
     iframe.style.bottom = '20px';
     iframe.style.right = '20px';
     iframe.style.width = '400px';
-    iframe.style.height = '500px';
+    iframe.style.height = '80%';
     iframe.style.border = 'none';
     iframe.style.borderRadius = '8px';
     iframe.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';

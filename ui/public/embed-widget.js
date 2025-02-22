@@ -3,7 +3,7 @@
     function insertWidget(agentId) {
         // Crear el script que cargará el widget
         var script = document.createElement('script');
-        script.src = '/widget.js';
+        script.src = './widget.js';
         script.setAttribute('data-agent-id', agentId);
         script.async = true;
         document.body.appendChild(script);

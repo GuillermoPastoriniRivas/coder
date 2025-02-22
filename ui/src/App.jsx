@@ -44,6 +44,7 @@ function MainApp() {
               <Route path="/" element={<Login />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<SignUp />} />
+              <Route path="/widget/:agentId" element={<Widget />} />
             </>
           ) : (
             <>
@@ -52,7 +53,6 @@ function MainApp() {
               <Route path="/agents/:id" element={<AgentForm />} />        
               <Route path="/chat/:agentId" element={<ChatInterface />} /> 
               <Route path="/public/:publicId" element={<PublicChatInterface />} />
-              <Route path="/widget/:agentId" element={<Widget />} />
               <Route path="/account" element={<AccountSettings />} />     
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/docs" element={<Docs />} />
