@@ -34,9 +34,9 @@ export default function Widget() {
                 <div className="widget-iframe-container">
                     <div className="widget-iframe-wrapper">
                     <ChatInterface agentId={agentId} />
-                        <button className="widget-close-button" onClick={toggleWidget}>
-                            &times;
-                        </button>
+                    <button className="widget-close-button" onClick={toggleWidget}>
+                        &times;
+                    </button>
                     </div>
                 </div>
             ) : (
