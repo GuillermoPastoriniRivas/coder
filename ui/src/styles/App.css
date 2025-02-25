@@ -28,7 +28,12 @@ Author E-mail: naimlasker@gmail.com
   --box-shadow: 0px 5px 15px rgba(118, 85, 225, 0.3);
 }
 
+* {
+  box-sizing: border-box;
+}
+
 body {
+  margin: 0;
   line-height: 26px;
   font-size: 15px;
   font-family: var(--font-family);
@@ -419,7 +424,7 @@ button:focus {
 ============================================================================================ */
 .home_banner_area {
   z-index: 1;
-  background: url(../img/banner/home-banner.png) no-repeat top center;
+  /* background: url(../../img/banner/home-banner.png) no-repeat top center; */
   background-position: center;
   background-size: cover;
 }
@@ -510,7 +515,7 @@ button:focus {
   overflow: hidden;
   width: 100%;
   min-height: 485px;
-  background: url(../img/banner/common-banner.png) no-repeat right bottom;
+  background: url(../../img/banner/common-banner.png) no-repeat right bottom;
   background-size: 90% 85%;
   width: 98%;
   z-index: 1;
@@ -578,7 +583,6 @@ button:focus {
 /* End Latest Blog Area css */
 .blog_btn {
   border: 1px solid #eeeeee;
-  background: #f9f9ff;
   padding: 0px 32px;
   font-size: 13px;
   font-weight: 500;
@@ -1677,7 +1681,6 @@ button:focus {
   line-height: 40px;
   border: none;
   outline: none;
-  background: #f9f9ff;
   padding: 0 20px;
 }
 
@@ -1711,9 +1714,7 @@ button:focus {
   line-height: 40px;
   border: none;
   outline: none;
-  background: #f9f9ff;
   padding: 0 20px;
-  height: 100px;
   resize: none;
 }
 
@@ -1727,7 +1728,6 @@ button:focus {
   line-height: 40px;
   border: 1px solid transparent;
   outline: none;
-  background: #f9f9ff;
   padding: 0 20px;
 }
 
@@ -1742,7 +1742,6 @@ button:focus {
   line-height: 40px;
   border: 1px solid transparent;
   outline: none;
-  background: #f9f9ff;
   padding: 0 20px;
 }
 
@@ -1757,7 +1756,6 @@ button:focus {
   line-height: 40px;
   border: 1px solid transparent;
   outline: none;
-  background: #f9f9ff;
   padding: 0 20px;
 }
 
@@ -1962,7 +1960,7 @@ button:focus {
 }
 
 .primary-checkbox input:checked + label {
-  background: url(../img/elements/primary-check.png) no-repeat center center/cover;
+  background: url(../../img/elements/primary-check.png) no-repeat center center/cover;
   border: none;
 }
 
@@ -1998,7 +1996,7 @@ button:focus {
 }
 
 .confirm-checkbox input:checked + label {
-  background: url(../img/elements/success-check.png) no-repeat center center/cover;
+  background: url(../../img/elements/success-check.png) no-repeat center center/cover;
   border: none;
 }
 
@@ -2039,7 +2037,7 @@ button:focus {
 }
 
 .disabled-checkbox input:checked + label {
-  background: url(../img/elements/disabled-check.png) no-repeat center center/cover;
+  background: url(../../img/elements/disabled-check.png) no-repeat center center/cover;
   border: none;
 }
 
@@ -2075,7 +2073,7 @@ button:focus {
 }
 
 .primary-radio input:checked + label {
-  background: url(../img/elements/primary-radio.png) no-repeat center center/cover;
+  background: url(../../img/elements/primary-radio.png) no-repeat center center/cover;
   border: none;
 }
 
@@ -2111,7 +2109,7 @@ button:focus {
 }
 
 .confirm-radio input:checked + label {
-  background: url(../img/elements/success-radio.png) no-repeat center center/cover;
+  background: url(../../img/elements/success-radio.png) no-repeat center center/cover;
   border: none;
 }
 
@@ -2152,7 +2150,7 @@ button:focus {
 }
 
 .disabled-radio input:checked + label {
-  background: url(../img/elements/disabled-radio.png) no-repeat center center/cover;
+  background: url(../../img/elements/disabled-radio.png) no-repeat center center/cover;
   border: none;
 }
 
@@ -2211,7 +2209,6 @@ button:focus {
   display: flex;
   flex-direction: column;
   height: 93vh;
-  width: 100vw;
   background-color: var(--color-background);
   font-family: var(--font-family);
 }
@@ -2219,11 +2216,12 @@ button:focus {
 .chat-header {
   padding: 20px;
   background-color: #f0f2f5;
-  border-bottom: 1px solid #ddd;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: var(--box-shadow);
+  width: 100%;
+  max-width: 80%;
+  margin: 0 auto;
 }
 
 .chat-messages {
@@ -2268,13 +2266,16 @@ button:focus {
   display: flex;
   align-items: center;
   border-top: 1px solid #ddd;
-  box-shadow: var(--box-shadow);
+  box-shadow: none;
+  border: none;
+  width: 100%;
+  max-width: 80%;
+  margin: 0 auto;
 }
 
 .chat-input input {
   flex: 1;
   padding: 14px 20px;
-  border: 1px solid #ccc;
   border-radius: var(--border-radius);
   outline: none;
   font-size: 16px;
@@ -2302,17 +2303,28 @@ button:focus {
   transform: translateY(-1px);
 }
 
+hr {
+  border-color: #ffffff45;
+  margin-bottom: 0;
+}
+
 /* Responsive Design */
 @media (max-width: 600px) {
+
+  .chat-input {
+    max-width: 100%;
+    padding: 0 !important;
+  }
   .chat-container {
     padding: 10px;
-    width: 100%;
   }
 
   .chat-header {
     flex-direction: column;
     align-items: flex-start;
-    padding: 15px;
+    padding: 5px;
+    padding-bottom: 15px;
+    max-width: 100%;
   }
 
   .chat-messages {

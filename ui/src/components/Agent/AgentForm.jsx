@@ -4,7 +4,7 @@ import { Card, Box, Typography, TextField, Button, Divider, Grid } from '@mui/ma
 import SettingsIcon from '@mui/icons-material/Settings';
 import Select from 'react-select';
 import api from '../../api';
-import '../../App.css';
+import '../../styles/App.css';
 
 export default function AgentForm() {
     const { id } = useParams();
@@ -110,7 +110,7 @@ export default function AgentForm() {
                                     isMulti
                                     name="tools"
                                     options={toolOptions}
-                                    className="basic-multi-select"
+                                    className="basic-multi-select agent-tools-select"
                                     classNamePrefix="select"
                                     value={toolOptions.filter((option) => formData.tools.some((tool) => tool.name === option.value))}
                                     onChange={(selectedOptions) =>
@@ -142,7 +142,6 @@ export default function AgentForm() {
                                         })
                                     }}
                                     placeholder="Selecciona herramientas..."
-                                    className="agent-tools-select"
                                 />
                             </Box>
                         </Grid>

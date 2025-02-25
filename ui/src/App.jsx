@@ -13,7 +13,7 @@ import Pricing from './components/Pricing.jsx';
 import Docs from './components/Docs.jsx';
 import { useAuth } from './context/AuthContext';
 import React from 'react';
-import './App.css';
+import './styles/App.css';
 
 function App() {
   return (
@@ -24,13 +24,8 @@ function App() {
 }
 
 function MainApp() {
-  const { email, logout } = useAuth();
-  const navigate = useNavigate();
+  const { email } = useAuth();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   return (
     <div className="App">

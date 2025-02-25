@@ -17,15 +17,13 @@
     iframe.style.background = 'none';
     iframe.style.right = '20px';
     iframe.style.width = '410px';
-    iframe.style.height = '80%';
+    iframe.style.height = '75%';
     iframe.style.border = 'none';
     iframe.style.borderRadius = '8px';
     iframe.style.zIndex = '1000';
 
-    // Agregar el iframe al cuerpo del documento
     document.body.appendChild(iframe);
 
-    // Opcional: Agregar un botón para cerrar el widget
     var closeButton = document.createElement('button');
     closeButton.innerHTML = '✕';
     closeButton.style.position = 'absolute';

@@ -6,7 +6,7 @@ import LinkIcon from '@mui/icons-material/Link';
 import EditIcon from '@mui/icons-material/Edit';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import api from '../../api';
-import '../../App.css';
+import '../../styles/App.css';
 import InfoIcon from '@mui/icons-material/Info';
 
 export default function AgentList() {

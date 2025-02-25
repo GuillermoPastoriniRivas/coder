@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../../api';
 import ChatInterface from './ChatInterface';
-import '../../App.css';
-import './Widget.css';
+import '../../styles/App.css';
+import '../../styles/Widget.css';
 
 export default function Widget() {
     const { agentId } = useParams();

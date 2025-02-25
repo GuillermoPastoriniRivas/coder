@@ -38,20 +38,14 @@ export default function Menu() {
             <Toolbar sx={{ justifyContent: 'space-between' }}>
                 <Typography variant="h6" sx={{ color: 'white' }}>Langchain UI</Typography>        
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <       Box className="saldo-container">
+                    {/* <Box className="saldo-container">
                         <Typography variant="body1" className="saldo-text">
                             Saldo: ${balance}
                         </Typography>
-                    </Box>
+                    </Box> */}
                     <Box sx={{ mr: '30px' }}>
                         <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/">
                             Inicio
-                        </Button>
-                        <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/account">
-                            Mi Cuenta
-                        </Button>
-                        <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/pricing">
-                            Precios
                         </Button>
                         <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/docs">
                             Docs

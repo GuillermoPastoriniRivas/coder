@@ -3,7 +3,7 @@ import { Box, TextField, Button, Typography, Avatar, Paper } from '@mui/material
 import SendIcon from '@mui/icons-material/Send';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import api from '../../api';
-import '../../App.css';
+import '../../styles/App.css';
 
 export default function ChatInterface({ agentId }) {
     const [phone, setPhone] = useState('');
@@ -47,24 +47,24 @@ export default function ChatInterface({ agentId }) {
     return (
         <Box className="chat-container">
             {/* Phone Input Header */}
-            <Paper className="chat-header" elevation={1} sx={{display: 'flex', flexDirection: 'row'}}>
-                <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
+            <Paper className="chat-header" sx={{display: 'flex', flexDirection: 'row', boxShadow: 'none'}}>
+                <Avatar sx={{ bgcolor: 'primary.main' }}>
                     <SmartToyIcon />
                 </Avatar>
-                <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                    Chat with Agent
-                </Typography>
-                <TextField
-                    label="Phone Number"
-                    variant="outlined"
-                    size="small"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    sx={{ width: '150px' }}
-                />
-                <Button variant="contained" onClick={loadConversation} disabled={!phone} sx={{ ml: 2 }}>
-                    Load
-                </Button>
+                <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', ml: 2 }}>
+                    <TextField
+                        label="Phone Number"
+                        variant="outlined"
+                        size="small"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        sx={{ width: '150px' }}
+                    />
+                    <Button variant="contained" onClick={loadConversation} disabled={!phone} sx={{ ml: 2 }}>
+                        Load Chat
+                    </Button>
+                </Box>
+                
             </Paper>
 
             {/* Chat Messages */}
@@ -75,8 +75,9 @@ export default function ChatInterface({ agentId }) {
                         className={`chat-message ${msg.role === 'user' ? 'user' : 'assistant'}`}
                     >
                         <Typography variant="body1">{msg.content}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                            {new Date(msg.timestamp).toLocaleTimeString()}
+                        <hr />
+                        <Typography variant="caption" sx={{ color: '#ffffff86' }}>
+                        {new Date(msg.timestamp).toDateString().split(' ')[2]} {new Date(msg.timestamp).toDateString().split(' ')[1]}, {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </Typography>
                     </Box>
                 ))}
@@ -84,7 +85,7 @@ export default function ChatInterface({ agentId }) {
             </Box>
 
             {/* Message Input */}
-            <Paper className="chat-input" elevation={1}>
+            <Paper className="chat-input" elevation={1} sx={{display: 'flex', flexDirection: 'row', boxShadow: 'none'}}>
                 <TextField
                     fullWidth
                     variant="outlined"
