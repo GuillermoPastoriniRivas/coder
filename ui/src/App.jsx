@@ -47,13 +47,13 @@ function MainApp() {
               <Route path="/agents/new" element={<AgentForm />} />        
               <Route path="/agents/:id" element={<AgentForm />} />        
               <Route path="/chat/:agentId" element={<ChatInterface />} /> 
-              <Route path="/public/:publicId" element={<PublicChatInterface />} />
               <Route path="/account" element={<AccountSettings />} />     
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/docs" element={<Docs />} />
             </>
           )}
           {/* Ruta por defecto */}
+          <Route path="/public/:publicId/:phone?" element={<PublicChatInterface />} />
           <Route path="*" element={email ? <AgentList /> : <Login />} />  
         </Routes>
       </Box>

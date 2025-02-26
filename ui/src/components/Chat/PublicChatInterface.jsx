@@ -4,7 +4,7 @@ import api from '../../api';
 import ChatInterface from './ChatInterface';
 
 export default function PublicChatInterface() {
-    const { publicId } = useParams();
+    const { publicId, phone } = useParams();
     const [agentId, setAgentId] = useState(null);
 
     useEffect(() => {
@@ -17,5 +17,5 @@ export default function PublicChatInterface() {
 
     if (!agentId) return <div>Loading...</div>;
 
-    return <ChatInterface agentId={agentId} />;
+    return <ChatInterface agentId={agentId} phoneNumber={phone} />;
 }

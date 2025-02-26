@@ -11,7 +11,7 @@
 
     // Crear el iframe del widget
     var iframe = document.createElement('iframe');
-    iframe.src = `http://localhost:3005/widget/${agentId}`;
+    iframe.src = `https://staging.d2276p7j5766np.amplifyapp.com/widget/${agentId}`;
     iframe.style.position = 'fixed';
     iframe.style.bottom = '20px';
     iframe.style.background = 'none';

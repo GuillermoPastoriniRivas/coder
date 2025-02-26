@@ -2208,7 +2208,7 @@ button:focus {
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: 93vh;
+  height: 100vh;
   background-color: var(--color-background);
   font-family: var(--font-family);
 }
@@ -2222,11 +2222,14 @@ button:focus {
   width: 100%;
   max-width: 80%;
   margin: 0 auto;
+  box-shadow: 0px 5px 15px #4458dc3a !important;
 }
 
 .chat-messages {
   flex: 1;
-  overflow-y: auto;
+  overflow: auto; /* o scroll */
+  scrollbar-width: none; /* Para Firefox */
+  -ms-overflow-style: none; /* Para Internet Explorer y Edge */
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -2234,6 +2237,10 @@ button:focus {
   min-width: 800px;
   align-self: center;
   gap: 15px;
+}
+
+.chat-messages::-webkit-scrollbar {
+  display: none; /* Oculta la barra en Chrome, Safari y Edge */
 }
 
 .chat-message {
@@ -2271,6 +2278,7 @@ button:focus {
   width: 100%;
   max-width: 80%;
   margin: 0 auto;
+  box-shadow: 0px 5px 15px #4458dc3a !important;
 }
 
 .chat-input input {
@@ -2291,7 +2299,7 @@ button:focus {
   background-color: var(--color-primary);
   color: #ffffff;
   border: none;
-  padding: 14px 28px;
+  padding: 14px;
   border-radius: var(--border-radius);
   cursor: pointer;
   transition: background-color var(--transition-speed), transform var(--transition-speed);
@@ -2313,7 +2321,7 @@ hr {
 
   .chat-input {
     max-width: 100%;
-    padding: 0 !important;
+    padding: 5px;
   }
   .chat-container {
     padding: 10px;
@@ -2322,8 +2330,7 @@ hr {
   .chat-header {
     flex-direction: column;
     align-items: flex-start;
-    padding: 5px;
-    padding-bottom: 15px;
+    padding: 15px 5px;
     max-width: 100%;
   }
 
@@ -2339,7 +2346,7 @@ hr {
   }
 
   .chat-input button {
-    padding: 10px 20px;
+    padding: 10px;
     margin-left: 10px;
   }
 

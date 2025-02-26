@@ -5,7 +5,7 @@ import SmartToyIcon from '@mui/icons-material/SmartToy';
 import api from '../../api';
 import '../../styles/App.css';
 
-export default function ChatInterface({ agentId }) {
+export default function ChatInterface({ agentId, phoneNumber }) {
     const [phone, setPhone] = useState('');
     const [message, setMessage] = useState('');
     const [conversation, setConversation] = useState([]);
@@ -13,21 +13,37 @@ export default function ChatInterface({ agentId }) {
 
     const loadConversation = async () => {
         try {
-            const response = await api.getConversation(agentId, phone);
-            setConversation(response.data.messages);
+            if (phone) {
+                const response = await api.getConversation(agentId, phone);
+                setConversation(response.data.messages);
+            }
         } catch (error) {
-            setConversation([]);
+            setConversation([{ role: 'assistant', content: '¡Hola! ¿En qué puedo ayudarte?', timestamp: new Date() }]);
         }
     };
+
+    useEffect(() => {
+        if (phoneNumber) {
+            setPhone(phoneNumber);
+        }
+    }, [phoneNumber]); 
+
+    useEffect(() => {
+        loadConversation();
+    }, [phone]); 
+
 
     const handleSend = async () => {
         if (!message || !phone) return;
 
-        const newMessage = { role: 'user', content: message, timestamp: new Date() };
+        const messageWritten = message;
+        setMessage('');
+
+        const newMessage = { role: 'user', content: messageWritten, timestamp: new Date() };
         setConversation((prev) => [...prev, newMessage]);
 
         try {
-            const response = await api.sendMessage({ agentId, phone, message });
+            const response = await api.sendMessage({ agentId, phone, message: messageWritten });
             const aiMessage = {
                 role: 'assistant',
                 content: response.data.response,
@@ -41,7 +57,7 @@ export default function ChatInterface({ agentId }) {
     };
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        // messagesEndRef.current?.scrollIntoView({ behavior: 'smooth'});
     }, [conversation]);
 
     return (
@@ -99,9 +115,7 @@ export default function ChatInterface({ agentId }) {
                     onClick={handleSend}
                     disabled={!message || !phone}
                     endIcon={<SendIcon />}
-                    sx={{ ml: 2 }}
                 >
-                    Send
                 </Button>
             </Paper>
         </Box>
