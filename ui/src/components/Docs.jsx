@@ -14,7 +14,13 @@ export default function Docs() {
                         Para facilitar la interacción de los usuarios con tu agente IA directamente desde tu página web, puedes integrar el widget proporcionado. Sigue estos sencillos pasos:
                     </Typography>
                     <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
-                        1. Incluir el Script del Widget
+                        1. Obtener el ID de tu agente
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 2 }}>
+                        Ve a la lista de agentes y haz clic en "Copiar ID" para obtener el ID de tu agente.
+                    </Typography>
+                    <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+                        2. Incluir el Script del Widget
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 2 }}>
                         Añade el siguiente fragmento de código dentro de la etiqueta &lt;head&gt; o antes de la etiqueta &lt;/body&gt; en tu página web. Asegúrate de reemplazar <strong>tu-agent-id</strong> con el ID de tu agente.
@@ -33,14 +39,8 @@ export default function Docs() {
                             overflowX: 'auto'
                         }}
                     >
-                        {`<script src="/widget.js" data-agent-id="tu-agent-id"></script>`}
+                        {`<script src="https://staging.d2276p7j5766np.amplifyapp.com/widget.js" data-agent-id="tu-agent-id"></script>`}
                     </Box>
-                    <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
-                        2. Personalizar la Posición del Widget
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 2 }}>
-                        El widget se posicionará de forma fija en la esquina inferior derecha de tu página web. Puedes personalizar su posición modificando las propiedades de estilo en el archivo <strong>widget.js</strong>.
-                    </Typography>
                     <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
                         3. Probar la Integración
                     </Typography>
@@ -69,7 +69,7 @@ export default function Docs() {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Mi Página Web</title>
             <!-- Incluir el script del widget -->
-            <script src="/widget.js" data-agent-id="tu-agent-id"></script>
+            <script src="https://staging.d2276p7j5766np.amplifyapp.com/widget.js" data-agent-id="tu-agent-id"></script>
         </head>
         <body>
             <!-- Contenido de tu página web -->
@@ -93,10 +93,10 @@ export default function Docs() {
                         prácticos y pasos sencillos:
                     </Typography>
                     <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
-                        1. Obtener el enlace público de tu agente
+                        1. Obtener el ID de tu agente
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 2 }}>
-                        Ve a la lista de agentes y haz clic en "Copiar Enlace" para obtener la URL pública de tu agente.
+                        Ve a la lista de agentes y haz clic en "Copiar ID" para obtener el ID de tu agente.
                     </Typography>
                     <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
                         2. Realizar una solicitud a la API
@@ -105,7 +105,7 @@ export default function Docs() {
                         Envía una solicitud POST a la siguiente URL:
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 2, fontStyle: 'monospace', backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '4px', overflowX: 'auto' }}>
-                        POST https://tudominio.com/api/call
+                        POST https://tudominio.com/call
                     </Typography>
                     <Typography variant="body2" sx={{ mb: 2 }}>
                         Incluye en el cuerpo de la solicitud los siguientes parámetros:
@@ -146,7 +146,7 @@ export default function Docs() {
                             overflowX: 'auto'
                         }}
                     >
-                        {`fetch('https://tudominio.com/api/call', {
+                        {`fetch('https://waba.soon.it/call', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json'
