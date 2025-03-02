@@ -5,36 +5,27 @@ import SmartToyIcon from '@mui/icons-material/SmartToy';
 import api from '../../api';
 import '../../styles/App.css';
 
-export default function ChatInterface({ agentId, phoneNumber }) {
-    const [phone, setPhone] = useState('');
+export default function ChatInterface() {
     const [message, setMessage] = useState('');
     const [conversation, setConversation] = useState([]);
     const messagesEndRef = useRef(null);
 
     const loadConversation = async () => {
         try {
-            if (phone) {
-                const response = await api.getConversation(agentId, phone);
-                setConversation(response.data.messages);
-            }
+            const response = await api.getConversation();
+            setConversation(response.data.messages);
         } catch (error) {
-            setConversation([{ role: 'assistant', content: '¡Hola! ¿En qué puedo ayudarte?', timestamp: new Date() }]);
+            setConversation([{ role: 'assistant', content: '¡Hola! Soy Coder, Puedo ayudarte a entender, depurar y mejorar tu código. Pregúntame sobre funciones, errores, refactorización o cualquier duda técnica.', timestamp: new Date() }]);
         }
     };
 
     useEffect(() => {
-        if (phoneNumber) {
-            setPhone(phoneNumber);
-        }
-    }, [phoneNumber]); 
-
-    useEffect(() => {
         loadConversation();
-    }, [phone]); 
+    }, []); 
 
 
     const handleSend = async () => {
-        if (!message || !phone) return;
+        if (!message) return;
 
         const messageWritten = message;
         setMessage('');
@@ -43,7 +34,7 @@ export default function ChatInterface({ agentId, phoneNumber }) {
         setConversation((prev) => [...prev, newMessage]);
 
         try {
-            const response = await api.sendMessage({ agentId, phone, message: messageWritten });
+            const response = await api.sendMessage({ message: messageWritten });
             const aiMessage = {
                 role: 'assistant',
                 content: response.data.response,
@@ -57,32 +48,11 @@ export default function ChatInterface({ agentId, phoneNumber }) {
     };
 
     useEffect(() => {
-        // messagesEndRef.current?.scrollIntoView({ behavior: 'smooth'});
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth'});
     }, [conversation]);
 
     return (
         <Box className="chat-container">
-            {/* Phone Input Header */}
-            <Paper className="chat-header" sx={{display: 'flex', flexDirection: 'row', boxShadow: 'none'}}>
-                <Avatar sx={{ bgcolor: 'primary.main' }}>
-                    <SmartToyIcon />
-                </Avatar>
-                <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', ml: 2 }}>
-                    <TextField
-                        label="Phone Number"
-                        variant="outlined"
-                        size="small"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        sx={{ width: '150px' }}
-                    />
-                    <Button variant="contained" onClick={loadConversation} disabled={!phone} sx={{ ml: 2 }}>
-                        Load Chat
-                    </Button>
-                </Box>
-                
-            </Paper>
-
             {/* Chat Messages */}
             <Box className="chat-messages">
                 {conversation.map((msg, index) => (
@@ -113,7 +83,7 @@ export default function ChatInterface({ agentId, phoneNumber }) {
                 <Button
                     variant="contained"
                     onClick={handleSend}
-                    disabled={!message || !phone}
+                    disabled={!message}
                     endIcon={<SendIcon />}
                 >
                 </Button>

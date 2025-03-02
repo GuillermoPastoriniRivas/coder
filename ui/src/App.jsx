@@ -1,12 +1,8 @@
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material'; 
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Box } from '@mui/material';
 import Login from './components/Auth/Login';
 import SignUp from './components/Auth/SignUp';
-import AgentList from './components/Agent/AgentList';
-import AgentForm from './components/Agent/AgentForm';
 import ChatInterface from './components/Chat/ChatInterface';
-import PublicChatInterface from './components/Chat/PublicChatInterface';
-import Widget from './components/Chat/Widget'; 
 import AccountSettings from './components/AccountSettings.jsx';
 import Menu from './components/Menu.jsx';
 import Pricing from './components/Pricing.jsx';
@@ -14,51 +10,46 @@ import Docs from './components/Docs.jsx';
 import { useAuth } from './context/AuthContext';
 import React from 'react';
 import './styles/App.css';
+import OpenFolder from './components/OpenFolder.jsx';
+import { ApiProvider } from './api';
 
 function App() {
-  return (
-    <Router>
-      <MainApp />
-    </Router>
-  );
+    return (
+        <ApiProvider>
+            <Router>
+                <MainApp />
+            </Router>
+        </ApiProvider>
+    );
 }
 
 function MainApp() {
-  const { email } = useAuth();
+    const { email } = useAuth();
 
-
-  return (
-    <div className="App">
-      {email && (
-        <Menu />
-      )}
-      <Box>
-        <Routes>
-          {!email ? (
-            <>
-              <Route path="/" element={<Login />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/widget/:agentId" element={<Widget />} />
-            </>
-          ) : (
-            <>
-              <Route path="/agents" element={<AgentList />} />
-              <Route path="/agents/new" element={<AgentForm />} />        
-              <Route path="/agents/:id" element={<AgentForm />} />        
-              <Route path="/chat/:agentId" element={<ChatInterface />} /> 
-              <Route path="/account" element={<AccountSettings />} />     
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/docs" element={<Docs />} />
-            </>
-          )}
-          {/* Ruta por defecto */}
-          <Route path="/public/:publicId/:phone?" element={<PublicChatInterface />} />
-          <Route path="*" element={email ? <AgentList /> : <Login />} />  
-        </Routes>
-      </Box>
-    </div>
-  );
+    return (
+        <div className="App">
+            {email && <Menu />}
+            <Box>
+                <Routes>
+                    {!email ? (
+                        <>
+                            <Route path="/" element={<Login />} />
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/signup" element={<SignUp />} />
+                        </>
+                    ) : (
+                        <>
+                            <Route path="/chat" element={<ChatInterface />} />
+                            <Route path="/account" element={<AccountSettings />} />
+                            <Route path="/pricing" element={<Pricing />} />
+                            <Route path="/docs" element={<Docs />} />
+                        </>
+                    )}
+                    <Route path="*" element={email ? <OpenFolder /> : <Login />} />
+                </Routes>
+            </Box>
+        </div>
+    );
 }
 
 export default App;

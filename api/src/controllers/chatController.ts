@@ -14,9 +14,9 @@ export const postChat = async (req: Request, res: Response) => {
 };
 
 export const postCall = async (req: Request, res: Response) => {
-    const { phone, message, agentId } = req.body;
+    const { message } = req.body;
     try {
-        const response = await chatService.callAgent(message, phone, agentId);
+        const response = await chatService.callAgent(message);
         res.json({ response });
     } catch (error) {
         console.error('Error:', error);

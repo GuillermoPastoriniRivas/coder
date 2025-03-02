@@ -4,8 +4,6 @@ import API from '../api';
 
 const AuthContext = createContext();
 
-
-
 export const useAuth = () => {
     return useContext(AuthContext);
 };
@@ -13,14 +11,12 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [email, setEmail] = useState(localStorage.getItem('userEmail') || '');
-    
+
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            // Optionally, you can fetch the user data here if needed
-            // For example:
-            // API.getUser().then(response => setUser(response.data.user)).catch(error => console.error(error));
+            // Aquí puedes obtener los datos del usuario si es necesario
         }
     }, []);
 
@@ -33,16 +29,15 @@ export const AuthProvider = ({ children }) => {
     };
 
     const signUp = async (email, password, username) => {
-        const response = await API.createAccount({ email, password, username }); // Assuming this endpoint exists
+        const response = await API.createAccount({ email, password, username });
         setUser(response.data.account);
         localStorage.setItem('userEmail', email);
         setEmail(email);
         return response.data;
     };
-  
+
     const login = async (email, password) => {
-        const response = await API.login({ email, password }); // Assuming this endpoint exists
-        // Assuming the token is stored and used for authenticated requests
+        const response = await API.login({ email, password });
         const { token, user: loggedInUser } = response.data;
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         setUser(loggedInUser);
