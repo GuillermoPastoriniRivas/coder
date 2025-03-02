@@ -1,0 +1,40 @@
+h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0 20px;
+    color: #000;
+}
+
+li {
+    cursor: pointer;
+    margin: 5px 0;
+}
+
+li:hover {
+    color: #3751a0;
+}
+
+pre {
+    background-color: #f5f5f5;
+    padding: 10px;
+    border-radius: 5px;
+    overflow: auto;
+    color: #000;    
+}
+
+.editor {
+    display: flex;
+    align-items: flex-start;
+}
+
+.open-folder {
+    padding: 0 20px;
+}
+
+.open-folder button {
+    margin-right: 20px;
+}

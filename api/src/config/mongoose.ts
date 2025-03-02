@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 import 'dotenv/config';
 
 const mongoConnectionString = process.env.MONGODB_ATLAS_URI as string;
-
 export async function connectToMongoDB() {
     try {
         await mongoose.connect(mongoConnectionString);

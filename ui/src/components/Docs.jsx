@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Card, Divider } from '@mui/material';
+import { Box, Typography, Card } from '@mui/material';
 
 export default function Docs() {
     return (

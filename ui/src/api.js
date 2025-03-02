@@ -1,39 +1,49 @@
 import axios from 'axios';
+import { useAuth } from './context/AuthContext';
+import { useEffect } from 'react';
 
 const API = axios.create({
-  baseURL: 'https://waba.soon.it',
+  baseURL: 'http://localhost:5000',
 });
 
-export default {
-  // Agents
-  getAgentsByEmail: (email) => API.get(`/agents?owner=${email}`),
-  createAgent: (agentData) => API.post('/agents', agentData),
-  updateAgent: (id, agentData) => API.put(`/agents/${id}`, agentData),    
-  getAgent: (id) => API.get(`/agents/${id}`),
+// Función para configurar el token
+const setAuthToken = (token) => {
+  if (token) {
+    API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  } else {
+    delete API.defaults.headers.common['Authorization'];
+  }
+};
 
+// Componente que envuelve las llamadas a la API
+export const ApiProvider = ({ children }) => {
+  const { token } = useAuth();
+
+  // Configura el token cada vez que cambie
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    setAuthToken(storedToken);
+  }, [token]);
+
+  return children;
+};
+
+export default {
   // Conversations
   upsertConversation: (convoData) => API.post('/conversations', convoData),
-  getConversation: (agentId, phone) => API.get(`/conversations/${agentId}/${phone}`),
+  getConversation: () => API.get(`/conversations`),
 
   // Chat
   sendMessage: (messageData) => API.post('/call', messageData),
 
-  // Public
-  getPublicAgent: (publicId) => API.get(`/public/${publicId}`),
-
   // Account
   getAccount: () => API.get('/account'),
-  updateAccount: (accountData) => API.put('/account', accountData),       
+  updateAccount: (accountData) => API.put('/account', accountData),
 
   // Purchase Tokens
-  purchaseTokens: (tokens) => API.post('/purchase-tokens', { tokens }),    
+  purchaseTokens: (tokens) => API.post('/purchase-tokens', { tokens }),
 
   // Account
   createAccount: (accountData) => API.post('/signup', accountData),
   login: (loginData) => API.post('/login', loginData),
-
-  // Widget
-  initializeWidget: (agentId, phone) => API.post('/widget/init', { agentId, phone }),
-  sendWidgetMessage: (agentId, phone, message) => API.post('/widget/message', { agentId, phone, message }),
-  getWidgetConversation: (agentId, phone) => API.get(`/widget/conversations/${agentId}/${phone}`),
 };

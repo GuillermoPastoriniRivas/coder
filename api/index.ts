@@ -6,7 +6,6 @@ import cors from 'cors';
 import { publicController } from './src/controllers/publicController';
 import { authMiddleware } from './src/middleware/authMiddleware';
 import { authController } from './src/controllers/authController';
-import { widgetController } from './src/controllers/widgetController'; // Added import for widgetController
 const app: Express = express();
 app.use(express.json());
 
@@ -25,19 +24,9 @@ app.post('/login', authController.login);
 app.post('/chat', postChat);
 app.post('/call', postCall);
 
-app.post('/agents', agentController.createAgent);
-app.put('/agents/:id', agentController.updateAgent);
-app.get('/agents/:id', agentController.getAgent);
-app.get('/agents', agentController.getAgents);
-
 app.get('/public/:publicId', publicController.getPublicAgent);
 
 app.get('/conversations/:agentId/:phone', getConversation);
-
-// Widget Routes
-app.post('/widget/init', widgetController.initializeWidget);
-app.post('/widget/message', widgetController.sendMessage);
-app.get('/widget/conversations/:agentId/:phone', widgetController.getConversation);
 
 app.get('/account', agentController.getAccount);
 app.put('/account', agentController.updateAccount);
