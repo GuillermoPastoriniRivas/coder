@@ -44,6 +44,10 @@ pre {
     margin-right: 20px;
 }
 
+.open-folder .alert {
+    color: #000;
+}
+
 .folder, .file {
     display: flex;
     gap: 4px;
