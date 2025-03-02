@@ -13,10 +13,14 @@ const OpenFolder = () => {
     const { folderHandle, setFolderHandle, directoryTree, setDirectoryTree } = useDirectory();
 
     const handleOpenFolder = async () => {
-        const folderHandle = await window.showDirectoryPicker();
-        setFolderHandle(folderHandle);
-        const files = await getFilesFromDirectory(folderHandle);
-        setDirectoryTree(files);
+        try {
+            const folderHandle = await window.showDirectoryPicker();
+            setFolderHandle(folderHandle);
+            const files = await getFilesFromDirectory(folderHandle);
+            setDirectoryTree(files);
+        } catch (error) {
+            console.log(error);
+        }
     };
 
     useEffect(() => {
