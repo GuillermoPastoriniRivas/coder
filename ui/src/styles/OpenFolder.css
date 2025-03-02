@@ -24,6 +24,11 @@ pre {
     border-radius: 5px;
     overflow: auto;
     color: #000;    
+    max-height: 700px;
+}
+
+.file-content {
+    min-width: 50%;
 }
 
 .editor {
@@ -32,9 +37,34 @@ pre {
 }
 
 .open-folder {
-    padding: 0 20px;
+    padding: 20px;
 }
 
 .open-folder button {
     margin-right: 20px;
+}
+
+.folder, .file {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.folder svg {
+    width: 1rem;
+    color: #F5D6AF;
+}
+
+.file svg {
+    width: 1rem;
+    color: #c8c8c8;
+}
+
+.chat-container {
+    max-height: 700px;
+    max-width: 30%;
+}
+
+.chat-messages {
+    min-width: auto !important;
 }

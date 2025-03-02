@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material'; 
+import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
@@ -30,20 +30,28 @@ export default function Menu() {
     return (
         <AppBar position="static">
             <Toolbar sx={{ justifyContent: 'space-between' }}>
-                <Typography variant="h6" sx={{ color: 'white' }}>Coder UI</Typography>        
+                <Button color="inherit" component={Link} to="/">
+                    <Typography variant="h6" sx={{ color: 'white' }}>
+                        Coder UI
+                    </Typography>
+                </Button>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Box className="saldo-container">
-                        <Typography variant="body1" className="saldo-text">
+                        <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/pricing">
                             Saldo: ${balance}
-                        </Typography>
+                        </Button>
                     </Box>
                     <Box sx={{ mr: '30px' }}>
                         <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/">
                             Inicio
                         </Button>
-                        {/* <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/docs">
+                        <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/account">
+                            Account
+                        </Button>
+
+                        <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/docs">
                             Docs
-                        </Button> */}
+                        </Button>
                         <Button sx={{ mr: 2 }} color="inherit" onClick={handleLogout}>
                             Cerrar Sesión
                         </Button>

@@ -15,7 +15,7 @@ export default function ChatInterface() {
             const response = await api.getConversation();
             setConversation(response.data.messages);
         } catch (error) {
-            setConversation([{ role: 'assistant', content: '¡Hola! Soy Coder, Puedo ayudarte a entender, depurar y mejorar tu código. Pregúntame sobre funciones, errores, refactorización o cualquier duda técnica.', timestamp: new Date() }]);
+            setConversation([{ role: 'assistant', content: '¡Hola! Puedo ayudarte a entender, depurar y mejorar tu código. Pregúntame sobre funciones, errores, refactorización o cualquier duda técnica.', timestamp: new Date() }]);
         }
     };
 
@@ -46,10 +46,6 @@ export default function ChatInterface() {
         }
         setMessage('');
     };
-
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth'});
-    }, [conversation]);
 
     return (
         <Box className="chat-container">
