@@ -12,13 +12,16 @@ import React from 'react';
 import './styles/App.css';
 import OpenFolder from './components/OpenFolder.jsx';
 import { ApiProvider } from './api';
+import { DirectoryProvider } from './context/DirectoryContext.jsx';
 
 function App() {
     return (
         <ApiProvider>
-            <Router>
-                <MainApp />
-            </Router>
+            <DirectoryProvider>
+                <Router>
+                    <MainApp />
+                </Router>
+            </DirectoryProvider>
         </ApiProvider>
     );
 }

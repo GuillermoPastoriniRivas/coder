@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import FolderIcon from '@mui/icons-material/Folder'; // Importa el icono de carpeta
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile'; // Importa el icono de archivo
 import '../styles/OpenFolder.css';
 import ChatInterface from './Chat/ChatInterface';
+import { useDirectory } from '../context/DirectoryContext';
 
 const OpenFolder = () => {
     const navigate = useNavigate();
-    const [directoryTree, setDirectoryTree] = useState([]);
     const [fileContent, setFileContent] = useState('');
-    const [folderHandle, setFolderHandle] = useState(null);
     const [expandedDirectories, setExpandedDirectories] = useState({});
+    const { folderHandle, setFolderHandle, directoryTree, setDirectoryTree } = useDirectory();
 
     const handleOpenFolder = async () => {
         const folderHandle = await window.showDirectoryPicker();
@@ -19,8 +19,14 @@ const OpenFolder = () => {
         setDirectoryTree(files);
     };
 
+    useEffect(() => {
+        if (folderHandle && directoryTree) {
+            handleRefresh();
+        }
+    }, []);
+
     const handleRefresh = async () => {
-        const files = await getFilesFromDirectory(folderHandle);    
+        const files = await getFilesFromDirectory(folderHandle);
         setDirectoryTree(files);
     };
 
@@ -40,7 +46,7 @@ const OpenFolder = () => {
     };
 
     const handleDirectoryClick = (name) => {
-        setExpandedDirectories(prev => ({
+        setExpandedDirectories((prev) => ({
             ...prev,
             [name]: !prev[name]
         }));
@@ -49,7 +55,7 @@ const OpenFolder = () => {
     const handleFileClick = async (file) => {
         console.log('file:', file);
         try {
-            const content = file.content
+            const content = file.content;
             setFileContent(content);
         } catch (error) {
             console.error('Error al abrir el archivo:', error);
@@ -68,11 +74,13 @@ const OpenFolder = () => {
                 {files.map((file, index) => (
                     <li key={index}>
                         {file.children ? (
-                            <span className='folder' onClick={() => handleDirectoryClick(file.name)}>
-                               {expandedDirectories[file.name] ? '-' : '+'} <FolderIcon /> {file.name} 
+                            <span className="folder" onClick={() => handleDirectoryClick(file.name)}>
+                                {expandedDirectories[file.name] ? '-' : '+'} <FolderIcon /> {file.name}
                             </span>
                         ) : (
-                            <span className='file' onClick={() => handleFileClick(file)}><InsertDriveFileIcon /> {file.name}</span>
+                            <span className="file" onClick={() => handleFileClick(file)}>
+                                <InsertDriveFileIcon /> {file.name}
+                            </span>
                         )}
                         {file.children && expandedDirectories[file.name] && renderDirectoryTree(file.children)}
                     </li>
@@ -82,18 +90,21 @@ const OpenFolder = () => {
     };
 
     return (
-        <div className='open-folder'>
-            <div className='actions'>
+        <div className="open-folder">
+            <div className="actions">
+                {!folderHandle && <p className='alert'>Seleccione una carpeta para ver comenzar</p>}
                 <button onClick={handleOpenFolder}>Abrir Carpeta</button>
-                <button onClick={() => handleRefresh()}>Actualizar Contenido</button>
-                <button onClick={handleSyncWithServer}>Sincronizar con el Servidor</button>
+                {folderHandle && <button onClick={handleRefresh}>Actualizar</button>}
+                {folderHandle && <button onClick={handleSyncWithServer}>Sincronizar con el servidor</button>}
             </div>
             <h2>{folderHandle?.name ? folderHandle.name : ''}</h2>
-            <div className='editor'>
+            <div className="editor">
                 {renderDirectoryTree(directoryTree)}
-                    <div className='file-content'>
+                {folderHandle && (
+                    <div className="file-content">
                         <pre>{fileContent}</pre>
                     </div>
+                )}
                 {folderHandle?.name && <ChatInterface />}
             </div>
         </div>
