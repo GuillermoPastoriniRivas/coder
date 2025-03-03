@@ -2278,7 +2278,7 @@ button:focus {
   width: 100%;
   max-width: 80%;
   margin: 0 auto;
-  box-shadow: 0px 5px 15px #4458dc3a !important;
+  border: 1px solid #4458dc3a;
 }
 
 .chat-input input {

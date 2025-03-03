@@ -42,6 +42,7 @@ function MainApp() {
                         </>
                     ) : (
                         <>
+                            <Route path="/chat" element={<ChatInterface />} />
                             <Route path="/account" element={<AccountSettings />} />
                             <Route path="/pricing" element={<Pricing />} />
                             <Route path="/docs" element={<Docs />} />

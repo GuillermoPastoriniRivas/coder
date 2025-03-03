@@ -25,10 +25,11 @@ pre {
     overflow: auto;
     color: #000;    
     max-height: 700px;
+    margin: 0;
 }
 
 .file-content {
-    min-width: 50%;
+    width: 50%;
 }
 
 .editor {
@@ -46,6 +47,7 @@ pre {
 
 .open-folder .alert {
     color: #000;
+    margin-bottom: 1rem;
 }
 
 .folder, .file {
@@ -64,11 +66,45 @@ pre {
     color: #c8c8c8;
 }
 
+.chat {
+    max-height: 600px;
+    max-width: 30%;
+}
+
 .chat-container {
     max-height: 700px;
-    max-width: 30%;
 }
 
 .chat-messages {
     min-width: auto !important;
+    max-width: 100%;
 }
+
+.chat-input {
+    margin: 0 10px;
+    align-items: flex-start;
+    max-width: 100%;
+}
+
+.chat-input button {
+    margin-top: 10px;
+}
+
+textarea:active, textarea:focus {
+    border: none !important;
+    outline: none !important;
+}
+
+textarea {
+    height: auto !important;
+    min-height: 100px !important;
+    max-height: 250px !important;
+    overflow: auto;
+}
+
+.directory-tree {
+    max-height: 700px;
+    overflow: auto;
+    width: 30%;
+}
+

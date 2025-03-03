@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, TextField, Button, Typography, Avatar, Paper } from '@mui/material';
+import { Box, Button, Typography, Paper, TextareaAutosize } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
-import SmartToyIcon from '@mui/icons-material/SmartToy';
 import api from '../../api';
 import '../../styles/App.css';
 
@@ -67,14 +66,13 @@ export default function ChatInterface() {
             </Box>
 
             {/* Message Input */}
-            <Paper className="chat-input" elevation={1} sx={{display: 'flex', flexDirection: 'row', boxShadow: 'none'}}>
-                <TextField
-                    fullWidth
-                    variant="outlined"
+            <Paper className="chat-input" elevation={1} sx={{display: 'flex', flexDirection: 'row', boxShadow: 'none', borderRadius: '8px', padding: '0'}}>
+                <TextareaAutosize
+                    minRows={3}
                     placeholder="Type your message..."
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                    style={{ width: '100%', padding: '20px', borderRadius: '8px', border: 'none',  fontSize: '1rem' }}
                 />
                 <Button
                     variant="contained"

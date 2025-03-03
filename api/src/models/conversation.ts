@@ -7,10 +7,8 @@ interface IMessage {
 }
 
 interface IConversation extends Document {
-    phone: string;
-    agentId: Schema.Types.ObjectId;
+    userId: Schema.Types.ObjectId;
     messages: IMessage[];
-    callback?: string;
 }
 
 const messageSchema = new Schema<IMessage>({
@@ -20,10 +18,8 @@ const messageSchema = new Schema<IMessage>({
 });
 
 const conversationSchema = new Schema<IConversation>({
-    phone: { type: String, required: true },
-    agentId: { type: Schema.Types.ObjectId, ref: 'Agent', required: true },
+    userId: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
     messages: [messageSchema],
-    callback: { type: String, required: false },
 });
 
 export const Conversation = mongoose.model<IConversation>('Conversation', conversationSchema);
