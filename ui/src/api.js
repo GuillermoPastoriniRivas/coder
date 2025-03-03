@@ -30,10 +30,7 @@ export const ApiProvider = ({ children }) => {
 
 export default {
   // Conversations
-  upsertConversation: (convoData) => API.post('/conversations', convoData),
   getConversation: () => API.get(`/conversations`),
-
-  // Chat
   sendMessage: (messageData) => API.post('/call', messageData),
 
   // Account

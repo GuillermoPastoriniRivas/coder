@@ -2,20 +2,15 @@ import { conversationRepository } from '../repositories/conversationRepository';
 import { callAgent } from '../utils/langchain';
 
 export const chatService = {
-    async saveMessage(phone: string, message: string, agentId: string) {
+    async saveMessage( message: string, userId: string) {
         const conversation = {
-            phone,
-            agentId,
+            userId,
             messages: [{ role: 'user', content: message, timestamp: new Date() }]
         };
         await conversationRepository.upsertConversation(conversation);
     },
 
-    async callAgent(message: string, phone: string, agentId: string) {
-        return await callAgent(message, phone, agentId);
-    },
-
-    async callPublicAgent(message: string, phone: string, agentId: string) {
-        return await callAgent(message, phone, agentId, true);
+    async callAgent(message: string, user: string) {
+        return await callAgent(message, user);
     }
 };

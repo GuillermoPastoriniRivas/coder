@@ -1,9 +1,8 @@
 import express, { Express, Request, Response } from 'express';
 import { connectToMongoDB } from './src/config/mongoose';
-import { postChat, postCall, getConversation } from './src/controllers/chatController';
-import { agentController } from './src/controllers/agentController';
+import { postCall, getConversation } from './src/controllers/chatController';
+import { accountController } from './src/controllers/accountController';
 import cors from 'cors';
-import { publicController } from './src/controllers/publicController';
 import { authMiddleware } from './src/middleware/authMiddleware';
 import { authController } from './src/controllers/authController';
 const app: Express = express();
@@ -16,20 +15,15 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 app.post('/signup', authController.signUp);
-
-// You can add more auth-related routes here (e.g., login)
 app.post('/login', authController.login);
 
 // Protected Routes
-app.post('/chat', postChat);
-app.post('/call', postCall);
+app.post('/call', authMiddleware, postCall);
 
-app.get('/public/:publicId', publicController.getPublicAgent);
+app.get('/conversations', authMiddleware, getConversation);
 
-app.get('/conversations/:agentId/:phone', getConversation);
-
-app.get('/account', agentController.getAccount);
-app.put('/account', agentController.updateAccount);
+app.get('/account', authMiddleware, accountController.getAccount);
+app.put('/account', authMiddleware, accountController.updateAccount);
 
 const PORT = process.env.PORT || 5000;                                                  
 app.listen(PORT, () => {
