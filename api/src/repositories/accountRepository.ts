@@ -10,5 +10,8 @@ export const accountRepository = {
         return await account.save();
     },
 
-    // Add other account-related repository methods if needed
+    async updateAccountByEmail(email: string, updateData: any) {
+        return await Account.findOneAndUpdate({ email }, updateData, { new: true });
+    }
+
 };
