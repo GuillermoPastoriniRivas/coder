@@ -18,7 +18,7 @@ const executePythonScriptTool = tool(
     async ({ instruction, project, config }: { instruction: string; project: string; config: string }) => {
         console.log(`Executing Python script with project: ${project}, instruction: ${instruction}, config: ${config}`);
 
-        const pythonProcess = spawn('python', ['scripts/documenter.py', '--instruction', instruction, '--project', project, '--config', config]);
+        const pythonProcess = spawn('python', ['scripts/codeanswer.py', '--instruction', instruction, '--project', project, '--config', config]);
 
         return new Promise((resolve, reject) => {
             let output = '';
@@ -29,22 +29,23 @@ const executePythonScriptTool = tool(
 
             pythonProcess.stderr.on('data', (data) => {
                 console.error(`stderr: ${data}`);
-                reject(new Error(`Error in documenter.py: ${data}`));
+                reject(new Error(`Error in codeanswer.py: ${data}`));
             });
 
             pythonProcess.on('close', (code) => {
-                console.log(`documenter.py exited with code ${code}`);
+                console.log(`codeanswer.py exited with code ${code}`);
                 if (code === 0) {
-                    resolve(output.trim()); // Devuelve la salida del script como resultado
+                    resolve(output.trim()); 
                 } else {
-                    reject(new Error(`documenter.py exited with code ${code}`));
+                    reject(new Error(`codeanswer.py exited with code ${code}`));
                 }
             });
         });
     },
     {
-        name: 'get_code_description',
-        description: 'Executes a Python script to generate documentation using AI',
+        name: 'extract_code_information',
+        description: `Analyzes the code structure, extracts relevant information, and provides context-aware documentation based on user instructions. 
+        It uses embeddings and cross-encoders to retrieve the most relevant code snippets and generates precise responses using a LLM.`,
         schema: z.object({
             instruction: z.string().describe('The user instruction for generating documentation'),
             project: z.string().describe('The project path to analyze'),
@@ -54,14 +55,14 @@ const executePythonScriptTool = tool(
 );
 
 const toolsRegistry: Record<string, any> = {
-    code_answer: executePythonScriptTool
+    extract_code_information: executePythonScriptTool
 };
 
 export async function callAgent(query: string, userId: string) {
     const agentConfig = {
-        prompt: 'Hello! How can I help you today?',
+        prompt: `You are an Agent specialized in generating and improving documentation for codebases. You can analyze thr code, extract relevant information, and provide context-aware documentation based on user instructions. You have advanced AI techniques, including embeddings and cross-encoders, to ensure the documentation is accurate and relevant.`,
         knowledge: 'I am a virtual assistant that can help you with a variety of tasks.',
-        tools: ['code_answer'],
+        tools: ['extract_code_information'],
     }
 
     const fullContext = `${agentConfig.prompt}\nKnowledge Base:\n${agentConfig.knowledge}`;

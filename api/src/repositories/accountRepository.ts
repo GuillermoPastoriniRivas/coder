@@ -13,5 +13,4 @@ export const accountRepository = {
     async updateAccountByEmail(email: string, updateData: any) {
         return await Account.findOneAndUpdate({ email }, updateData, { new: true });
     }
-
 };
