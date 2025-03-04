@@ -11,61 +11,68 @@ import { z } from 'zod';
 import 'dotenv/config';
 import { conversationRepository } from '../repositories/conversationRepository';
 import { spawn } from 'child_process';
+import path from 'path';
 
 const client = new MongoClient(process.env.MONGODB_ATLAS_URI as string);
 
-const executePythonScriptTool = tool(
-    async ({ instruction, project, config }: { instruction: string; project: string; config: string }) => {
-        console.log(`Executing Python script with project: ${project}, instruction: ${instruction}, config: ${config}`);
-
-        const pythonProcess = spawn('python', ['scripts/codeanswer.py', '--instruction', instruction, '--project', project, '--config', config]);
-
-        return new Promise((resolve, reject) => {
-            let output = '';
-
-            pythonProcess.stdout.on('data', (data) => {
-                output += data.toString();
-            });
-
-            pythonProcess.stderr.on('data', (data) => {
-                console.error(`stderr: ${data}`);
-                reject(new Error(`Error in codeanswer.py: ${data}`));
-            });
-
-            pythonProcess.on('close', (code) => {
-                console.log(`codeanswer.py exited with code ${code}`);
-                if (code === 0) {
-                    resolve(output.trim()); 
-                } else {
-                    reject(new Error(`codeanswer.py exited with code ${code}`));
-                }
-            });
-        });
-    },
-    {
-        name: 'extract_code_information',
-        description: `Analyzes the code structure, extracts relevant information, and provides context-aware documentation based on user instructions. 
-        It uses embeddings and cross-encoders to retrieve the most relevant code snippets and generates precise responses using a LLM.`,
-        schema: z.object({
-            instruction: z.string().describe('The user instruction for generating documentation'),
-            project: z.string().describe('The project path to analyze'),
-            config: z.string().describe('The JSON configuration file path')
-        })
-    }
-);
-
-const toolsRegistry: Record<string, any> = {
-    extract_code_information: executePythonScriptTool
-};
-
-export async function callAgent(query: string, userId: string) {
+export async function callAgent(query: string, userId: string, folder: string) {
     const agentConfig = {
         prompt: `You are an Agent specialized in generating and improving documentation for codebases. 
             You can analyze thr code, extract relevant information, and provide context-aware documentation 
             based on user instructions. You have advanced AI techniques, including embeddings and cross-encoders,
             to ensure the documentation is accurate and relevant.`,
-        tools: ['extract_code_information'],
-    }
+        tools: ['extract_code_information']
+    };
+
+    const executePythonScriptTool = tool(
+        async ({ instruction }: { instruction: string}) => {
+            // Sanitizar nombres
+            const safeUserId = userId.replace(/[\/\\]/g, '_');
+            const safeFolder = folder.replace(/[\/\\]/g, '_');
+
+            const baseDir = path.resolve(process.cwd(), 'sources', safeUserId, safeFolder);
+
+            const project = baseDir;
+            const config = path.resolve(process.cwd(), 'sources', safeUserId, `${safeFolder}.json`);
+            console.log(`Executing Python script with project: ${project}, instruction: ${instruction}, config: ${config}`);
+
+            const pythonProcess = spawn('python', ['src/scripts/codeanswer.py', '--instruction', instruction, '--project', project, '--config', config]);
+
+            return new Promise((resolve, reject) => {
+                let output = '';
+
+                pythonProcess.stdout.on('data', (data) => {
+                    output += data.toString();
+                });
+
+                pythonProcess.stderr.on('data', (data) => {
+                    console.error(`stderr: ${data}`);
+                    reject(new Error(`Error in codeanswer.py: ${data}`));
+                });
+
+                pythonProcess.on('close', (code) => {
+                    console.log(`codeanswer.py exited with code ${code}`);
+                    if (code === 0) {
+                        resolve(output.trim());
+                    } else {
+                        reject(new Error(`codeanswer.py exited with code ${code}`));
+                    }
+                });
+            });
+        },
+        {
+            name: 'extract_code_information',
+            description: `Analyzes the code structure, extracts relevant information, and provides context-aware documentation based on user instructions. 
+        It uses embeddings and cross-encoders to retrieve the most relevant code snippets and generates precise responses using a LLM.`,
+            schema: z.object({
+                instruction: z.string().describe('The user instruction for generating documentation')
+            })
+        }
+    );
+
+    const toolsRegistry: Record<string, any> = {
+        extract_code_information: executePythonScriptTool
+    };
 
     const fullContext = `${agentConfig.prompt}`;
 

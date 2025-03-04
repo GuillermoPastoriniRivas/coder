@@ -3,12 +3,10 @@ import { chatService } from '../services/chatService';
 import { conversationRepository } from '../repositories/conversationRepository';
 
 export const postCall = async (req: Request, res: Response) => {
-    const { message } = req.body;
-    //@ts-ignore
-    console.log(req.user)
+    const { message, folder } = req.body;
     try {
         //@ts-ignore
-        const response = await chatService.callAgent(message, req.user.id);
+        const response = await chatService.callAgent(message, req.user.id, folder);
         res.json({ response });
     } catch (error) {
         console.error('Error:', error);
@@ -17,9 +15,9 @@ export const postCall = async (req: Request, res: Response) => {
 };
 
 export const getConversation = async (req: Request, res: Response) => {
-    const { agentId, phone } = req.params;
     try {
-        const conversation = await conversationRepository.getConversation(agentId, phone);
+        //@ts-ignore
+        const conversation = await conversationRepository.getConversation(req.user.id);
         if (!conversation) {
             return res.status(404).json({ error: 'Conversation not found' });
         }

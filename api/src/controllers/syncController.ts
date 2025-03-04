@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { spawn } from 'child_process';
 
 export const syncController = {
     async sync(req: Request, res: Response) {
@@ -20,12 +21,7 @@ export const syncController = {
             const safeFolder = folder.replace(/[\/\\]/g, '_');
 
             // Crear ruta base
-            const baseDir = path.resolve(
-                process.cwd(),
-                'sources',
-                safeUserId,
-                safeFolder
-            );
+            const baseDir = path.resolve(process.cwd(), 'sources', safeUserId, safeFolder);
 
             // Validar seguridad de rutas
             if (!baseDir.startsWith(process.cwd())) {
@@ -58,6 +54,35 @@ export const syncController = {
             }
 
             res.json({ message: 'Estructura creada exitosamente' });
+
+            const project = baseDir;
+            const config = path.resolve(process.cwd(), 'sources', safeUserId, `${safeFolder}.json`);
+
+            const pythonProcess = spawn('python', ['src/scripts/call_documenter.py', '--project', project, '--config', config]);
+
+            return new Promise((resolve, reject) => {
+                let output = '';
+
+                pythonProcess.stdout.on('data', (data) => {
+                    output += data.toString();
+                });
+
+                pythonProcess.stderr.on('data', (data) => {
+                    console.error(`stderr: ${data}`);
+                    reject(new Error(`Error in call_documenter.py: ${data}`));
+                });
+
+                pythonProcess.on('close', (code) => {
+                    console.log(`call_documenter.py exited with code ${code}`);
+                    console.log(output)
+                    if (code === 0) {
+                        resolve(output.trim());
+                    } else {
+                        reject(new Error(`call_documenter.py exited with code ${code}`));
+                    }
+                });
+            });
+
         } catch (error) {
             console.error('Error en syncController:', error);
             res.status(500).json({ error: 'Error al sincronizar estructura' });

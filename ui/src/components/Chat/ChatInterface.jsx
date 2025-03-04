@@ -3,11 +3,13 @@ import { Box, Button, Typography, Paper, TextareaAutosize } from '@mui/material'
 import SendIcon from '@mui/icons-material/Send';
 import api from '../../api';
 import '../../styles/App.css';
+import { useDirectory } from '../../context/DirectoryContext';
 
-export default function ChatInterface() {
+export default function ChatInterface({handleMessageClick}) {
     const [message, setMessage] = useState('');
     const [conversation, setConversation] = useState([]);
     const messagesEndRef = useRef(null);
+    const { folderHandle } = useDirectory();
 
     const loadConversation = async () => {
         try {
@@ -33,7 +35,8 @@ export default function ChatInterface() {
         setConversation((prev) => [...prev, newMessage]);
 
         try {
-            const response = await api.sendMessage({ message: messageWritten });
+            const response = await api.sendMessage({ message: messageWritten, folder: folderHandle.name });
+            
             const aiMessage = {
                 role: 'assistant',
                 content: response.data.response,
@@ -54,6 +57,7 @@ export default function ChatInterface() {
                     <Box
                         key={index}
                         className={`chat-message ${msg.role === 'user' ? 'user' : 'assistant'}`}
+                        onClick={() => handleMessageClick(msg.content)}
                     >
                         <Typography variant="body1">{msg.content}</Typography>
                         <hr />
