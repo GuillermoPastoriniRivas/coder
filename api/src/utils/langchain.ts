@@ -60,12 +60,14 @@ const toolsRegistry: Record<string, any> = {
 
 export async function callAgent(query: string, userId: string) {
     const agentConfig = {
-        prompt: `You are an Agent specialized in generating and improving documentation for codebases. You can analyze thr code, extract relevant information, and provide context-aware documentation based on user instructions. You have advanced AI techniques, including embeddings and cross-encoders, to ensure the documentation is accurate and relevant.`,
-        knowledge: 'I am a virtual assistant that can help you with a variety of tasks.',
+        prompt: `You are an Agent specialized in generating and improving documentation for codebases. 
+            You can analyze thr code, extract relevant information, and provide context-aware documentation 
+            based on user instructions. You have advanced AI techniques, including embeddings and cross-encoders,
+            to ensure the documentation is accurate and relevant.`,
         tools: ['extract_code_information'],
     }
 
-    const fullContext = `${agentConfig.prompt}\nKnowledge Base:\n${agentConfig.knowledge}`;
+    const fullContext = `${agentConfig.prompt}`;
 
     const enabledTools = agentConfig.tools.map((t) => toolsRegistry[t]).filter((t) => t);
 

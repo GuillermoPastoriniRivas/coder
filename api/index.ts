@@ -1,12 +1,15 @@
+import cors from 'cors';
 import express, { Express, Request, Response } from 'express';
 import { connectToMongoDB } from './src/config/mongoose';
-import { postCall, getConversation } from './src/controllers/chatController';
 import { accountController } from './src/controllers/accountController';
-import cors from 'cors';
 import { authMiddleware } from './src/middleware/authMiddleware';
 import { authController } from './src/controllers/authController';
+import { syncController } from './src/controllers/syncController';
+import { postCall, getConversation } from './src/controllers/chatController';
+
 const app: Express = express();
-app.use(express.json());
+app.use(express.json({ limit: "50mb" })); 
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 app.use(cors());
 
@@ -24,6 +27,9 @@ app.get('/conversations', authMiddleware, getConversation);
 
 app.get('/account', authMiddleware, accountController.getAccount);
 app.put('/account', authMiddleware, accountController.updateAccount);
+
+app.post('/sync', authMiddleware, syncController.sync);
+
 
 const PORT = process.env.PORT || 5000;                                                  
 app.listen(PORT, () => {
