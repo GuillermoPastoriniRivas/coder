@@ -21,23 +21,23 @@ def main():
     parser.add_argument("--config", required=True)
     args = parser.parse_args()
 
-    carpeta_proyecto = args.project
-    instruccion_usuario = args.instruction
-    json_path = args.config
+    # carpeta_proyecto = args.project
+    # instruccion_usuario = args.instruction
+    # json_path = args.config
 
-    documenter = AIDocumenter(
-        api_key=api_key,
-        code_path=carpeta_proyecto,
-        output_file=json_path
-    )
+    # documenter = AIDocumenter(
+    #     api_key=api_key,
+    #     code_path=carpeta_proyecto,
+    #     output_file=json_path
+    # )
 
-    documenter.generate_documentation()
-    # save_log(carpeta_proyecto, "Generando contexto...")
-    contexto = generar_contexto(instruccion_usuario, carpeta_proyecto, json_path)
-    # save_log(carpeta_proyecto, contexto.get('query', instruccion_usuario))
-    # save_log(carpeta_proyecto, contexto.get('context', ''))
-    cambios = obtener_respuesta_openai(contexto, instruccion_usuario, carpeta_proyecto)
-    print(cambios)
+    # documenter.generate_documentation()
+    # # save_log(carpeta_proyecto, "Generando contexto...")
+    # contexto = generar_contexto(instruccion_usuario, carpeta_proyecto, json_path)
+    # # save_log(carpeta_proyecto, contexto.get('query', instruccion_usuario))
+    # # save_log(carpeta_proyecto, contexto.get('context', ''))
+    # cambios = obtener_respuesta_openai(contexto, instruccion_usuario, carpeta_proyecto)
+    print("Logramos enviar templates usando la funcion sendTemplate que requiere un templateId y un usuario")
 
 
 class CodeRAG:

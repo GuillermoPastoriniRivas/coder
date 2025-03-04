@@ -93,6 +93,18 @@ const OpenFolder = () => {
         }
     };
 
+    const handleMessageClick = async (content) => {
+        try {
+            setFileContent(content);
+
+            const extension = 'md';
+            const languageClass = languageMap[extension] || 'plaintext'; 
+            setLanguageClassName(`language-${languageClass}`);
+        } catch (error) {
+            console.error('Error al abrir el archivo:', error);
+        }
+    };
+
     const handleSyncWithServer = async () => {
         console.log('Sincronizando con el servidor...');
         console.log('Directorio:', folderHandle);
@@ -165,7 +177,7 @@ const OpenFolder = () => {
                     </div>
                 )}
                 <div className='chat'>
-                    {folderHandle?.name && <ChatInterface />}
+                    {folderHandle?.name && <ChatInterface handleMessageClick={handleMessageClick} />}
                 </div>
             </div>
         </div>

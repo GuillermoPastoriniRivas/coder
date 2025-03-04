@@ -4,7 +4,6 @@ import hashlib
 import tiktoken
 from openai import OpenAI
 from pathlib import Path
-from tqdm import tqdm
 import re
 
 class AIDocumenter:
@@ -132,7 +131,7 @@ class AIDocumenter:
 
             self._save_progress() 
 
-        for file in tqdm(all_files, desc="Processing files"):
+        for file in all_files:
             current_hash = self._compute_file_hash(file)
             relative_path = file.relative_to(self.code_path).as_posix()
 
@@ -149,7 +148,8 @@ class AIDocumenter:
             except Exception as e:
                 print(f"Error en {file}: {str(e)}")
 
-        self._generate_project_overview()
+        # self._generate_project_overview()
+        print("Documentación generada exitosamente.")
         return self.docs
 
     def _save_progress(self):

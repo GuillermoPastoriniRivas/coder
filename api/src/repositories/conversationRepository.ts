@@ -3,7 +3,7 @@ import { Conversation } from '../models/conversation';
 export const conversationRepository = {
     async upsertConversation(conversation: any) {
         await Conversation.findOneAndUpdate(
-            { phone: conversation.phone, agentId: conversation.agentId },
+            { userId: conversation.userId },
             { $push: { messages: { $each: conversation.messages } } },
             { upsert: true, new: true }
         );
@@ -13,7 +13,7 @@ export const conversationRepository = {
         return await Conversation.find({});
     },
 
-    async getConversation(agentId: string, phone: string) {
-        return await Conversation.findOne({ agentId, phone });
+    async getConversation(userId: string) {
+        return await Conversation.findOne({ userId });
     }
 };

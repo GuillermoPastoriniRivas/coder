@@ -10,7 +10,7 @@ export const chatService = {
         await conversationRepository.upsertConversation(conversation);
     },
 
-    async callAgent(message: string, user: string) {
-        return await callAgent(message, user);
+    async callAgent(message: string, userId: string, folder: string) {
+        return await callAgent(message, userId, folder);
     }
 };
