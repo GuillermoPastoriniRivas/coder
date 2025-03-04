@@ -43,4 +43,7 @@ export default {
   // Account
   createAccount: (accountData) => API.post('/signup', accountData),
   login: (loginData) => API.post('/login', loginData),
+
+  // Account
+  syncDirectory: (data) => API.post('/sync', data),
 };

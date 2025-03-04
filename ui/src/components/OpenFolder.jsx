@@ -15,6 +15,7 @@ import '../styles/OpenFolder.css';
 import ChatInterface from './Chat/ChatInterface';
 import { useDirectory } from '../context/DirectoryContext';
 import { Button, Typography } from '@mui/material';
+import api from '../api';
 
 // Mapeo de extensiones a clases de lenguaje
 const languageMap = {
@@ -59,7 +60,7 @@ const OpenFolder = () => {
     const getFilesFromDirectory = async (folderHandle) => {
         const files = [];
         for await (const entry of folderHandle.values()) {
-            if (entry.kind === 'file' && entry.name[0] !== '.') {
+            if (entry.kind === 'file' && entry.name[0] !== '.' && !['package-lock.json', 'yarn.lock'].includes(entry.name) && ['md', 'js', 'tsx', 'jsx', 'json', 'css', 'scss', 'html', 'ts', 'py'].includes(entry.name.split('.').pop())) {
                 const file = await entry.getFile();
                 const content = await file.text();
                 files.push({ name: file.name, path: file.webkitRelativePath, content });
@@ -83,21 +84,29 @@ const OpenFolder = () => {
             const content = file.content;
             setFileContent(content);
 
-            // Obtener la extensión del archivo
             const extension = file.name.split('.').pop().toLowerCase();
 
-            // Asignar la clase de lenguaje según la extensión
-            const languageClass = languageMap[extension] || 'plaintext'; // Valor por defecto si no se encuentra la extensión
+            const languageClass = languageMap[extension] || 'plaintext'; 
             setLanguageClassName(`language-${languageClass}`);
         } catch (error) {
             console.error('Error al abrir el archivo:', error);
         }
     };
 
-    const handleSyncWithServer = () => {
+    const handleSyncWithServer = async () => {
         console.log('Sincronizando con el servidor...');
         console.log('Directorio:', folderHandle);
         console.log('Contenido:', directoryTree);
+    
+        try {
+            const response = await api.syncDirectory({
+                folder: folderHandle.name,
+                directoryTree: directoryTree,
+            });
+            console.log('Respuesta del servidor:', response.data);
+        } catch (error) {
+            console.error('Error al sincronizar con el servidor:', error);
+        }
     };
 
     const renderDirectoryTree = (files) => {
