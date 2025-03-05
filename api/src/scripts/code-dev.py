@@ -13,6 +13,8 @@ api_key = "***REMOVED***"
 client = OpenAI(api_key=api_key)
 sub_carpeta=""
 top_k = 10
+coder_model = "gpt-4o-mini"
+temperature = 0.3
 
 def main():
     parser = argparse.ArgumentParser()
@@ -21,23 +23,20 @@ def main():
     parser.add_argument("--config", required=True)
     args = parser.parse_args()
 
-    # carpeta_proyecto = args.project
-    # instruccion_usuario = args.instruction
-    # json_path = args.config
+    carpeta_proyecto = args.project
+    instruccion_usuario = args.instruction
+    json_path = args.config
 
-    # documenter = AIDocumenter(
-    #     api_key=api_key,
-    #     code_path=carpeta_proyecto,
-    #     output_file=json_path
-    # )
+    documenter = AIDocumenter(
+        api_key=api_key,
+        code_path=carpeta_proyecto,
+        output_file=json_path
+    )
 
-    # documenter.generate_documentation()
-    # # save_log(carpeta_proyecto, "Generando contexto...")
-    # contexto = generar_contexto(instruccion_usuario, carpeta_proyecto, json_path)
-    # # save_log(carpeta_proyecto, contexto.get('query', instruccion_usuario))
-    # # save_log(carpeta_proyecto, contexto.get('context', ''))
-    # cambios = obtener_respuesta_openai(contexto, instruccion_usuario, carpeta_proyecto)
-    print("Logramos enviar templates usando la funcion sendTemplate que requiere un templateId y un usuario")
+    documenter.generate_documentation()
+    contexto = generar_contexto(instruccion_usuario, carpeta_proyecto, json_path)
+    cambios = obtener_cambios_openai(contexto, instruccion_usuario)
+    print(cambios)
 
 
 class CodeRAG:
@@ -157,39 +156,31 @@ def escribir_codigo(archivo, nuevo_contenido):
     with open(archivo, "w", encoding="utf-8") as f:
         f.write(nuevo_contenido)
 
-def obtener_respuesta_openai(contexto, instruccion_usuario, carpeta_proyecto):
+def obtener_cambios_openai(contexto, instruccion_usuario):
     """Envía la consulta a OpenAI y obtiene los cambios necesarios en formato JSON."""
-
     prompt = f"""
-    Eres un ingeniero de software especializado en guiar a otros desarrolladores.
-    Al recibir una consulta de otro dev, verás fragmentos de código fuente e información adicional 
-    que debes usar como conocimiento para generar la respuesta adecuada a esa consulta.
-    DEBES GENERAR UNA RESPUESTA PRECISA para que sea interpretada por el desarrollador a cargo de resolver el requerimiento
+    Eres un asistente experto en implementar cambios en código. Se te proporciona una instrucción de cambio y fragmentos de código obtenidos por RAG basado en la instrucción.
+    Debes explicar paso a paso los cambios de código necesarios que vas a aplicar en cada sección para cumplir con la instrucción. 
+    Si debes generar un archivo nuevo debes generarlo completo.
+    TODO LO QUE GENERES DEBE ESTAR EN IDIOMA INGLES USA
 
-    ### Consulta:
+    ### Instrucción:
     {contexto.get('query', instruccion_usuario)}
 
     ### Proyecto:
     {contexto.get('context', '')}
 
     """
-    # save_log(carpeta_proyecto, "***PROMPT***")
-    # save_log(carpeta_proyecto, prompt)
     try:
         respuesta = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=coder_model,
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.3
+            temperature=temperature
         )
         return respuesta.choices[0].message.content
     except Exception as e:
         print(f"Error al obtener cambios de OpenAI: {e}")
         return ""
-
-# def save_log(carpeta_proyecto, log):
-#     with open(os.path.join(carpeta_proyecto, "log.txt"), "a") as f:
-#         timestamp = datetime.now().isoformat()
-#         f.write(f"[{timestamp}] {log}\n")
 
 if __name__ == "__main__":
     main()
