@@ -29,7 +29,7 @@ pre {
 }
 
 .file-content {
-    width: 50%;
+    min-width: 50%;
 }
 
 .editor {
@@ -108,3 +108,10 @@ textarea {
     width: 30%;
 }
 
+.language-markdown {
+    max-width: 100%;
+    overflow-x: auto !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+}

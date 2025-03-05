@@ -149,7 +149,6 @@ class AIDocumenter:
                 print(f"Error en {file}: {str(e)}")
 
         # self._generate_project_overview()
-        print("Documentación generada exitosamente.")
         return self.docs
 
     def _save_progress(self):

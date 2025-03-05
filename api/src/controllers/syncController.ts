@@ -54,7 +54,7 @@ export const syncController = {
             }
 
             res.json({ message: 'Estructura creada exitosamente' });
-
+            console.log("Creando documentacion...")
             const project = baseDir;
             const config = path.resolve(process.cwd(), 'sources', safeUserId, `${safeFolder}.json`);
 
@@ -74,7 +74,7 @@ export const syncController = {
 
                 pythonProcess.on('close', (code) => {
                     console.log(`call_documenter.py exited with code ${code}`);
-                    console.log(output)
+                    console.log("Documentacion creada exitosamente")
                     if (code === 0) {
                         resolve(output.trim());
                     } else {

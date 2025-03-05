@@ -15,7 +15,7 @@ import path from 'path';
 
 const client = new MongoClient(process.env.MONGODB_ATLAS_URI as string);
 
-export async function callAgent(query: string, userId: string, folder: string) {
+export async function callAgentOld(query: string, userId: string, folder: string) {
     const agentConfig = {
         prompt: `You are an Agent specialized in generating and improving documentation for codebases. 
             You can analyze thr code, extract relevant information, and provide context-aware documentation 
@@ -137,6 +137,51 @@ export async function callAgent(query: string, userId: string, folder: string) {
     );
 
     const responseContent = finalState.messages[finalState.messages.length - 1].content;
+
+    const response = {
+        userId,
+        messages: [{ role: 'assistant', content: responseContent, timestamp: new Date() }]
+    };
+    await conversationRepository.upsertConversation(response);
+
+    return responseContent;
+}
+
+export async function callAgent(query: string, userId: string, folder: string) {
+    const safeUserId = userId.replace(/[\/\\]/g, '_');
+    const safeFolder = folder.replace(/[\/\\]/g, '_');
+
+    const baseDir = path.resolve(process.cwd(), 'sources', safeUserId, safeFolder);
+
+    const project = baseDir;
+    const config = path.resolve(process.cwd(), 'sources', safeUserId, `${safeFolder}.json`);
+    console.log(`Executing Python script with project: ${project}, instruction: ${query}, config: ${config}`);
+
+    const pythonProcess = spawn('python', ['src/scripts/code-dev.py', '--instruction', query, '--project', project, '--config', config]);
+
+    const responsePromise = new Promise((resolve, reject) => {
+        let output = '';
+
+        pythonProcess.stdout.on('data', (data) => {
+            output += data.toString();
+        });
+
+        pythonProcess.stderr.on('data', (data) => {
+            console.error(`stderr: ${data}`);
+            reject(new Error(`Error in code-dev.py: ${data}`));
+        });
+
+        pythonProcess.on('close', (code) => {
+            console.log(`code-dev.py exited with code ${code}`);
+            if (code === 0) {
+                resolve(output.trim());
+            } else {
+                reject(new Error(`code-dev.py exited with code ${code}`));
+            }
+        });
+    });
+
+    const responseContent = await responsePromise;
 
     const response = {
         userId,

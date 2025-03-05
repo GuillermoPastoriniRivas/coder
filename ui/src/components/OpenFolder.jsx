@@ -15,9 +15,9 @@ import '../styles/OpenFolder.css';
 import ChatInterface from './Chat/ChatInterface';
 import { useDirectory } from '../context/DirectoryContext';
 import { Button, Typography } from '@mui/material';
+import RefreshIcon from '@mui/icons-material/Refresh'; 
 import api from '../api';
 
-// Mapeo de extensiones a clases de lenguaje
 const languageMap = {
     js: 'javascript',
     ts: 'typescript',
@@ -27,7 +27,6 @@ const languageMap = {
     py: 'python',
     json: 'json',
     md: 'markdown',
-    // Agrega más extensiones según sea necesario
 };
 
 const OpenFolder = () => {
@@ -36,7 +35,6 @@ const OpenFolder = () => {
     const [languageClassName, setLanguageClassName] = useState('language-plaintext'); // Clase de lenguaje por defecto
     const { folderHandle, setFolderHandle, directoryTree, setDirectoryTree } = useDirectory();
 
-    // Resalta el código cuando el contenido del archivo cambie
     useEffect(() => {
         Prism.highlightAll();
     }, [fileContent, languageClassName]);
@@ -47,6 +45,11 @@ const OpenFolder = () => {
             setFolderHandle(folderHandle);
             const files = await getFilesFromDirectory(folderHandle);
             setDirectoryTree(files);
+
+            await api.syncDirectory({
+                folder: folderHandle.name,
+                directoryTree: directoryTree,
+            });
         } catch (error) {
             console.log(error);
         }
@@ -154,7 +157,7 @@ const OpenFolder = () => {
                     Abrir Carpeta
                 </Button>
                 {folderHandle && (
-                    <Button variant="contained" color="primary" onClick={handleRefresh}>
+                    <Button variant="contained" color="primary" onClick={handleRefresh} startIcon={<RefreshIcon />}>
                         Actualizar
                     </Button>
                 )}
