@@ -30,7 +30,9 @@ export const ApiProvider = ({ children }) => {
 
 export default {
   // Conversations
-  getConversation: () => API.get(`/conversations`),
+  getConversation: (conversationId) => API.post(`/conversation/`, { conversationId }),
+
+  getConversations: () => API.get(`/conversations`),
   sendMessage: (messageData) => API.post('/call', messageData),
 
   // Account
@@ -46,4 +48,7 @@ export default {
 
   // Account
   syncDirectory: (data) => API.post('/sync', data),
+
+  getSaldo: () => API.get('/saldo'), // New method to get saldo
+  purchaseTokens: (data) => API.post('/purchase-tokens', data), // New method to purchase tokens
 };

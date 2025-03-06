@@ -12,6 +12,7 @@ import 'dotenv/config';
 import { conversationRepository } from '../repositories/conversationRepository';
 import { spawn } from 'child_process';
 import path from 'path';
+import { User } from '../models/User'; 
 
 const client = new MongoClient(process.env.MONGODB_ATLAS_URI as string);
 
@@ -148,6 +149,20 @@ export async function callAgentOld(query: string, userId: string, folder: string
 }
 
 export async function callAgent(query: string, userId: string, folder: string) {
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new Error('User not found');
+    }
+
+    // Check if user has sufficient saldo
+    if (user.saldo < 1) {
+        throw new Error('Insufficient saldo. Please purchase more tokens.');
+    }
+
+    // Deduct 1 saldo
+    user.saldo -= 1;
+    await user.save();
+
     const safeUserId = userId.replace(/[\/\\]/g, '_');
     const safeFolder = folder.replace(/[\/\\]/g, '_');
 

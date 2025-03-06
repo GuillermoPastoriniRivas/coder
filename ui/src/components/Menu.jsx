@@ -5,28 +5,29 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api';
 
 export default function Menu() {
-    const { logout } = useAuth();
+    const { logout, saldo, updateSaldo } = useAuth(); // Destructure saldo and updateSaldo
     const navigate = useNavigate();
-    const [balance, setBalance] = useState(0);
 
-    useEffect(() => {
-        fetchBalance();
-    }, []);
-
-    const fetchBalance = async () => {
+    // If you have the optional /user/saldo route
+    const fetchSaldo = async () => {
         try {
-            const response = await api.getAccount();
-            setBalance(response.data.balance);
+            const response = await api.getSaldo();
+            updateSaldo(response.data.saldo);
         } catch (error) {
-            console.error('Error fetching balance:', error);
-            setBalance(0);
+            console.error('Error fetching saldo:', error);
+            updateSaldo(0);
         }
     };
+
+    useEffect(() => {
+        fetchSaldo();
+    }, []);
 
     const handleLogout = () => {
         logout();
         navigate('/login');
     };
+
     return (
         <AppBar position="static">
             <Toolbar sx={{ justifyContent: 'space-between' }}>
@@ -38,7 +39,7 @@ export default function Menu() {
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Box className="saldo-container">
                         <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/pricing">
-                            Saldo: ${balance}
+                            Saldo: {saldo} Tokens
                         </Button>
                     </Box>
                     <Box sx={{ mr: '30px' }}>

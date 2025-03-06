@@ -1,25 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Box, Typography, Button, Grid, Snackbar, Alert, Card, CardContent } from '@mui/material';
+import { useAuth } from '../context/AuthContext'; // Import useAuth
 import api from '../api';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 
 export default function Pricing() {
-    // const [selectedPlan, setSelectedPlan] = useState(null);
     const [open, setOpen] = useState(false);
     const [message, setMessage] = useState('');
     const [severity, setSeverity] = useState('success');
-    const [saldo, setSaldo] = useState(0);
+    const { saldo, updateSaldo } = useAuth(); // Destructure saldo and updateSaldo
 
     const pricingPlans = [
         {
             id: 1,
-            name: 'Básico',
+            name: 'B�sico',
             tokens: 100,
             price: '$9.99'
         },
         {
             id: 2,
-            name: 'Estándar',
+            name: 'Est�ndar',
             tokens: 500,
             price: '$39.99'
         },
@@ -32,32 +32,21 @@ export default function Pricing() {
     ];
 
     useEffect(() => {
-        const fetchSaldo = async () => {
-            try {
-                const response = await api.getAccount();
-                setSaldo(response.data.saldo);
-            } catch (error) {
-                console.error('Error fetching saldo:', error);
-                setMessage('Error al obtener el saldo. Inténtalo de nuevo.');
-                setSeverity('error');
-                setOpen(true);
-            }
-        };
-        fetchSaldo();
+        // Optionally fetch saldo on component mount
     }, []);
 
     const handlePurchase = async (plan) => {
         try {
-            await api.post('/purchase-tokens', { tokens: plan.tokens });
-            setMessage(`Has recargado $${plan.price} y añadido ${plan.tokens} tokens a tu saldo.`);
+            const response = await api.post('/purchase-tokens', { tokens: plan.tokens });
+            // Assuming the backend returns the updated saldo
+            const newSaldo = response.data.saldo;
+            updateSaldo(newSaldo); // Update saldo in context
+            setMessage(`Successfully purchased ${plan.tokens} tokens.`);
             setSeverity('success');
             setOpen(true);
-            // Actualizar el saldo después de la compra
-            const response = await api.getAccount();
-            setSaldo(response.data.tokens);
         } catch (error) {
-            console.error('Error al comprar tokens:', error);
-            setMessage('Error al procesar la recarga. Inténtalo de nuevo.');
+            console.error('Error purchasing tokens:', error);
+            setMessage('Error processing the purchase. Please try again.');
             setSeverity('error');
             setOpen(true);
         }
@@ -71,15 +60,14 @@ export default function Pricing() {
         <Container maxWidth="md" sx={{ mt: 8 }}>
             <Box sx={{ textAlign: 'center', mb: 4 }}>
                 <Typography variant="h5" gutterBottom>
-                    Elige el plan que mejor se adapte a tus necesidades.
+                    Choose the plan that best suits your needs.
                 </Typography>
-              
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 6 }}>
                 <AccountBalanceWalletIcon color="primary" sx={{ mr: 1, fontSize: 40 }} />
                 <Typography variant="h6" sx={{ fontWeight: 500 }}>
-                    Saldo Actual: <strong>{saldo} Tokens</strong>
+                    Current Balance: <strong>{saldo} Tokens</strong>
                 </Typography>
             </Box>
 
@@ -133,7 +121,7 @@ export default function Pricing() {
                                         },
                                     }}
                                 >
-                                    Recargar Saldo
+                                    Purchase
                                 </Button>
                             </Box>
                         </Card>

@@ -2,18 +2,18 @@ import { Conversation } from '../models/conversation';
 
 export const conversationRepository = {
     async upsertConversation(conversation: any) {
-        await Conversation.findOneAndUpdate(
-            { userId: conversation.userId },
-            { $push: { messages: { $each: conversation.messages } } },
-            { upsert: true, new: true }
-        );
+        const newConversation = new Conversation({
+            userId: conversation.userId,
+            messages: conversation.messages,
+        });
+        await newConversation.save();
     },
 
-    async getConversations() {
-        return await Conversation.find({});
+    async getConversations(userId: string) {
+        return await Conversation.find({ userId });
     },
 
-    async getConversation(userId: string) {
-        return await Conversation.findOne({ userId });
+    async getConversation(conversationId: string) {
+        return await Conversation.findOne({ _id: conversationId });
     }
 };

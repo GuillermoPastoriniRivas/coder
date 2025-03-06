@@ -13,8 +13,8 @@ api_key = "sk-proj-iZUIWIoul2uPT3Si0x1DT3BlbkFJ0fSNIi1EVUCjp5ReYkJu"
 client = OpenAI(api_key=api_key)
 sub_carpeta=""
 top_k = 10
-coder_model = "gpt-4o-mini"
-temperature = 0.3
+coder_model = "o1-mini"
+temperature = 1
 
 def main():
     parser = argparse.ArgumentParser()
