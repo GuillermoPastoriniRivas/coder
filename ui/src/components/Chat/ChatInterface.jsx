@@ -5,7 +5,7 @@ import api from '../../api';
 import '../../styles/App.css';
 import { useDirectory } from '../../context/DirectoryContext';
 
-export default function ChatInterface({handleMessageClick}) {
+export default function ChatInterface({ selectedConversation, handleMessageClick }) {
     const [message, setMessage] = useState('');
     const [conversation, setConversation] = useState([]);
     const messagesEndRef = useRef(null);
@@ -13,29 +13,33 @@ export default function ChatInterface({handleMessageClick}) {
 
     const loadConversation = async () => {
         try {
-            const response = await api.getConversation();
-            setConversation(response.data.messages);
+            if (selectedConversation) {
+                const response = await api.getConversation(selectedConversation._id);
+                setConversation(response.data.messages);
+            } else {
+                setConversation([{ role: 'assistant', content: 'Hello! I can help you understand, debug, and improve your code. Ask me about functions, errors, refactoring, or any technical queries.', timestamp: new Date() }]);
+            }
         } catch (error) {
-            setConversation([{ role: 'assistant', content: '¡Hola! Puedo ayudarte a entender, depurar y mejorar tu código. Pregúntame sobre funciones, errores, refactorización o cualquier duda técnica.', timestamp: new Date() }]);
+            setConversation([{ role: 'assistant', content: 'Hello! I can help you understand, debug, and improve your code. Ask me about functions, errors, refactoring, or any technical queries.', timestamp: new Date() }]);
         }
     };
 
     useEffect(() => {
         loadConversation();
-    }, []); 
-
+    }, [selectedConversation]); 
 
     const handleSend = async () => {
         if (!message) return;
 
         const messageWritten = message;
-        setMessage('');
+        
 
         const newMessage = { role: 'user', content: messageWritten, timestamp: new Date() };
         setConversation((prev) => [...prev, newMessage]);
 
         try {
-            const response = await api.sendMessage({ message: messageWritten, folder: folderHandle.name });
+            let response;
+            response = await api.sendMessage({ message: messageWritten, folder: folderHandle.name });
             
             const aiMessage = {
                 role: 'assistant',
@@ -44,7 +48,8 @@ export default function ChatInterface({handleMessageClick}) {
             };
             setConversation((prev) => [...prev, aiMessage]);
         } catch (error) {
-            setConversation((prev) => prev.slice(0, -1));
+            setMessage(messageWritten);
+            // setConversation((prev) => prev.slice(0, -1));
         }
         setMessage('');
     };
@@ -88,4 +93,4 @@ export default function ChatInterface({handleMessageClick}) {
             </Paper>
         </Box>
     );
-}
+};

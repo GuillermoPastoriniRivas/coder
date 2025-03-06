@@ -1,4 +1,4 @@
-import { User } from '../models/User';
+import { User, IUser } from '../models/User';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
@@ -15,11 +15,12 @@ export const authService = {
         // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Create new user
-        const newUser = new User({
+        // Create new user with initial saldo
+        const newUser: IUser = new User({
             email,
             password: hashedPassword,
             username,
+            saldo: 5, // Initialize saldo to 10
         });
 
         await newUser.save();
@@ -44,5 +45,9 @@ export const authService = {
         });
 
         return token;
+    },
+
+    getUserByEmail: async (email: string) => {
+        return await User.findOne({ email });
     },
 };

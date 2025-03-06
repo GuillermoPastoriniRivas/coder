@@ -5,7 +5,9 @@ import { accountController } from './src/controllers/accountController';
 import { authMiddleware } from './src/middleware/authMiddleware';
 import { authController } from './src/controllers/authController';
 import { syncController } from './src/controllers/syncController';
-import { postCall, getConversation } from './src/controllers/chatController';
+import { postCall, getConversations, getConversation } from './src/controllers/chatController';
+import { userController } from './src/controllers/userController';
+import { purchaseController } from './src/controllers/purchaseController';
 
 const app: Express = express();
 app.use(express.json({ limit: "50mb" })); 
@@ -23,12 +25,18 @@ app.post('/login', authController.login);
 // Protected Routes
 app.post('/call', authMiddleware, postCall);
 
-app.get('/conversations', authMiddleware, getConversation);
+app.post('/conversation', authMiddleware, getConversation);
 
 app.get('/account', authMiddleware, accountController.getAccount);
 app.put('/account', authMiddleware, accountController.updateAccount);
 
 app.post('/sync', authMiddleware, syncController.sync);
+
+app.get('/conversations', authMiddleware, getConversations);
+
+app.get('/saldo', authMiddleware, userController.getSaldo);
+
+app.post('/purchase-tokens', authMiddleware, purchaseController.purchaseTokens);
 
 
 const PORT = process.env.PORT || 5000;                                                  

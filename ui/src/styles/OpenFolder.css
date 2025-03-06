@@ -115,3 +115,11 @@ textarea {
     word-wrap: break-word !important;
     overflow-wrap: break-word !important;
 }
+
+/* New styles for loading indicator */
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 10px;
+}
