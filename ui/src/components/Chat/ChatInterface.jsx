@@ -5,7 +5,7 @@ import api from '../../api';
 import '../../styles/App.css';
 import { useDirectory } from '../../context/DirectoryContext';
 
-export default function ChatInterface({ selectedConversation, handleMessageClick }) {
+export default function ChatInterface({ selectedConversation }) {
     const [message, setMessage] = useState('');
     const [conversation, setConversation] = useState([]);
     const messagesEndRef = useRef(null);
@@ -17,10 +17,10 @@ export default function ChatInterface({ selectedConversation, handleMessageClick
                 const response = await api.getConversation(selectedConversation._id);
                 setConversation(response.data.messages);
             } else {
-                setConversation([{ role: 'assistant', content: 'Hello! I can help you understand, debug, and improve your code. Ask me about functions, errors, refactoring, or any technical queries.', timestamp: new Date() }]);
+                setConversation([{ role: 'default', content: 'Hello! I can help you understand, debug, and improve your code. Ask me about functions, errors, refactoring, or any technical queries.', timestamp: new Date() }]);
             }
         } catch (error) {
-            setConversation([{ role: 'assistant', content: 'Hello! I can help you understand, debug, and improve your code. Ask me about functions, errors, refactoring, or any technical queries.', timestamp: new Date() }]);
+            setConversation([{ role: 'default', content: 'Hello! I can help you understand, debug, and improve your code. Ask me about functions, errors, refactoring, or any technical queries.', timestamp: new Date() }]);
         }
     };
 
@@ -54,15 +54,19 @@ export default function ChatInterface({ selectedConversation, handleMessageClick
         setMessage('');
     };
 
+
+    useEffect(() => {
+       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth'});
+    }, [conversation]);
+
     return (
         <Box className="chat-container">
             {/* Chat Messages */}
             <Box className="chat-messages">
-                {conversation.map((msg, index) => (
+                {conversation.map((msg, index) => msg.role !== 'assistant' && (
                     <Box
                         key={index}
                         className={`chat-message ${msg.role === 'user' ? 'user' : 'assistant'}`}
-                        onClick={() => handleMessageClick(msg.content)}
                     >
                         <Typography variant="body1">{msg.content}</Typography>
                         <hr />
@@ -88,7 +92,7 @@ export default function ChatInterface({ selectedConversation, handleMessageClick
                     onClick={handleSend}
                     disabled={!message}
                     endIcon={<SendIcon />}
-                >
+                > Send
                 </Button>
             </Paper>
         </Box>

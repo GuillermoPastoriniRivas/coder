@@ -28,11 +28,11 @@ export const ApiProvider = ({ children }) => {
   return children;
 };
 
-export default {
+const api = {
   // Conversations
   getConversation: (conversationId) => API.post(`/conversation/`, { conversationId }),
 
-  getConversations: () => API.get(`/conversations`),
+  getConversations: (folder) => API.get(`/conversations/${folder}`),
   sendMessage: (messageData) => API.post('/call', messageData),
 
   // Account
@@ -50,5 +50,8 @@ export default {
   syncDirectory: (data) => API.post('/sync', data),
 
   getSaldo: () => API.get('/saldo'), // New method to get saldo
-  purchaseTokens: (data) => API.post('/purchase-tokens', data), // New method to purchase tokens
+
+  updateConversationTitle: (conversationId, data) => API.put(`/conversation/${conversationId}/title`, data),
 };
+
+export default api;

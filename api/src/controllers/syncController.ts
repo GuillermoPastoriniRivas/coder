@@ -53,14 +53,14 @@ export const syncController = {
                 await processNode(node, baseDir);
             }
 
-            res.json({ message: 'Estructura creada exitosamente' });
+            
             console.log("Creando documentacion...")
             const project = baseDir;
             const config = path.resolve(process.cwd(), 'sources', safeUserId, `${safeFolder}.json`);
 
             const pythonProcess = spawn('python', ['src/scripts/call_documenter.py', '--project', project, '--config', config]);
 
-            return new Promise((resolve, reject) => {
+            await new Promise((resolve, reject) => {
                 let output = '';
 
                 pythonProcess.stdout.on('data', (data) => {
@@ -82,6 +82,8 @@ export const syncController = {
                     }
                 });
             });
+
+            res.json({ message: 'Estructura creada exitosamente' });
 
         } catch (error) {
             console.error('Error en syncController:', error);

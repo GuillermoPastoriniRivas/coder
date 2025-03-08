@@ -34,7 +34,7 @@ const OpenFolder = () => {
     const [fileContent, setFileContent] = useState('');
     const [expandedDirectories, setExpandedDirectories] = useState({});
     const [languageClassName, setLanguageClassName] = useState('language-plaintext');
-    const { folderHandle, setFolderHandle, directoryTree, setDirectoryTree } = useDirectory();
+    const { folderHandle, setFolderHandle, directoryTree, setDirectoryTree, setConversations } = useDirectory();
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [loading, setLoading] = useState(false); // New loading state
 
@@ -57,7 +57,11 @@ const OpenFolder = () => {
         setLoading(true); // Start loading
         const files = await getFilesFromDirectory(folderHandle);
         setDirectoryTree(files);
-
+    
+        // Refresh conversations
+        const response = await api.getConversations();
+        setConversations(response.data); // Assuming you have a state for conversations in OpenFolder
+    
         await api.syncDirectory({
             folder: folderHandle.name,
             directoryTree: directoryTree
@@ -117,7 +121,9 @@ const OpenFolder = () => {
     };
 
     const handleSelectConversation = (conversation) => {
-        setSelectedConversation(conversation);
+        setSelectedConversation(null);
+
+        handleMessageClick(conversation?.messages?.[0]?.content)
     };
 
     const handleStartNewConversation = () => {
@@ -162,13 +168,14 @@ const OpenFolder = () => {
                     </Button>
                 )}
             </div>
-            <h2>{folderHandle?.name ? folderHandle.name : ''}</h2>
+            
             <div className="editor">
                 <div className="directory-tree">
                     {folderHandle && (
                         <>
-                            <ConversationsList onSelectConversation={handleSelectConversation} onStartNewConversation={handleStartNewConversation} />
+                            <h2>{folderHandle?.name ? folderHandle.name : ''}</h2>
                             {renderDirectoryTree(directoryTree)}
+                            <ConversationsList onSelectConversation={handleSelectConversation} onStartNewConversation={handleStartNewConversation} />
                         </>
                     )}
                 </div>

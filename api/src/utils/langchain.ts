@@ -200,6 +200,7 @@ export async function callAgent(query: string, userId: string, folder: string) {
 
     const response = {
         userId,
+        folder,
         messages: [{ role: 'assistant', content: responseContent, timestamp: new Date() }]
     };
     await conversationRepository.upsertConversation(response);
