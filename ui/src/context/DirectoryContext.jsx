@@ -9,12 +9,15 @@ export const useDirectory = () => {
 export const DirectoryProvider = ({ children }) => {
     const [folderHandle, setFolderHandle] = useState(null);
     const [directoryTree, setDirectoryTree] = useState([]);
+    const [conversations, setConversations] = useState([]);
 
     const value = {
         folderHandle,
         setFolderHandle,
         directoryTree,
         setDirectoryTree,
+        conversations,
+        setConversations
     };
 
     return (

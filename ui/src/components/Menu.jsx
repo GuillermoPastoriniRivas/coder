@@ -46,9 +46,6 @@ export default function Menu() {
                         <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/">
                             Inicio
                         </Button>
-                        <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/chat">
-                            Chat
-                        </Button>
                         <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/account">
                             Account
                         </Button>

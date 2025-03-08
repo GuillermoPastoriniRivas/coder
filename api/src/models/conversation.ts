@@ -8,7 +8,9 @@ interface IMessage {
 
 interface IConversation extends Document {
     userId: Schema.Types.ObjectId;
+    folder: string;
     messages: IMessage[];
+    title?: string; 
 }
 
 const messageSchema = new Schema<IMessage>({
@@ -20,6 +22,8 @@ const messageSchema = new Schema<IMessage>({
 const conversationSchema = new Schema<IConversation>({
     userId: { type: Schema.Types.ObjectId, ref: 'Users', required: true },
     messages: [messageSchema],
+    title: { type: String, required: false },
+    folder: { type: String, required: true }
 });
 
 export const Conversation = mongoose.model<IConversation>('Conversation', conversationSchema);

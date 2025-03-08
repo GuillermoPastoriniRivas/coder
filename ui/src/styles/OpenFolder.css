@@ -29,7 +29,7 @@ pre {
 }
 
 .file-content {
-    min-width: 50%;
+    width: 60%;
 }
 
 .editor {
@@ -96,16 +96,15 @@ textarea:active, textarea:focus {
 }
 
 textarea {
-    height: auto !important;
-    min-height: 100px !important;
-    max-height: 250px !important;
+    height: 350px !important;
     overflow: auto;
 }
 
 .directory-tree {
     max-height: 700px;
     overflow: auto;
-    width: 30%;
+    width: 420px;
+    margin-right: 20px;
 }
 
 .language-markdown {

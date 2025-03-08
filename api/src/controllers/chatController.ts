@@ -34,9 +34,30 @@ export const getConversations = async (req: Request, res: Response) => {
     try {
         //@ts-ignore
         const userId = req.user.id;
-        const conversations = await conversationRepository.getConversations(userId);
+        const { folder } = req.params;
+        const conversations = await conversationRepository.getConversations(userId, folder);
         res.json(conversations);
     } catch (error) {
         res.status(500).json({ error: 'Error fetching conversations' });
+    }
+};
+
+export const updateConversationTitle = async (req: Request, res: Response) => {
+    const { conversationId } = req.params;
+    const { title } = req.body;
+
+    try {
+        const conversation = await conversationRepository.getConversation(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        conversation.title = title;
+        await conversation.save();
+
+        res.json({ message: 'Title updated successfully' });
+    } catch (error) {
+        console.error('Error updating conversation title:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 };

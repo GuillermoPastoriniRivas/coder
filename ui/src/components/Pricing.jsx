@@ -13,21 +13,21 @@ export default function Pricing() {
     const pricingPlans = [
         {
             id: 1,
-            name: 'B�sico',
-            tokens: 100,
-            price: '$9.99'
+            name: 'Bronce',
+            tokens: 3,
+            price: '$5.00'
         },
         {
             id: 2,
-            name: 'Est�ndar',
-            tokens: 500,
-            price: '$39.99'
+            name: 'Silver',
+            tokens: 5,
+            price: '$8.00'
         },
         {
             id: 3,
-            name: 'Premium',
-            tokens: 1200,
-            price: '$89.99'
+            name: 'Gold',
+            tokens: 10,
+            price: '$14.00'
         }
     ];
 
@@ -37,7 +37,7 @@ export default function Pricing() {
 
     const handlePurchase = async (plan) => {
         try {
-            const response = await api.post('/purchase-tokens', { tokens: plan.tokens });
+            const response = await api.purchaseTokens({ tokens: plan.tokens });
             // Assuming the backend returns the updated saldo
             const newSaldo = response.data.saldo;
             updateSaldo(newSaldo); // Update saldo in context
