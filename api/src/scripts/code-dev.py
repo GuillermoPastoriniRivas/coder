@@ -14,7 +14,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 api_key = "sk-proj-iZUIWIoul2uPT3Si0x1DT3BlbkFJ0fSNIi1EVUCjp5ReYkJu"
 client = OpenAI(api_key=api_key)
 sub_carpeta=""
-top_k = 12
+top_k = 10
 coder_model = "o1-mini"
 temperature = 1
 
@@ -161,16 +161,28 @@ def escribir_codigo(archivo, nuevo_contenido):
 def obtener_cambios_openai(contexto, instruccion_usuario):
     """Envía la consulta a OpenAI y obtiene los cambios necesarios en formato JSON."""
     prompt = f"""
-    Eres un asistente experto en implementar cambios en código. Se te proporciona una instrucción de cambio y fragmentos de código obtenidos por RAG basado en la instrucción.
-    Debes explicar paso a paso los cambios de código necesarios que vas a aplicar en cada sección para cumplir con la instrucción. 
-    Si debes generar un archivo nuevo debes generarlo completo.
-    TODO LO QUE GENERES DEBE ESTAR EN IDIOMA INGLES USA
+    Eres un asistente experto en código. Se te proporciona un proyecto con varios archivos y una instrucción.
+    Si cambias un archivo, devuelve el archivo completo con los cambios aplicados
+    Utiliza ---------------------- arriba y abajo para delimitar cada archivo
+    GENERA SOLAMENTE TEXTO PLANO, NO generes NINGÚN marcador como ```jsx ni nada por el estilo, devuelve solo el texto listo para ser sobreescrito en el archivo
 
     ### Instrucción:
     {contexto.get('query', instruccion_usuario)}
 
     ### Proyecto:
     {contexto.get('context', '')}
+
+    ### Formato de salida esperado (Ejemplo):
+    ----------------------
+    api/src/controllers/agentController.ts
+    +++++
+    <nuevo código>
+    ----------------------
+    ----------------------
+    ui/src/styles/main.css
+    +++++
+    <nuevo código>
+    ----------------------
 
     """
     try:
