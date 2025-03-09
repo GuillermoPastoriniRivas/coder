@@ -51,7 +51,7 @@ class AIDocumenter:
         prompt = f"""
         Analyze this source file and generate documentation in JSON format. Follow this schema:
         {{
-            "description": "string",  // Technical description in English
+            "description": "string",  // Technical description in English, porpuse, functionality, etc.
             "dependencies": [         // ONLY project files, not libraries, skip node_modules imports
                 {{
                     "file_path": "string", // Copy the exact import path as it is in the file
@@ -67,7 +67,7 @@ class AIDocumenter:
         - Current file path: {file_path}
 
         Code:
-        {code[:20000]}  // Limitar código para ahorrar tokens
+        {code}
         """
 
         try:
@@ -82,11 +82,11 @@ class AIDocumenter:
                 response_text = response.choices[0].message.content.strip() 
                 return json.loads(response.choices[0].message.content)
             except json.JSONDecodeError:
-                print(f"⚠️ Error parsing JSON for {file_path}: {response_text}")
+                print(f"Error parsing JSON for {file_path}: {response_text}")
                 return {}
 
         except Exception as e:
-            print(f"⚠️ OpenAI API Error for {file_path}: {str(e)}")
+            print(f"OpenAI API Error for {file_path}: {str(e)}")
             return {}
         
     def _process_file(self, file_path):

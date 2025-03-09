@@ -14,9 +14,9 @@ sys.stdout.reconfigure(encoding='utf-8')
 api_key = "***REMOVED***"
 client = OpenAI(api_key=api_key)
 sub_carpeta=""
-top_k = 10
-coder_model = "gpt-4o-mini"
-temperature = 0.3
+top_k = 12
+coder_model = "o1-mini"
+temperature = 1
 
 def main():
     parser = argparse.ArgumentParser()

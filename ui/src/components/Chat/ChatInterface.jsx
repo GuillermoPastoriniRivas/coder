@@ -26,7 +26,7 @@ export default function ChatInterface({ selectedConversation }) {
 
     useEffect(() => {
         loadConversation();
-    }, [selectedConversation]); 
+    }, []); 
 
     const handleSend = async () => {
         if (!message) return;
