@@ -14,6 +14,10 @@ export const conversationRepository = {
         return await Conversation.find({ userId, folder }).sort({_id: -1});
     },
 
+    async deleteConversation(conversationId: string) {
+        await Conversation.deleteOne({ _id: conversationId });
+    },
+
     async getConversation(conversationId: string) {
         return await Conversation.findOne({ _id: conversationId });
     }

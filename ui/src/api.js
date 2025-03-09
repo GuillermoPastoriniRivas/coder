@@ -31,7 +31,7 @@ export const ApiProvider = ({ children }) => {
 const api = {
   // Conversations
   getConversation: (conversationId) => API.post(`/conversation/`, { conversationId }),
-
+  deleteConversation: (conversationId) => API.delete(`/conversation/${conversationId}`), // Agregado método para eliminar conversación
   getConversations: (folder) => API.get(`/conversations/${folder}`),
   sendMessage: (messageData) => API.post('/call', messageData),
 

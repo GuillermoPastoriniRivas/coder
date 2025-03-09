@@ -37,7 +37,7 @@ export default function Pricing() {
 
     const handlePurchase = async (plan) => {
         try {
-            const response = await api.purchaseTokens({ tokens: plan.tokens });
+            const response = await api.purchaseTokens(plan.tokens);
             // Assuming the backend returns the updated saldo
             const newSaldo = response.data.saldo;
             updateSaldo(newSaldo); // Update saldo in context

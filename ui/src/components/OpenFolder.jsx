@@ -38,7 +38,7 @@ const OpenFolder = () => {
     const { folderHandle, setFolderHandle, directoryTree, setDirectoryTree, setConversations } = useDirectory();
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [isDiffView, setIsDiffView] = useState(false);
+    const [isDiffView, setIsDiffView] = useState(true);
     const containerRef = useRef(null);
     const diffEditorRef = useRef(null);
     const [changedFiles, setChangedFiles] = useState({});
@@ -127,8 +127,8 @@ const OpenFolder = () => {
         setDirectoryTree(files);
 
         // Refresh conversations
-        const response = await api.getConversations();
-        setConversations(response.data); // Assuming you have a state for conversations in OpenFolder
+        const response = await api.getConversations(folderHandle.name);
+        setConversations(response.data); 
 
         await api.syncDirectory({
             folder: folderHandle.name,
@@ -150,7 +150,7 @@ const OpenFolder = () => {
             ) {
                 const file = await entry.getFile();
                 const content = await file.text();
-                files.push({ name: entry.name, path: entryPath, content });
+                files.push({ name: entry.name, path: entryPath, content, handler: entry });
             } else if (entry.kind === 'directory' && !['node_modules', 'build', 'dist', 'sources'].includes(entry.name) && entry.name[0] !== '.') {
                 const subFiles = await getFilesFromDirectory(entry, entryPath);
                 files.push({ name: entry.name, path: entryPath, children: subFiles });
@@ -170,7 +170,7 @@ const OpenFolder = () => {
         try {
             const extension = file.name.split('.').pop().toLowerCase();
             const lang = languageMap[extension] || 'plaintext';
-
+            setChangedFiles({});
             setChangedFiles((prev) => ({
                 ...prev,
                 [file.path]: {
@@ -197,7 +197,7 @@ const OpenFolder = () => {
                     color="secondary"
                     style={{ margin: '0 5px' }}
                 >
-                    {path}
+                    {path.split('/').pop()}
                 </Button>
             ))}
         </div>
@@ -230,11 +230,46 @@ const OpenFolder = () => {
             .map((section) => {
                 const [path, ...rest] = section.split('+++++');
                 return {
-                    path: path?.split(folderHandle.name).pop()?.slice(1)?.trim() || '',
+                    path: path.replace(/\\/g, "/")?.split(folderHandle.name).pop()?.slice(1)?.trim() || '',
                     newContent: rest.join('+++++').trim()
                 };
             })
             .filter((file) => file.path);
+    };
+
+    const applyChanges = async () => {
+        if (selectedFilePath && changedFiles[selectedFilePath]) {
+            const { modified } = changedFiles[selectedFilePath];
+            const fileEntry = findFileByPath(directoryTree, selectedFilePath);
+            
+            if (!fileEntry || !fileEntry.handler) {
+                alert('No se encontró el manejador del archivo. Actualiza el directorio.');
+                return;
+            }
+    
+            try {
+                // Escribir en el archivo usando el handler
+                const writable = await fileEntry.handler.createWritable();
+                await writable.write(modified);
+                await writable.close();
+    
+                // Actualizar estados
+                setChangedFiles(prev => ({
+                    ...prev,
+                    [selectedFilePath]: {
+                        ...prev[selectedFilePath],
+                        original: modified
+                    }
+                }));
+    
+                handleRefresh();
+    
+                alert('¡Cambios aplicados correctamente!');
+            } catch (error) {
+                console.error('Error aplicando cambios:', error);
+                alert('Error al aplicar cambios');
+            }
+        }
     };
 
     const loadFilesFromConversation = (conversation) => {
@@ -247,6 +282,7 @@ const OpenFolder = () => {
         const parsedFiles = parseAIMessageForFiles(conversation.messages[0].content);
 
         if (parsedFiles.length > 0) {
+            setChangedFiles({});
             handleFileChanges(parsedFiles);
         }
     };
@@ -293,7 +329,10 @@ const OpenFolder = () => {
                             {loading ? <CircularProgress size={24} /> : 'Refresh'}
                         </Button>
                         <Button variant="contained" onClick={() => setIsDiffView(!isDiffView)} style={{ margin: '10px 0', marginLeft: 'calc(10% - 8px)' }}>
-                            {isDiffView ? 'Vista Normal' : 'Vista Diff'}
+                            {isDiffView ? 'Normal View' : 'Diff View'}
+                        </Button>
+                        <Button variant="contained" onClick={applyChanges} style={{ margin: '10px 0', marginLeft: '10px' }}>
+                            Apply Changes
                         </Button>
                     </>
                 )}

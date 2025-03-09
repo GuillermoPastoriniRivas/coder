@@ -29,17 +29,14 @@ const ConversationsList = ({ onSelectConversation, onStartNewConversation }) => 
         setConversations(response.data);
     };
 
+    const handleDeleteConversation = async (conversationId) => {
+        await api.deleteConversation(conversationId);
+        const response = await api.getConversations(folderHandle.name);
+        setConversations(response.data);
+    };
+
     return (
         <Box>
-            {/* <Button 
-                variant="contained" 
-                color="primary" 
-                onClick={onStartNewConversation}
-                fullWidth
-                style={{ marginBottom: '10px' }}
-            >
-                New Conversation
-            </Button> */}
             <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
                 Conversations
             </Typography>
@@ -63,7 +60,8 @@ const ConversationsList = ({ onSelectConversation, onStartNewConversation }) => 
                         ) : (
                             <>
                                 <ListItemText primary={conversation.title || `Conversation ${conversation._id}`} />
-                                <Button onClick={() => handleEditClick(conversation)}>Edit</Button>
+                                <Button onClick={() => handleEditClick(conversation)}>✏️</Button>
+                                <Button onClick={() => handleDeleteConversation(conversation._id)}>🗑️</Button>
                             </>
                         )}
                     </ListItem>
