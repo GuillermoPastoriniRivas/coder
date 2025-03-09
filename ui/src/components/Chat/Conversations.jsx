@@ -15,7 +15,7 @@ const ConversationsList = ({ onSelectConversation, onStartNewConversation }) => 
         };
 
         fetchConversations();
-    }, [folderHandle, conversations, setConversations]);
+    }, [folderHandle]);
 
     const handleEditClick = (conversation) => {
         setEditingId(conversation._id);

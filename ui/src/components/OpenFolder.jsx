@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import * as monaco from 'monaco-editor';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism-tomorrow.css';
 import 'prismjs/components/prism-javascript';
@@ -36,11 +37,42 @@ const OpenFolder = () => {
     const [languageClassName, setLanguageClassName] = useState('language-plaintext');
     const { folderHandle, setFolderHandle, directoryTree, setDirectoryTree, setConversations } = useDirectory();
     const [selectedConversation, setSelectedConversation] = useState(null);
-    const [loading, setLoading] = useState(false); // New loading state
+    const [loading, setLoading] = useState(false);
+    const [isDiffView, setIsDiffView] = useState(false);
+    const containerRef = useRef(null);
+    const diffEditorRef = useRef(null)
+    const [changedFiles, setChangedFiles] = useState({});
+    const [selectedFilePath, setSelectedFilePath] = useState(null);;
 
     useEffect(() => {
         Prism.highlightAll();
-    }, [fileContent, languageClassName]);
+    }, [fileContent, languageClassName, isDiffView]);
+
+    useEffect(() => {
+
+        if (isDiffView && selectedFilePath && containerRef.current) {
+            const file = changedFiles[selectedFilePath];
+            const originalModel = monaco.editor.createModel(file.original);
+            const modifiedModel = monaco.editor.createModel(file.modified);
+    
+            diffEditorRef.current = monaco.editor.createDiffEditor(containerRef.current, {
+                theme: 'vs-dark'
+            });
+    
+            diffEditorRef.current.setModel({
+                original: originalModel,
+                modified: modifiedModel
+            });
+    
+            return () => {
+                diffEditorRef.current.dispose();
+                originalModel.dispose();
+                modifiedModel.dispose();
+            };
+        }
+        console.log("changedFiles",changedFiles);
+        console.log("selectedFilePath",selectedFilePath);
+    }, [isDiffView, selectedFilePath, changedFiles]);
 
     const handleOpenFolder = async () => {
         try {
@@ -98,16 +130,46 @@ const OpenFolder = () => {
 
     const handleFileClick = async (file) => {
         try {
-            const content = file.content;
-            setFileContent(content);
-
             const extension = file.name.split('.').pop().toLowerCase();
-            const languageClass = languageMap[extension] || 'plaintext';
-            setLanguageClassName(`language-${languageClass}`);
+            const lang = languageMap[extension] || 'plaintext';
+            const newContent = file.content;
+    
+            setChangedFiles(prev => {
+                if (!prev[file.path]) {
+                    return {
+                        ...prev,
+                        [file.name]: {
+                            original: newContent,
+                            modified: `${newContent}\n// Modificación de ejemplo`,
+                            language: lang
+                        }
+                    };
+                }
+                return prev;
+            });
+    
+            setSelectedFilePath(file.path);
+            setLanguageClassName(`language-${lang}`);
         } catch (error) {
             console.error('Error opening file:', error);
         }
     };
+
+    const ChangedFilesBar = () => (
+        <div className="changed-files-bar">
+            {Object.keys(changedFiles).map(path => (
+                <Button
+                    key={path}
+                    onClick={() => setSelectedFilePath(path)}
+                    variant={selectedFilePath === path ? 'contained' : 'outlined'}
+                    color="secondary"
+                    style={{ margin: '0 5px' }}
+                >
+                    {path}
+                </Button>
+            ))}
+        </div>
+    );
 
     const handleMessageClick = async (content) => {
         try {
@@ -159,13 +221,21 @@ const OpenFolder = () => {
                         Select a folder to begin
                     </Typography>
                 )}
-                <Button variant="contained" color="primary" onClick={handleOpenFolder}>
+                <Button variant="contained" color="primary" onClick={() => handleOpenFolder()}>
                     Open Folder
                 </Button>
                 {folderHandle && (
-                    <Button variant="contained" color="primary" onClick={handleRefresh} startIcon={<RefreshIcon />} disabled={loading}>
+                    <>
+                    <Button variant="contained" color="primary" onClick={() => handleRefresh()} startIcon={<RefreshIcon />} disabled={loading}>
                         {loading ? <CircularProgress size={24} /> : 'Refresh'}
                     </Button>
+                    <Button 
+                    variant="contained" 
+                    onClick={() => setIsDiffView(!isDiffView)}
+                    style={{ margin: '10px 0', marginLeft: 'calc(10% - 8px)' }}
+                >
+                    {isDiffView ? 'Vista Normal' : 'Vista Diff'}
+                </Button></>
                 )}
             </div>
             
@@ -181,9 +251,22 @@ const OpenFolder = () => {
                 </div>
                 {folderHandle && (
                     <div className="file-content">
-                        <pre>
-                            <code className={languageClassName}>{fileContent}</code>
-                        </pre>
+                        {Object.keys(changedFiles).length > 0 && <ChangedFilesBar />}
+                        
+                        
+                        {selectedFilePath ? (
+                            isDiffView ? (
+                                <div ref={containerRef} style={{ height: '600px', border: '1px solid #3a3a3a' }} />
+                            ) : (
+                                <pre>
+                                    <code className={languageClassName}>
+                                        {changedFiles[selectedFilePath].modified}
+                                    </code>
+                                </pre>
+                            )
+                        ) : (
+                            <div className="empty-state">Selecciona un archivo para ver su contenido</div>
+                        )}
                     </div>
                 )}
                 <div className="chat">{folderHandle && <ChatInterface selectedConversation={selectedConversation} handleMessageClick={handleMessageClick} />}</div>
