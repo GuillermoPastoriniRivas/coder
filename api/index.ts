@@ -5,7 +5,7 @@ import { accountController } from './src/controllers/accountController';
 import { authMiddleware } from './src/middleware/authMiddleware';
 import { authController } from './src/controllers/authController';
 import { syncController } from './src/controllers/syncController';
-import { postCall, getConversations, getConversation, updateConversationTitle } from './src/controllers/chatController';
+import { postCall, getConversations, getConversation, updateConversationTitle, deleteConversation } from './src/controllers/chatController'; // Agregado deleteConversation
 import { userController } from './src/controllers/userController';
 import { purchaseController } from './src/controllers/purchaseController';
 
@@ -26,6 +26,7 @@ app.post('/login', authController.login);
 app.post('/call', authMiddleware, postCall);
 
 app.post('/conversation', authMiddleware, getConversation);
+app.delete('/conversation/:conversationId', authMiddleware, deleteConversation); // Agregado endpoint para eliminar conversación
 
 app.get('/account', authMiddleware, accountController.getAccount);
 app.put('/account', authMiddleware, accountController.updateAccount);

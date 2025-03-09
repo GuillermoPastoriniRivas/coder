@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Button, Typography, Paper, TextareaAutosize } from '@mui/material';
+import { Box, Button, Typography, Paper, TextareaAutosize, CircularProgress } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import api from '../../api';
 import '../../styles/App.css';
@@ -8,6 +8,7 @@ import { useDirectory } from '../../context/DirectoryContext';
 export default function ChatInterface({ selectedConversation, onFileChanges }) {
     const [message, setMessage] = useState('');
     const [conversation, setConversation] = useState([]);
+    const [loading, setLoading] = useState(false); // State for loading
     const messagesEndRef = useRef(null);
     const { folderHandle } = useDirectory();
 
@@ -59,6 +60,7 @@ export default function ChatInterface({ selectedConversation, onFileChanges }) {
 
         const userMessage = { role: 'user', content: message, timestamp: new Date() };
         setConversation((prev) => [...prev, userMessage]);
+        setLoading(true); // Start loading
 
         try {
             const response = await api.sendMessage({
@@ -83,6 +85,7 @@ export default function ChatInterface({ selectedConversation, onFileChanges }) {
             console.error('Error sending message:', error);
         }
         setMessage('');
+        setLoading(false); // Stop loading
     };
 
     useEffect(() => {
@@ -118,9 +121,9 @@ export default function ChatInterface({ selectedConversation, onFileChanges }) {
                     onChange={(e) => setMessage(e.target.value)}
                     style={{ width: '100%', padding: '20px', borderRadius: '8px', border: 'none', fontSize: '1rem' }}
                 />
-                <Button variant="contained" onClick={handleSend} disabled={!message} endIcon={<SendIcon />}>
+                <Button variant="contained" onClick={handleSend} disabled={!message} endIcon={loading ? <CircularProgress size={24} /> : <SendIcon />}>
                     {' '}
-                    Send
+                    {loading ? '' : 'Send'}
                 </Button>
             </Paper>
         </Box>

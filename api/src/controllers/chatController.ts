@@ -61,3 +61,20 @@ export const updateConversationTitle = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 };
+
+export const deleteConversation = async (req: Request, res: Response) => { // Nueva función para eliminar conversación
+    const { conversationId } = req.params;
+
+    try {
+        const conversation = await conversationRepository.getConversation(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ error: 'Conversation not found' });
+        }
+
+        await conversationRepository.deleteConversation(conversationId); // Lógica para eliminar la conversación
+        res.json({ message: 'Conversation deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting conversation:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
