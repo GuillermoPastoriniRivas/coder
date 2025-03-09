@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import * as monaco from 'monaco-editor';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism-tomorrow.css';
@@ -40,38 +40,74 @@ const OpenFolder = () => {
     const [loading, setLoading] = useState(false);
     const [isDiffView, setIsDiffView] = useState(false);
     const containerRef = useRef(null);
-    const diffEditorRef = useRef(null)
+    const diffEditorRef = useRef(null);
     const [changedFiles, setChangedFiles] = useState({});
-    const [selectedFilePath, setSelectedFilePath] = useState(null);;
+    const [selectedFilePath, setSelectedFilePath] = useState(null);
+
+    const findFileByPath = useCallback((tree, targetPath) => {
+        for (const item of tree) {
+            if (item.path === targetPath) return item;
+            if (item.children) {
+                const found = findFileByPath(item.children, targetPath);
+                if (found) return found;
+            }
+        }
+        return null;
+    }, []);
+
+    const handleFileChanges = useCallback(
+        (files) => {
+            files.forEach(({ path, newContent }) => {
+                const fileEntry = findFileByPath(directoryTree, path);
+                const originalContent = fileEntry?.content || '';
+                const extension = path.split('.').pop().toLowerCase();
+                const lang = languageMap[extension] || 'plaintext';
+
+                setChangedFiles((prev) => ({
+                    ...prev,
+                    [path]: {
+                        original: originalContent,
+                        modified: newContent,
+                        language: lang
+                    }
+                }));
+            });
+
+            if (files.length > 0) {
+                setSelectedFilePath(files[0].path);
+            }
+        },
+        [directoryTree, findFileByPath]
+    );
 
     useEffect(() => {
         Prism.highlightAll();
     }, [fileContent, languageClassName, isDiffView]);
 
     useEffect(() => {
-
         if (isDiffView && selectedFilePath && containerRef.current) {
             const file = changedFiles[selectedFilePath];
-            const originalModel = monaco.editor.createModel(file.original);
-            const modifiedModel = monaco.editor.createModel(file.modified);
-    
+            const extension = selectedFilePath.split('.').pop().toLowerCase();
+            const lang = languageMap[extension] || 'plaintext';
+
+            const originalModel = monaco.editor.createModel(file.original, 'plaintext');
+            const modifiedModel = monaco.editor.createModel(file.modified, 'plaintext');
+
             diffEditorRef.current = monaco.editor.createDiffEditor(containerRef.current, {
                 theme: 'vs-dark'
             });
-    
+
             diffEditorRef.current.setModel({
                 original: originalModel,
                 modified: modifiedModel
             });
-    
+
             return () => {
                 diffEditorRef.current.dispose();
                 originalModel.dispose();
                 modifiedModel.dispose();
             };
         }
-        console.log("changedFiles",changedFiles);
-        console.log("selectedFilePath",selectedFilePath);
     }, [isDiffView, selectedFilePath, changedFiles]);
 
     const handleOpenFolder = async () => {
@@ -89,11 +125,11 @@ const OpenFolder = () => {
         setLoading(true); // Start loading
         const files = await getFilesFromDirectory(folderHandle);
         setDirectoryTree(files);
-    
+
         // Refresh conversations
         const response = await api.getConversations();
         setConversations(response.data); // Assuming you have a state for conversations in OpenFolder
-    
+
         await api.syncDirectory({
             folder: folderHandle.name,
             directoryTree: directoryTree
@@ -101,9 +137,11 @@ const OpenFolder = () => {
         setLoading(false); // Stop loading
     };
 
-    const getFilesFromDirectory = async (folderHandle) => {
+    const getFilesFromDirectory = async (folderHandle, basePath = '') => {
         const files = [];
         for await (const entry of folderHandle.values()) {
+            const entryPath = basePath ? `${basePath}/${entry.name}` : entry.name;
+
             if (
                 entry.kind === 'file' &&
                 entry.name[0] !== '.' &&
@@ -112,10 +150,10 @@ const OpenFolder = () => {
             ) {
                 const file = await entry.getFile();
                 const content = await file.text();
-                files.push({ name: file.name, path: file.webkitRelativePath, content });
+                files.push({ name: entry.name, path: entryPath, content });
             } else if (entry.kind === 'directory' && !['node_modules', 'build', 'dist', 'sources'].includes(entry.name) && entry.name[0] !== '.') {
-                const subFiles = await getFilesFromDirectory(entry);
-                files.push({ name: entry.name, path: entry.name, children: subFiles });
+                const subFiles = await getFilesFromDirectory(entry, entryPath);
+                files.push({ name: entry.name, path: entryPath, children: subFiles });
             }
         }
         return files;
@@ -132,22 +170,16 @@ const OpenFolder = () => {
         try {
             const extension = file.name.split('.').pop().toLowerCase();
             const lang = languageMap[extension] || 'plaintext';
-            const newContent = file.content;
-    
-            setChangedFiles(prev => {
-                if (!prev[file.path]) {
-                    return {
-                        ...prev,
-                        [file.name]: {
-                            original: newContent,
-                            modified: `${newContent}\n// Modificación de ejemplo`,
-                            language: lang
-                        }
-                    };
+
+            setChangedFiles((prev) => ({
+                ...prev,
+                [file.path]: {
+                    original: file.content,
+                    modified: file.content, // Inicialmente sin cambios
+                    language: lang
                 }
-                return prev;
-            });
-    
+            }));
+
             setSelectedFilePath(file.path);
             setLanguageClassName(`language-${lang}`);
         } catch (error) {
@@ -157,7 +189,7 @@ const OpenFolder = () => {
 
     const ChangedFilesBar = () => (
         <div className="changed-files-bar">
-            {Object.keys(changedFiles).map(path => (
+            {Object.keys(changedFiles).map((path) => (
                 <Button
                     key={path}
                     onClick={() => setSelectedFilePath(path)}
@@ -183,9 +215,40 @@ const OpenFolder = () => {
     };
 
     const handleSelectConversation = (conversation) => {
-        setSelectedConversation(null);
+        console.log('Selected conversation:', conversation);
+        setSelectedConversation(conversation);
 
-        handleMessageClick(conversation?.messages?.[0]?.content)
+        // handleMessageClick(conversation?.messages?.[0]?.content);
+        // Load files from the selected conversation
+        loadFilesFromConversation(conversation);
+    };
+
+    const parseAIMessageForFiles = (content) => {
+        const sections = content.split('----------------------').filter((s) => s.trim() !== '');
+
+        return sections
+            .map((section) => {
+                const [path, ...rest] = section.split('+++++');
+                return {
+                    path: path?.split(folderHandle.name).pop()?.slice(1)?.trim() || '',
+                    newContent: rest.join('+++++').trim()
+                };
+            })
+            .filter((file) => file.path);
+    };
+
+    const loadFilesFromConversation = (conversation) => {
+        if (!conversation) {
+            // No files associated with this conversation
+            setChangedFiles({});
+            return;
+        }
+
+        const parsedFiles = parseAIMessageForFiles(conversation.messages[0].content);
+
+        if (parsedFiles.length > 0) {
+            handleFileChanges(parsedFiles);
+        }
     };
 
     const handleStartNewConversation = () => {
@@ -226,19 +289,16 @@ const OpenFolder = () => {
                 </Button>
                 {folderHandle && (
                     <>
-                    <Button variant="contained" color="primary" onClick={() => handleRefresh()} startIcon={<RefreshIcon />} disabled={loading}>
-                        {loading ? <CircularProgress size={24} /> : 'Refresh'}
-                    </Button>
-                    <Button 
-                    variant="contained" 
-                    onClick={() => setIsDiffView(!isDiffView)}
-                    style={{ margin: '10px 0', marginLeft: 'calc(10% - 8px)' }}
-                >
-                    {isDiffView ? 'Vista Normal' : 'Vista Diff'}
-                </Button></>
+                        <Button variant="contained" color="primary" onClick={() => handleRefresh()} startIcon={<RefreshIcon />} disabled={loading}>
+                            {loading ? <CircularProgress size={24} /> : 'Refresh'}
+                        </Button>
+                        <Button variant="contained" onClick={() => setIsDiffView(!isDiffView)} style={{ margin: '10px 0', marginLeft: 'calc(10% - 8px)' }}>
+                            {isDiffView ? 'Vista Normal' : 'Vista Diff'}
+                        </Button>
+                    </>
                 )}
             </div>
-            
+
             <div className="editor">
                 <div className="directory-tree">
                     {folderHandle && (
@@ -252,16 +312,13 @@ const OpenFolder = () => {
                 {folderHandle && (
                     <div className="file-content">
                         {Object.keys(changedFiles).length > 0 && <ChangedFilesBar />}
-                        
-                        
+
                         {selectedFilePath ? (
                             isDiffView ? (
                                 <div ref={containerRef} style={{ height: '600px', border: '1px solid #3a3a3a' }} />
                             ) : (
                                 <pre>
-                                    <code className={languageClassName}>
-                                        {changedFiles[selectedFilePath].modified}
-                                    </code>
+                                    <code className={languageClassName}>{changedFiles[selectedFilePath].modified}</code>
                                 </pre>
                             )
                         ) : (
@@ -269,7 +326,9 @@ const OpenFolder = () => {
                         )}
                     </div>
                 )}
-                <div className="chat">{folderHandle && <ChatInterface selectedConversation={selectedConversation} handleMessageClick={handleMessageClick} />}</div>
+                <div className="chat">
+                    {folderHandle && <ChatInterface selectedConversation={selectedConversation} handleMessageClick={handleMessageClick} onFileChanges={handleFileChanges} />}
+                </div>
             </div>
         </div>
     );
