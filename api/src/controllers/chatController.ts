@@ -3,11 +3,11 @@ import { chatService } from '../services/chatService';
 import { conversationRepository } from '../repositories/conversationRepository';
 
 export const postCall = async (req: Request, res: Response) => {
-    const { message, folder } = req.body;
+    const { message, folder, subFolders, model } = req.body;
     try {
         //@ts-ignore
         const userId = req.user.id;
-        const response = await chatService.callAgent(message, userId, folder);
+        const response = await chatService.callAgent(message, userId, folder, subFolders, model);
         res.json({ response });
     } catch (error) {
         console.error('Error:', error);

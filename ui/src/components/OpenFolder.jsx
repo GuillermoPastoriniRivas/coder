@@ -15,10 +15,11 @@ import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import '../styles/OpenFolder.css';
 import ChatInterface from './Chat/ChatInterface';
 import { useDirectory } from '../context/DirectoryContext';
-import { Button, Typography, CircularProgress } from '@mui/material';
+import { Button, Typography, CircularProgress, MenuItem, Select, Checkbox, FormControlLabel } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import api from '../api';
 import ConversationsList from './Chat/Conversations';
+import { parseAIMessageForFiles } from '../utils/functions';
 
 const languageMap = {
     js: 'javascript',
@@ -35,7 +36,7 @@ const OpenFolder = () => {
     const [fileContent, setFileContent] = useState('');
     const [expandedDirectories, setExpandedDirectories] = useState({});
     const [languageClassName, setLanguageClassName] = useState('language-plaintext');
-    const { folderHandle, setFolderHandle, directoryTree, setDirectoryTree, setConversations } = useDirectory();
+    const { folderHandle, setFolderHandle, directoryTree, setDirectoryTree, setConversations, selectedSubFolders, toggleSubFolder } = useDirectory(); // Added selectedSubFolders and toggleSubFolder
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [loading, setLoading] = useState(false);
     const [isDiffView, setIsDiffView] = useState(true);
@@ -43,6 +44,9 @@ const OpenFolder = () => {
     const diffEditorRef = useRef(null);
     const [changedFiles, setChangedFiles] = useState({});
     const [selectedFilePath, setSelectedFilePath] = useState(null);
+    const [selectedModel, setSelectedModel] = useState('gpt-4o-mini'); // State for selected model
+
+    const models = ['gpt-4o-mini', 'o1-mini']; // Available models
 
     const findFileByPath = useCallback((tree, targetPath) => {
         for (const item of tree) {
@@ -223,19 +227,7 @@ const OpenFolder = () => {
         loadFilesFromConversation(conversation);
     };
 
-    const parseAIMessageForFiles = (content) => {
-        const sections = content.split('----------------------').filter((s) => s.trim() !== '');
 
-        return sections
-            .map((section) => {
-                const [path, ...rest] = section.split('+++++');
-                return {
-                    path: path.replace(/\\/g, "/")?.split(folderHandle.name).pop()?.slice(1)?.trim() || '',
-                    newContent: rest.join('+++++').trim()
-                };
-            })
-            .filter((file) => file.path);
-    };
 
     const applyChanges = async () => {
         if (selectedFilePath && changedFiles[selectedFilePath]) {
@@ -263,8 +255,6 @@ const OpenFolder = () => {
                 }));
     
                 handleRefresh();
-    
-                alert('¡Cambios aplicados correctamente!');
             } catch (error) {
                 console.error('Error aplicando cambios:', error);
                 alert('Error al aplicar cambios');
@@ -279,7 +269,7 @@ const OpenFolder = () => {
             return;
         }
 
-        const parsedFiles = parseAIMessageForFiles(conversation.messages[0].content);
+        const parsedFiles = parseAIMessageForFiles(folderHandle.name, conversation.messages[0].content);
 
         if (parsedFiles.length > 0) {
             setChangedFiles({});
@@ -299,6 +289,17 @@ const OpenFolder = () => {
                         {file.children ? (
                             <span className="folder" onClick={() => handleDirectoryClick(file.name)}>
                                 {expandedDirectories[file.name] ? '-' : '+'} <FolderIcon /> {file.name}
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            checked={selectedSubFolders.includes(file.path)}
+                                            onChange={() => toggleSubFolder(file.path)}
+                                            onClick={(e) => e.stopPropagation()} // Prevent triggering directory click
+                                        />
+                                    }
+                                    label="Select"
+                                    style={{ marginLeft: '10px' }}
+                                />
                             </span>
                         ) : (
                             <span className="file" onClick={() => handleFileClick(file)}>
@@ -334,6 +335,19 @@ const OpenFolder = () => {
                         <Button variant="contained" onClick={applyChanges} style={{ margin: '10px 0', marginLeft: '10px' }}>
                             Apply Changes
                         </Button>
+                        <Select
+                            value={selectedModel}
+                            onChange={(e) => setSelectedModel(e.target.value)}
+                            displayEmpty
+                            inputProps={{ 'aria-label': 'Select Model' }}
+                            style={{ marginLeft: '10px' }}
+                        >
+                            {models.map((model) => (
+                                <MenuItem key={model} value={model}>
+                                    {model}
+                                </MenuItem>
+                            ))}
+                        </Select>
                     </>
                 )}
             </div>
@@ -366,7 +380,7 @@ const OpenFolder = () => {
                     </div>
                 )}
                 <div className="chat">
-                    {folderHandle && <ChatInterface selectedConversation={selectedConversation} handleMessageClick={handleMessageClick} onFileChanges={handleFileChanges} />}
+                    {folderHandle && <ChatInterface selectedConversation={selectedConversation} handleMessageClick={handleMessageClick} onFileChanges={handleFileChanges} selectedModel={selectedModel} />} {/* Pass selected model to ChatInterface */}
                 </div>
             </div>
         </div>

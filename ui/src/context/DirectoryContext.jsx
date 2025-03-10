@@ -10,6 +10,17 @@ export const DirectoryProvider = ({ children }) => {
     const [folderHandle, setFolderHandle] = useState(null);
     const [directoryTree, setDirectoryTree] = useState([]);
     const [conversations, setConversations] = useState([]);
+    const [selectedSubFolders, setSelectedSubFolders] = useState([]); // Added state for selected subfolders
+
+    const toggleSubFolder = (subFolder) => {
+        setSelectedSubFolders((prev) => {
+            if (prev.includes(subFolder)) {
+                return prev.filter((folder) => folder !== subFolder);
+            } else {
+                return [...prev, subFolder];
+            }
+        });
+    };
 
     const value = {
         folderHandle,
@@ -17,7 +28,9 @@ export const DirectoryProvider = ({ children }) => {
         directoryTree,
         setDirectoryTree,
         conversations,
-        setConversations
+        setConversations,
+        selectedSubFolders, // Exposed selectedSubFolders
+        toggleSubFolder,    // Function to toggle selection
     };
 
     return (
