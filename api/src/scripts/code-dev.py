@@ -15,19 +15,22 @@ api_key = "***REMOVED***"
 client = OpenAI(api_key=api_key)
 sub_carpeta=""
 top_k = 10
-coder_model = "gpt-4o-mini"
-temperature = 0.2
+
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--instruction", required=True)
     parser.add_argument("--project", required=True)
     parser.add_argument("--config", required=True)
+    parser.add_argument("--model", required=True)
+    parser.add_argument("--subfolders", required=True)  # Nuevo argumento
     args = parser.parse_args()
 
+    sub_folders = args.subfolders.split(',') if args.subfolders else []
     carpeta_proyecto = args.project
     instruccion_usuario = args.instruction
     json_path = args.config
+    coder_model = args.model
 
     documenter = AIDocumenter(
         api_key=api_key,
@@ -36,17 +39,15 @@ def main():
     )
 
     documenter.generate_documentation()
-    contexto = generar_contexto(instruccion_usuario, carpeta_proyecto, json_path)
-    cambios = obtener_cambios_openai(contexto, instruccion_usuario)
+    contexto = generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folders)
+    cambios = obtener_cambios_openai(contexto, instruccion_usuario, coder_model)
     print(cambios)
 
 
 class CodeRAG:
-
-    def __init__(self, code_base_path, json_path):
-        # Mejor modelo de embeddings
+    def __init__(self, code_base_path, json_path, sub_folders):  # Agregar parámetro
+        self.sub_folders = sub_folders  # Lista de subcarpetas
         self.model = SentenceTransformer('all-mpnet-base-v2')
-        # Cross-encoder para reranking
         self.cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
 
         with open(json_path) as f:
@@ -56,15 +57,14 @@ class CodeRAG:
 
         self.file_records = []
         for file_path, file_data in self.data.items():
-            if file_path.startswith(sub_carpeta):
+            if (not self.sub_folders) or any(file_path.startswith(sub) for sub in self.sub_folders):
                 description = file_data.get("description", "")
-                dependencies = file_data.get("dependencies", [])  # Corregido
+                dependencies = file_data.get("dependencies", [])
                 tokens = file_data.get("tokens", 0)
 
-                # Mejor texto para embeddings incluyendo dependencias
                 embedding_text = (
-                    f"File Path: {file_path}/n"
-                    f"Description: {description}/n"
+                    f"File Path: {file_path}\n"
+                    f"Description: {description}\n"
                     f"Dependencies: {', '.join([dep.get('file_path', '') for dep in dependencies])}"
                 )
 
@@ -129,11 +129,11 @@ class CodeRAG:
 
         return { 'results': results, 'queries': queries}
 
-def generar_contexto(instruccion_usuario, carpeta_proyecto, json_path):
+def generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folders):
     """Genera el contexto con la lista de archivos y su contenido utilizando CodeRAG."""
     # Inicializar CodeRAG
-    code_base_path = carpeta_proyecto + "/"  # Ruta base del código
-    rag = CodeRAG(code_base_path, json_path).query(instruccion_usuario)
+    code_base_path = carpeta_proyecto + "/"
+    rag = CodeRAG(code_base_path, json_path, sub_folders).query(instruccion_usuario)
 
     # Obtener información de CodeRAG
     contexto = []
@@ -158,7 +158,7 @@ def escribir_codigo(archivo, nuevo_contenido):
     with open(archivo, "w", encoding="utf-8") as f:
         f.write(nuevo_contenido)
 
-def obtener_cambios_openai(contexto, instruccion_usuario):
+def obtener_cambios_openai(contexto, instruccion_usuario, coder_model):
     """Envía la consulta a OpenAI y obtiene los cambios necesarios en formato JSON."""
     prompt = f"""
     Eres un asistente experto en código. Se te proporciona un proyecto con varios archivos y una instrucción.
@@ -185,6 +185,12 @@ def obtener_cambios_openai(contexto, instruccion_usuario):
     ----------------------
 
     """
+    if (coder_model == "o1-mini"):
+        temperature = 1
+    else:
+        temperature = 0.2
+    
+
     try:
         respuesta = client.chat.completions.create(
             model=coder_model,

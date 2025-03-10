@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api';
 
 export default function Menu() {
-    const { logout, saldo, updateSaldo } = useAuth(); // Destructure saldo and updateSaldo
+    const { logout, saldo, updateSaldo } = useAuth();
     const navigate = useNavigate();
 
     // If you have the optional /user/saldo route
