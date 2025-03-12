@@ -14,20 +14,20 @@ export default function Pricing() {
         {
             id: 1,
             name: 'Bronce',
-            tokens: 3,
-            price: '$5.00'
+            tokens: 30,
+            price: '$ 5.00'
         },
         {
             id: 2,
             name: 'Silver',
-            tokens: 5,
-            price: '$8.00'
+            tokens: 50,
+            price: '$ 8.00'
         },
         {
             id: 3,
             name: 'Gold',
-            tokens: 10,
-            price: '$14.00'
+            tokens: 100,
+            price: '$ 14.00'
         }
     ];
 
@@ -96,10 +96,10 @@ export default function Pricing() {
                                     {plan.name}
                                 </Typography>
                                 <Typography variant="h3" color="primary" gutterBottom>
-                                    {plan.price}
+                                    {plan.tokens} Req
                                 </Typography>
                                 <Typography variant="h6" color="text.secondary">
-                                    {plan.tokens} Tokens
+                                    {plan.price} USD
                                 </Typography>
                             </CardContent>
                             <Box sx={{ p: 3 }}>

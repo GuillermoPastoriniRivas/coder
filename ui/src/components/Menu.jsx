@@ -39,7 +39,8 @@ export default function Menu() {
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Box className="saldo-container">
                         <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/pricing">
-                            Saldo: {saldo} Tokens
+                            {saldo} Req remaining {' '}
+                            {saldo < 6 ? ' Buy more here' : ''}
                         </Button>
                     </Box>
                     <Box sx={{ mr: '30px' }}>
