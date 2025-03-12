@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Button, Typography, Paper, TextareaAutosize, CircularProgress } from '@mui/material';
+import { Box, Button, Typography, Paper, TextareaAutosize, CircularProgress, Chip } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import api from '../../api';
 import '../../styles/App.css';
@@ -7,7 +7,7 @@ import { useDirectory } from '../../context/DirectoryContext';
 import { parseAIMessageForFiles } from '../../utils/functions';
 import { useAuth } from '../../context/AuthContext';
 
-export default function ChatInterface({ selectedConversation, onFileChanges, selectedModel }) {
+export default function ChatInterface({ selectedConversation, onFileChanges, selectedModel, selectedFiles, deselectFile }) {
     const [message, setMessage] = useState('');
     const [conversation, setConversation] = useState([]);
     const [loading, setLoading] = useState(false); // State for loading
@@ -26,28 +26,13 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
     };
 
     const loadConversation = async () => {
-        try {
-            if (selectedConversation) {
-                const response = await api.getConversation(selectedConversation._id);
-                setConversation(response.data.messages);
-            } else {
-                setConversation([
-                    {
-                        role: 'default',
-                        content: 'Hello! I can help you understand, debug, and improve your code. Ask me about functions, errors, refactoring, or any technical queries.',
-                        timestamp: new Date()
-                    }
-                ]);
+        setConversation([
+            {
+                role: 'default',
+                content: 'Hello! I can help you understand, debug, and improve your code. Ask me about functions, errors, refactoring, or any technical queries.',
+                timestamp: new Date()
             }
-        } catch (error) {
-            setConversation([
-                {
-                    role: 'default',
-                    content: 'Hello! I can help you understand, debug, and improve your code. Ask me about functions, errors, refactoring, or any technical queries.',
-                    timestamp: new Date()
-                }
-            ]);
-        }
+        ]);
     };
 
     useEffect(() => {
@@ -66,6 +51,7 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
                 message,
                 folder: folderHandle.name,
                 subFolders: selectedSubFolders, // Include selected subFolders in the request
+                selectedFiles, // Include selectedFiles in the request
                 model: selectedModel // Include selected model in the request
             });
 
@@ -98,6 +84,28 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
 
     return (
         <Box className="chat-container">
+            {/* Selected Files/Folders */}
+            <Box className="selected-items" sx={{ padding: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                {selectedSubFolders.map((folder, index) => (
+                    <Chip
+                        key={index}
+                        label={folder}
+                        onDelete={() => deselectFile(folder)}
+                        color="secondary"
+                        variant="outlined"
+                    />
+                ))}
+                {selectedFiles.map((file, index) => (
+                    <Chip
+                        key={index}
+                        label={file}
+                        onDelete={() => deselectFile(file)}
+                        color="primary"
+                        variant="outlined"
+                    />
+                ))}
+            </Box>
+
             {/* Chat Messages */}
             <Box className="chat-messages">
                 {conversation.map(

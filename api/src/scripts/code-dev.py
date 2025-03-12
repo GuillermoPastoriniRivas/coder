@@ -23,10 +23,12 @@ def main():
     parser.add_argument("--project", required=True)
     parser.add_argument("--config", required=True)
     parser.add_argument("--model", required=True)
-    parser.add_argument("--subfolders", required=True)  # Nuevo argumento
+    parser.add_argument("--subfolders", required=True)
+    parser.add_argument("--selectedFiles", required=False, default="")
     args = parser.parse_args()
 
     sub_folders = args.subfolders.split(',') if args.subfolders else []
+    selected_files = args.selectedFiles.split(',') if args.selectedFiles else []
     carpeta_proyecto = args.project
     instruccion_usuario = args.instruction
     json_path = args.config
@@ -39,14 +41,15 @@ def main():
     )
 
     documenter.generate_documentation()
-    contexto = generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folders)
+    contexto = generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folders, selected_files)
     cambios = obtener_cambios_openai(contexto, instruccion_usuario, coder_model)
     print(cambios)
 
 
 class CodeRAG:
-    def __init__(self, code_base_path, json_path, sub_folders):  # Agregar parámetro
-        self.sub_folders = sub_folders  # Lista de subcarpetas
+    def __init__(self, code_base_path, json_path, sub_folders, selected_files):
+        self.selected_files = selected_files
+        self.sub_folders = sub_folders
         self.model = SentenceTransformer('all-mpnet-base-v2')
         self.cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
 
@@ -56,20 +59,31 @@ class CodeRAG:
             self.data = self.project.get("files", {})
 
         self.file_records = []
-        for file_path, file_data in self.data.items():
-            if (not self.sub_folders) or any(file_path.startswith(sub) for sub in self.sub_folders):
+        for file_path_rel, file_data in self.data.items():
+            include = False
+            if self.selected_files:
+                if file_path_rel in self.selected_files:
+                    include = True
+                elif self.sub_folders and any(file_path_rel.startswith(sub) for sub in self.sub_folders):
+                    include = True
+            else:
+                if not self.sub_folders or any(file_path_rel.startswith(sub) for sub in self.sub_folders):
+                    include = True
+
+            if include:
                 description = file_data.get("description", "")
                 dependencies = file_data.get("dependencies", [])
                 tokens = file_data.get("tokens", 0)
 
                 embedding_text = (
-                    f"File Path: {file_path}\n"
+                    f"File Path: {file_path_rel}\n"
                     f"Description: {description}\n"
                     f"Dependencies: {', '.join([dep.get('file_path', '') for dep in dependencies])}"
                 )
 
                 self.file_records.append({
-                    'file_path': code_base_path + file_path,
+                    'rel_path': file_path_rel,
+                    'abs_path': code_base_path + file_path_rel,
                     'description': description,
                     'dependencies': dependencies,
                     'tokens': tokens,
@@ -78,7 +92,6 @@ class CodeRAG:
 
         texts = [r['embedding_text'] for r in self.file_records]
         self.embeddings = self.model.encode(texts) if texts else np.array([])
-        # Normalizar embeddings para cosine similarity
         if self.embeddings.size != 0:
             self.embeddings = self.embeddings / np.linalg.norm(self.embeddings, axis=1, keepdims=True)
 
@@ -96,49 +109,74 @@ class CodeRAG:
         if self.embeddings.size == 0:
             return {'error': 'No hay archivos para buscar'}
 
-        # Paso 1: Expansión del query
         queries = [query_text]
-        query_embeds = self.model.encode(queries)
-        query_embedding = np.mean(query_embeds, axis=0)
-        query_embedding = query_embedding / np.linalg.norm(query_embedding)
+        selected_files = self.selected_files
 
-        # Paso 2: Búsqueda inicial
-        similarities = np.dot(self.embeddings, query_embedding)
-        initial_indices = np.argsort(similarities)[::-1][:top_k*2]
+        if selected_files:
+            selected_indices = []
+            for i, record in enumerate(self.file_records):
+                if record['rel_path'] in selected_files:
+                    selected_indices.append(i)
+            selected_records = [self.file_records[i] for i in selected_indices]
 
-        # Paso 3: Reranking con cross-encoder
-        candidates = [self.file_records[i] for i in initial_indices]
-        cross_input = [[query_text, cand['embedding_text']] for cand in candidates]
-        cross_scores = self.cross_encoder.predict(cross_input)
+            remaining_k = max(top_k - len(selected_indices), 0)
+            rag_records = []
 
-        # Obtener índices ordenados por cross-score
-        ranked_indices = np.argsort(cross_scores)[::-1][:top_k]
+            if len(self.sub_folders) > 0 and remaining_k > 0 and len(self.file_records) > len(selected_indices):
+                other_indices = [i for i in range(len(self.file_records)) if i not in selected_indices]
+                other_embeddings = self.embeddings[other_indices]
 
-        # Obtener los índices finales correctamente
-        final_indices = [initial_indices[i] for i in ranked_indices]
+                query_embeds = self.model.encode(queries)
+                query_embedding = np.mean(query_embeds, axis=0)
+                query_embedding = query_embedding / np.linalg.norm(query_embedding)
 
-        # Construir resultados con la relación correcta de índices
+                similarities = np.dot(other_embeddings, query_embedding)
+                initial_rag_indices = np.argsort(similarities)[::-1][:remaining_k * 2]
+
+                candidates = [self.file_records[other_indices[i]] for i in initial_rag_indices]
+                cross_input = [[query_text, cand['embedding_text']] for cand in candidates]
+                cross_scores = self.cross_encoder.predict(cross_input)
+
+                ranked_rag_indices = np.argsort(cross_scores)[::-1][:remaining_k]
+                final_rag_indices = [other_indices[initial_rag_indices[i]] for i in ranked_rag_indices]
+
+                rag_records = [self.file_records[i] for i in final_rag_indices]
+
+            all_records = selected_records + rag_records
+            all_records = all_records[:top_k]
+        else:
+            query_embeds = self.model.encode(queries)
+            query_embedding = np.mean(query_embeds, axis=0)
+            query_embedding = query_embedding / np.linalg.norm(query_embedding)
+
+            similarities = np.dot(self.embeddings, query_embedding)
+            initial_indices = np.argsort(similarities)[::-1][:top_k * 2]
+
+            candidates = [self.file_records[i] for i in initial_indices]
+            cross_input = [[query_text, cand['embedding_text']] for cand in candidates]
+            cross_scores = self.cross_encoder.predict(cross_input)
+
+            ranked_indices = np.argsort(cross_scores)[::-1][:top_k]
+            final_indices = [initial_indices[i] for i in ranked_indices]
+
+            all_records = [self.file_records[i] for i in final_indices]
+
         results = []
-        for i, idx in enumerate(final_indices):
-            record = self.file_records[idx]
+        for record in all_records:
             results.append({
-                'file_path': record['file_path'],
+                'file_path': record['abs_path'],
                 'tokens': record['tokens'],
-                'code': self._get_code_snippet(record['file_path']),
+                'code': self._get_code_snippet(record['abs_path']),
             })
 
         return { 'results': results, 'queries': queries}
 
-def generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folders):
-    """Genera el contexto con la lista de archivos y su contenido utilizando CodeRAG."""
-    # Inicializar CodeRAG
+def generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folders, selected_files):
     code_base_path = carpeta_proyecto + "/"
-    rag = CodeRAG(code_base_path, json_path, sub_folders).query(instruccion_usuario)
+    rag = CodeRAG(code_base_path, json_path, sub_folders, selected_files).query(instruccion_usuario)
 
-    # Obtener información de CodeRAG
     contexto = []
-
-    for item in rag.get('results', {}):
+    for item in rag.get('results', []):
         file_path = item['file_path']
         contenido = item['code']
         contexto.append({"archivo": file_path, "contenido": contenido})

@@ -5,7 +5,7 @@ import { spawn } from 'child_process';
 import path from 'path';
 import { User } from '../models/User'; 
 
-export async function callAgent(query: string, userId: string, folder: string, subFolders: string[], model: string) {
+export async function callAgent(query: string, userId: string, folder: string, subFolders: string[], model: string, selectedFiles: string[]) {
     const user = await User.findById(userId);
     if (!user) {
         throw new Error('User not found');
@@ -44,7 +44,8 @@ export async function callAgent(query: string, userId: string, folder: string, s
         '--project', project,
         '--config', config,
         '--model', model,
-        '--subfolders', (subFolders || []).join(',')
+        '--subfolders', (subFolders || []).join(','),
+        '--selectedFiles', (selectedFiles || []).join(',')
     ]);
     const responsePromise = new Promise((resolve, reject) => {
         let output = '';

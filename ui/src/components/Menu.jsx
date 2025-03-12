@@ -39,13 +39,13 @@ export default function Menu() {
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Box className="saldo-container">
                         <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/pricing">
-                            {saldo} Req remaining {' '}
+                            {saldo} Credits remaining {' '}
                             {saldo < 6 ? ' Buy more here' : ''}
                         </Button>
                     </Box>
                     <Box sx={{ mr: '30px' }}>
                         <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/">
-                            Inicio
+                            Home
                         </Button>
                         <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/account">
                             Account
@@ -54,7 +54,7 @@ export default function Menu() {
                             Docs
                         </Button>
                         <Button sx={{ mr: 2 }} color="inherit" onClick={handleLogout}>
-                            Cerrar Sesión
+                            Log Out
                         </Button>
                     </Box>
                 </Box>
