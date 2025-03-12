@@ -16,7 +16,7 @@ export default function SignUp() {
         e.preventDefault();
         try {
             await signUp(email, password, username);
-            navigate('/agents');
+            navigate('/');
         } catch (error) {
             console.error('SignUp failed:', error);
             setError('Failed to create account. Please try again.');

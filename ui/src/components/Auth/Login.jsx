@@ -20,7 +20,7 @@ export default function Login() {
         e.preventDefault();
         try {
             await login(email, password);
-            navigate('/agents');
+            navigate('/');
         } catch (error) {
             console.error('Login failed:', error);
             // Puedes agregar manejo de errores aquí
