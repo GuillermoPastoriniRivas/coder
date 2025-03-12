@@ -13,21 +13,18 @@ export default function Pricing() {
     const pricingPlans = [
         {
             id: 1,
-            name: 'Bronce',
-            tokens: 30,
+            tokens: 20,
             price: '$ 5.00'
         },
         {
             id: 2,
-            name: 'Silver',
-            tokens: 50,
+            tokens: 40,
             price: '$ 8.00'
         },
         {
             id: 3,
-            name: 'Gold',
             tokens: 100,
-            price: '$ 14.00'
+            price: '$ 15.00'
         }
     ];
 
@@ -67,7 +64,7 @@ export default function Pricing() {
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 6 }}>
                 <AccountBalanceWalletIcon color="primary" sx={{ mr: 1, fontSize: 40 }} />
                 <Typography variant="h6" sx={{ fontWeight: 500 }}>
-                    Current Balance: <strong>{saldo} Tokens</strong>
+                    Current Balance: <strong>{saldo} Credits</strong>
                 </Typography>
             </Box>
 
@@ -93,13 +90,11 @@ export default function Pricing() {
                         >
                             <CardContent sx={{ textAlign: 'center' }}>
                                 <Typography variant="h5" component="div" gutterBottom sx={{ fontWeight: 700, color: 'primary.main' }}>
-                                    {plan.name}
+                                {plan.tokens} Credits
                                 </Typography>
-                                <Typography variant="h3" color="primary" gutterBottom>
-                                    {plan.tokens} Req
-                                </Typography>
+                                
                                 <Typography variant="h6" color="text.secondary">
-                                    {plan.price} USD
+                                {plan.price} USD
                                 </Typography>
                             </CardContent>
                             <Box sx={{ p: 3 }}>
@@ -121,7 +116,7 @@ export default function Pricing() {
                                         },
                                     }}
                                 >
-                                    Purchase
+                                    But Now
                                 </Button>
                             </Box>
                         </Card>

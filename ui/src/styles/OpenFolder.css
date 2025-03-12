@@ -27,7 +27,6 @@ pre {
 }
 
 .file-content {
-    width: 60%;
     flex: 1;
     padding: 20px;
     overflow: auto;
@@ -37,7 +36,7 @@ pre {
 
 .editor {
     display: flex;
-    align-items: flex-start;
+    height: 100%;
 }
 
 .open-folder {
@@ -51,11 +50,25 @@ pre {
 .open-folder button {
     margin-right: 20px;
     color: #d4d4d4;
-    background-color: none;
 }
 
-.directory-tree button {
+.changed-files-bar button {
+    background: none;
+}
+
+.changed-files-bar button.css-1899hjk-MuiButtonBase-root-MuiButton-root {
+    background: #8a6787;
+}
+
+.directory-tree button  {
     margin-right: 0px;
+    background-color: #1e1e1e;
+    border-radius: 0;
+    height: 100%;
+}
+
+.directory-tree button:hover {
+    background-color: #2d2d2d;
 }
 
 .open-folder .alert {
@@ -81,8 +94,6 @@ pre {
 }
 
 .chat {
-    max-height: 600px;
-    width: 25%;
     background-color: #1e1e1e;
     color: #d4d4d4;
     padding: 10px;
@@ -127,8 +138,6 @@ textarea {
 .directory-tree {
     max-height: 80vh;
     overflow: auto;
-    width: 20%;
-    margin-right: 20px;
     background-color: #1e1e1e;
     color: #d4d4d4;
 }
@@ -170,7 +179,7 @@ textarea {
 }
 
 .cm-merge {
-    height:70vh;
+    height: 70vh;
     border: 1px solid #3a3a3a;
     margin: 10px 0;
     background-color: #1e1e1e;
@@ -187,4 +196,25 @@ textarea {
 
 .cm-theme {
     height: 75vh;
+}
+
+/* Resizer styles */
+.resizer {
+    width: 5px;
+    cursor: col-resize;
+    background-color: #555;
+    opacity: 0.5;
+    z-index: 1;
+}
+
+.resizer:hover {
+    opacity: 1;
+}
+
+.editor .resizer1 {
+    /* Position between directory-tree and file-content */
+}
+
+.editor .resizer2 {
+    /* Position between file-content and chat */
 }
