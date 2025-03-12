@@ -3,20 +3,26 @@ import { Conversation } from '../models/conversation';
 export const conversationRepository = {
     async upsertConversation(conversation: any, isUserMessage: boolean = false) {
         const { userId, folder, model } = conversation;
-        const updateData = isUserMessage
-            ? { $push: { userMessages: conversation.messages[0] } }
-            : { $push: { messages: { $each: conversation.messages } } };
 
-        await Conversation.findOneAndUpdate(
-            { userId, folder },
-            { $set: { aiModel: model } }
-        );
-        
-        await Conversation.findOneAndUpdate(
-            { userId, folder },
-            updateData,
-            { upsert: true, new: true }
-        );
+        if (isUserMessage) {
+            // await Conversation.findOneAndUpdate(
+            //     { userId, folder },
+            //     { $set: { aiModel: model } }
+            // );
+            // await Conversation.findOneAndUpdate(
+            //     { userId, folder },
+            //     { $set: { userMessages: conversation.messages[0] } },
+            //     { upsert: true, new: true }
+            // );
+            return;
+        }   
+
+        const newConversation = new Conversation({
+            userId: conversation.userId,
+            folder: conversation.folder,
+            messages: conversation.messages,
+        });
+        await newConversation.save(); 
     },
 
     async getConversations(userId: string, folder: string) {

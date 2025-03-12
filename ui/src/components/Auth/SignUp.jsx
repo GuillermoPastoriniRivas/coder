@@ -25,7 +25,7 @@ export default function SignUp() {
 
     return (
         <Container maxWidth="xs" className="section_gap_top">
-            <Box className="white_bg box-shadow border-radius p-25 text-center mb-50">
+            <Box className="box-shadow border-radius p-25 text-center mb-50">
                 <PersonAddIcon className="icon-large primary-color mb-15" />
                 <Typography variant="h4" className="main-title mb-25">
                     Crear Nueva Cuenta

@@ -37,7 +37,7 @@ const ConversationsList = ({ onSelectConversation, onStartNewConversation }) => 
 
     return (
         <Box>
-            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+            <Typography sx={{ mb: 1, fontWeight: 600 }}>
                 Conversations
             </Typography>
             <List>

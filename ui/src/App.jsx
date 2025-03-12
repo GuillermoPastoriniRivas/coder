@@ -13,14 +13,54 @@ import './styles/App.css';
 import OpenFolder from './components/OpenFolder.jsx';
 import { ApiProvider } from './api';
 import { DirectoryProvider } from './context/DirectoryContext.jsx';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+
+// Define the dark theme
+const darkTheme = createTheme({
+    palette: {
+        mode: 'dark',
+        primary: {
+            main: '#0c6aa8', // VSCode blue
+        },
+        background: {
+            default: '#1e1e1e',
+            paper: '#2d2d2d',
+        },
+        text: {
+            primary: '#d4d4d4',
+            secondary: '#858585',
+        },
+    },
+    typography: {
+        fontFamily: 'Segoe UI, sans-serif',
+    },
+    components: {
+        MuiAppBar: {
+            styleOverrides: {
+                root: {
+                    backgroundColor: '#333333',
+                },
+            },
+        },
+        MuiButton: {
+            styleOverrides: {
+                root: {
+                    textTransform: 'none',
+                },
+            },
+        },
+    },
+});
 
 function App() {
     return (
         <ApiProvider>
             <DirectoryProvider>
-                <Router>
-                    <MainApp />
-                </Router>
+                <ThemeProvider theme={darkTheme}>
+                    <Router>
+                        <MainApp />
+                    </Router>
+                </ThemeProvider>
             </DirectoryProvider>
         </ApiProvider>
     );

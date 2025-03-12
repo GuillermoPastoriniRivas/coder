@@ -1,29 +1,27 @@
 h1 {
     font-size: 24px;
     margin-bottom: 20px;
+    color: #d4d4d4;
 }
 
 ul {
     list-style-type: none;
     padding: 0 20px;
-    color: #000;
+    color: #d4d4d4;
 }
 
 li {
     cursor: pointer;
     margin: 5px 0;
-}
-
-li:hover {
-    color: #3751a0;
+    color: #d4d4d4;
 }
 
 pre {
-    background-color: #f5f5f5;
+    background-color: #2d2d2d;
     padding: 10px;
     border-radius: 5px;
     overflow: auto;
-    color: #000;    
+    color: #d4d4d4;
     max-height: 700px;
     margin: 0;
 }
@@ -34,6 +32,7 @@ pre {
     padding: 20px;
     overflow: auto;
     padding-top: 0;
+    background-color: #1e1e1e;
 }
 
 .editor {
@@ -43,18 +42,29 @@ pre {
 
 .open-folder {
     padding: 20px;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    max-height: 90vh;
+    padding-top: 10px;
 }
 
 .open-folder button {
     margin-right: 20px;
+    color: #d4d4d4;
+    background-color: none;
+}
+
+.directory-tree button {
+    margin-right: 0px;
 }
 
 .open-folder .alert {
-    color: #000;
+    color: #d4d4d4;
     margin-bottom: 1rem;
 }
 
-.folder, .file {
+.folder,
+.file {
     display: flex;
     gap: 4px;
     align-items: center;
@@ -62,21 +72,21 @@ pre {
 
 .folder svg {
     width: 1rem;
-    color: #F5D6AF;
+    color: #f1b770;
 }
 
 .file svg {
     width: 1rem;
-    color: #c8c8c8;
+    color: #8a8a8a;
 }
 
 .chat {
     max-height: 600px;
-    max-width: 30%;
-}
-
-.chat-container {
-    max-height: 700px;
+    width: 25%;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    padding: 10px;
+    border-radius: 5px;
 }
 
 .chat-messages {
@@ -88,27 +98,39 @@ pre {
     margin: 0 10px;
     align-items: flex-start;
     max-width: 100%;
+    background-color: #2d2d2d;
+    border-radius: 5px;
+    padding: 10px;
 }
 
 .chat-input button {
     margin-top: 10px;
+    background-color: #007acc;
+    color: #ffffff;
 }
 
-textarea:active, textarea:focus {
+textarea:active,
+textarea:focus {
     border: none !important;
     outline: none !important;
+    background-color: #3c3c3c;
+    color: #d4d4d4;
 }
 
 textarea {
     height: 350px !important;
     overflow: auto;
+    background-color: #2d2d2d;
+    color: #d4d4d4;
 }
 
 .directory-tree {
-    max-height: 700px;
+    max-height: 80vh;
     overflow: auto;
-    width: 420px;
+    width: 20%;
     margin-right: 20px;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
 }
 
 .language-markdown {
@@ -138,10 +160,31 @@ textarea {
     padding: 10px 0;
     border-bottom: 1px solid #3a3a3a;
     margin-bottom: 10px;
+    background-color: #1e1e1e;
 }
 
 .empty-state {
     padding: 20px;
     text-align: center;
     color: #666;
+}
+
+.cm-merge {
+    height:70vh;
+    border: 1px solid #3a3a3a;
+    margin: 10px 0;
+    background-color: #1e1e1e;
+}
+
+.cm-editor {
+    height: 100%;
+    color: #d4d4d4;
+}
+
+.cm-gutter {
+    min-width: 30px;
+}
+
+.cm-theme {
+    height: 75vh;
 }

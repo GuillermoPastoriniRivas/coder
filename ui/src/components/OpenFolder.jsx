@@ -1,15 +1,16 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import * as monaco from 'monaco-editor';
+import CodeMirrorMerge from 'react-codemirror-merge';
+import { EditorState } from '@codemirror/state';
+import { EditorView } from '@codemirror/view';
+import { javascript } from '@codemirror/lang-javascript';
+import { python } from '@codemirror/lang-python';
+import { css } from '@codemirror/lang-css';
+import { json } from '@codemirror/lang-json';
+import { markdown } from '@codemirror/lang-markdown';
+import { vscodeDark } from '@uiw/codemirror-theme-vscode';
+import CodeMirror from '@uiw/react-codemirror';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism-tomorrow.css';
-import 'prismjs/components/prism-javascript';
-import 'prismjs/components/prism-typescript';
-import 'prismjs/components/prism-python';
-import 'prismjs/components/prism-jsx';
-import 'prismjs/components/prism-tsx';
-import 'prismjs/components/prism-css';
-import 'prismjs/components/prism-json';
-import 'prismjs/components/prism-markdown';
 import FolderIcon from '@mui/icons-material/Folder';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import '../styles/OpenFolder.css';
@@ -21,6 +22,20 @@ import api from '../api';
 import ConversationsList from './Chat/Conversations';
 import { parseAIMessageForFiles } from '../utils/functions';
 
+const Original = CodeMirrorMerge.Original;
+const Modified = CodeMirrorMerge.Modified;
+
+const languageExtensions = {
+    js: [javascript()],
+    ts: [javascript()],
+    jsx: [javascript({ jsx: true })],
+    tsx: [javascript({ jsx: true })],
+    css: [css()],
+    py: [python()],
+    json: [json()],
+    md: [markdown()]
+};
+
 const languageMap = {
     js: 'javascript',
     ts: 'typescript',
@@ -31,7 +46,6 @@ const languageMap = {
     json: 'json',
     md: 'markdown'
 };
-
 const OpenFolder = () => {
     const [fileContent, setFileContent] = useState('');
     const [expandedDirectories, setExpandedDirectories] = useState({});
@@ -47,6 +61,23 @@ const OpenFolder = () => {
     const [selectedModel, setSelectedModel] = useState('gpt-4o-mini'); // State for selected model
 
     const models = ['gpt-4o-mini', 'o1-mini']; // Available models
+
+    const getLanguageExtension = (path) => {
+        const extension = path?.split('.').pop().toLowerCase();
+        return languageExtensions[extension] || [];
+    };
+
+    const handleModifiedChange = (value) => {
+        if (selectedFilePath) {
+            setChangedFiles((prev) => ({
+                ...prev,
+                [selectedFilePath]: {
+                    ...prev[selectedFilePath],
+                    modified: value
+                }
+            }));
+        }
+    };
 
     const findFileByPath = useCallback((tree, targetPath) => {
         for (const item of tree) {
@@ -88,31 +119,45 @@ const OpenFolder = () => {
         Prism.highlightAll();
     }, [fileContent, languageClassName, isDiffView]);
 
-    useEffect(() => {
-        if (isDiffView && selectedFilePath && containerRef.current) {
-            const file = changedFiles[selectedFilePath];
-            const extension = selectedFilePath.split('.').pop().toLowerCase();
-            const lang = languageMap[extension] || 'plaintext';
+    // useEffect(() => {
+    //     if (isDiffView && selectedFilePath && containerRef.current) {
+    //         const file = changedFiles[selectedFilePath];
+    //         const extension = selectedFilePath.split('.').pop().toLowerCase();
+    //         const lang = languageMap[extension] || 'plaintext';
 
-            const originalModel = monaco.editor.createModel(file.original, 'plaintext');
-            const modifiedModel = monaco.editor.createModel(file.modified, 'plaintext');
+    //         const originalModel = monaco.editor.createModel(file.original, 'plaintext');
+    //         const modifiedModel = monaco.editor.createModel(file.modified, 'plaintext');
 
-            diffEditorRef.current = monaco.editor.createDiffEditor(containerRef.current, {
-                theme: 'vs-dark'
-            });
+    //         diffEditorRef.current = monaco.editor.createDiffEditor(containerRef.current, {
+    //             theme: 'vs-dark'
+    //         });
 
-            diffEditorRef.current.setModel({
-                original: originalModel,
-                modified: modifiedModel
-            });
+    //         diffEditorRef.current.setModel({
+    //             original: originalModel,
+    //             modified: modifiedModel
+    //         });
 
-            return () => {
-                diffEditorRef.current.dispose();
-                originalModel.dispose();
-                modifiedModel.dispose();
-            };
-        }
-    }, [isDiffView, selectedFilePath, changedFiles]);
+    //         // Listen to changes in the modified model
+    //         const dispose = modifiedModel.onDidChangeContent(() => {
+    //             const newContent = modifiedModel.getValue();
+    //             setChangedFiles((prev) => ({
+    //                 ...prev,
+    //                 [selectedFilePath]: {
+    //                     ...prev[selectedFilePath],
+    //                     modified: newContent
+    //                 }
+    //             }));
+    //         });
+
+    //         return () => {
+    //             console.log('Disposing diff editor', dispose?.dispose);
+    //             dispose?.dispose?.();
+    //             diffEditorRef.current?.dispose();
+    //             originalModel?.dispose();
+    //             modifiedModel?.dispose();
+    //         };
+    //     }
+    // }, [isDiffView, selectedFilePath, changedFiles]);
 
     const handleOpenFolder = async () => {
         try {
@@ -132,7 +177,7 @@ const OpenFolder = () => {
 
         // Refresh conversations
         const response = await api.getConversations(folderHandle.name);
-        setConversations(response.data); 
+        setConversations(response.data);
 
         await api.syncDirectory({
             folder: folderHandle.name,
@@ -227,40 +272,38 @@ const OpenFolder = () => {
         loadFilesFromConversation(conversation);
     };
 
-
-
-    const applyChanges = async () => {
+    const applyChanges = useCallback(async () => {
         if (selectedFilePath && changedFiles[selectedFilePath]) {
             const { modified } = changedFiles[selectedFilePath];
             const fileEntry = findFileByPath(directoryTree, selectedFilePath);
-            
+
             if (!fileEntry || !fileEntry.handler) {
                 alert('No se encontró el manejador del archivo. Actualiza el directorio.');
                 return;
             }
-    
+
             try {
                 // Escribir en el archivo usando el handler
                 const writable = await fileEntry.handler.createWritable();
                 await writable.write(modified);
                 await writable.close();
-    
+
                 // Actualizar estados
-                setChangedFiles(prev => ({
+                setChangedFiles((prev) => ({
                     ...prev,
                     [selectedFilePath]: {
                         ...prev[selectedFilePath],
                         original: modified
                     }
                 }));
-    
+
                 handleRefresh();
             } catch (error) {
                 console.error('Error aplicando cambios:', error);
                 alert('Error al aplicar cambios');
             }
         }
-    };
+    }, [selectedFilePath, changedFiles, findFileByPath, directoryTree, handleRefresh]);
 
     const loadFilesFromConversation = (conversation) => {
         if (!conversation) {
@@ -313,6 +356,19 @@ const OpenFolder = () => {
         );
     };
 
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.ctrlKey && (e.key === 's' || e.key === 'S')) {
+                e.preventDefault();
+                applyChanges();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [applyChanges]);
+
     return (
         <div className="open-folder">
             <div className="actions">
@@ -356,7 +412,9 @@ const OpenFolder = () => {
                 <div className="directory-tree">
                     {folderHandle && (
                         <>
-                            <h2>{folderHandle?.name ? folderHandle.name : ''}</h2>
+                        <Typography sx={{ mb: 1, fontWeight: 600, mt: 2 }}>
+                        {folderHandle?.name ? folderHandle.name : ''}
+                                    </Typography>
                             {renderDirectoryTree(directoryTree)}
                             <ConversationsList onSelectConversation={handleSelectConversation} onStartNewConversation={handleStartNewConversation} />
                         </>
@@ -368,11 +426,25 @@ const OpenFolder = () => {
 
                         {selectedFilePath ? (
                             isDiffView ? (
-                                <div ref={containerRef} style={{ height: '600px', border: '1px solid #3a3a3a' }} />
+                                <CodeMirrorMerge theme={vscodeDark} orientation="a-b" gutter={true} highlightChanges={true} className="cm-merge">
+                                    <Original
+                                        value={changedFiles[selectedFilePath]?.original || ''}
+                                        extensions={[EditorView.editable.of(false), ...getLanguageExtension(selectedFilePath)]}
+                                    />
+                                    <Modified
+                                        value={changedFiles[selectedFilePath]?.modified || ''}
+                                        onChange={handleModifiedChange}
+                                        extensions={getLanguageExtension(selectedFilePath)}
+                                    />
+                                </CodeMirrorMerge>
                             ) : (
-                                <pre>
-                                    <code className={languageClassName}>{changedFiles[selectedFilePath].modified}</code>
-                                </pre>
+                                <CodeMirror
+                                    value={changedFiles[selectedFilePath]?.modified || ''}
+                                    onChange={handleModifiedChange}
+                                    theme={vscodeDark}
+                                    extensions={getLanguageExtension(selectedFilePath)}
+                                    height="600px"
+                                />
                             )
                         ) : (
                             <div className="empty-state">Selecciona un archivo para ver su contenido</div>
@@ -380,7 +452,15 @@ const OpenFolder = () => {
                     </div>
                 )}
                 <div className="chat">
-                    {folderHandle && <ChatInterface selectedConversation={selectedConversation} handleMessageClick={handleMessageClick} onFileChanges={handleFileChanges} selectedModel={selectedModel} />} {/* Pass selected model to ChatInterface */}
+                    {folderHandle && (
+                        <ChatInterface
+                            selectedConversation={selectedConversation}
+                            handleMessageClick={handleMessageClick}
+                            onFileChanges={handleFileChanges}
+                            selectedModel={selectedModel}
+                        />
+                    )}{' '}
+                    {/* Pass selected model to ChatInterface */}
                 </div>
             </div>
         </div>
