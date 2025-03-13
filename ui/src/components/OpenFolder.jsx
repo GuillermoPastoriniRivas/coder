@@ -487,19 +487,6 @@ const OpenFolder = () => {
                         <Button variant="contained" onClick={applyChanges} style={{ margin: '10px 0', marginLeft: '10px' }}>
                             Apply Changes
                         </Button>
-                        <Select
-                            value={selectedModel}
-                            onChange={(e) => setSelectedModel(e.target.value)}
-                            displayEmpty
-                            inputProps={{ 'aria-label': 'Select Model' }}
-                            style={{ marginLeft: '10px' }}
-                        >
-                            {models.map((model) => (
-                                <MenuItem key={model} value={model}>
-                                    {model}
-                                </MenuItem>
-                            ))}
-                        </Select>
                     </>
                 )}
             </div>
@@ -564,11 +551,12 @@ const OpenFolder = () => {
                             style={{ width: chatWidth }}
                         >
                             {folderHandle && (
-                                <ChatInterface
+                                 <ChatInterface
                                     selectedConversation={selectedConversation}
                                     handleMessageClick={handleMessageClick}
                                     onFileChanges={handleFileChanges}
                                     selectedModel={selectedModel}
+                                    setSelectedModel={setSelectedModel}
                                     selectedFiles={selectedFiles} // Pass selectedFiles
                                     deselectFile={deselectFile} // Pass deselect function
                                 />
