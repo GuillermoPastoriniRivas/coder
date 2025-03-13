@@ -115,9 +115,10 @@ pre {
 }
 
 .chat-input button {
-    margin-top: 10px;
+    padding: 10px;
     background-color: #007acc;
     color: #ffffff;
+    margin: 0;
 }
 
 textarea:active,

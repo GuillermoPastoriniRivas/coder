@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Button, Typography, Paper, TextareaAutosize, CircularProgress, Chip } from '@mui/material';
+import { Box, Button, Typography, Paper, TextareaAutosize, CircularProgress, Chip, MenuItem, Select } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import api from '../../api';
 import '../../styles/App.css';
@@ -7,13 +7,15 @@ import { useDirectory } from '../../context/DirectoryContext';
 import { parseAIMessageForFiles } from '../../utils/functions';
 import { useAuth } from '../../context/AuthContext';
 
-export default function ChatInterface({ selectedConversation, onFileChanges, selectedModel, selectedFiles, deselectFile }) {
+export default function ChatInterface({ selectedConversation, onFileChanges, selectedModel, setSelectedModel, selectedFiles, deselectFile }) {
     const [message, setMessage] = useState('');
     const [conversation, setConversation] = useState([]);
     const [loading, setLoading] = useState(false); // State for loading
     const messagesEndRef = useRef(null);
     const { folderHandle, selectedSubFolders, setConversations } = useDirectory(); // Access selectedSubFolders
     const { updateSaldo } = useAuth();
+
+    const models = ['o1-mini', 'gpt-4o-mini']; // Available models
 
     const fetchSaldo = async () => {
         try {
@@ -126,18 +128,40 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
             </Box>
 
             {/* Message Input */}
-            <Paper className="chat-input" elevation={1} sx={{ display: 'flex', flexDirection: 'row', boxShadow: 'none', borderRadius: '8px', padding: '0' }}>
-                <TextareaAutosize
+            <Paper className="chat-input" elevation={1} sx={{ display: 'flex', flexDirection: 'column', boxShadow: 'none', borderRadius: '8px', padding: '0' }}>
+                <textarea
                     minRows={3}
                     placeholder="Type your message..."
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    style={{ width: '100%', padding: '20px', borderRadius: '8px', border: 'none', fontSize: '1rem' }}
-                />
-                <Button variant="contained" onClick={handleSend} disabled={loading || !message} endIcon={loading ? <CircularProgress size={24} /> : <SendIcon />}>
-                    {' '}
-                    {loading ? '' : 'Send'}
-                </Button>
+                    style={{
+                        width: '100%',
+                        padding: '20px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        fontSize: '1rem',
+                        maxHeight: '250px',        // Added maxHeight
+                        overflow: 'auto'           // Added overflow
+                    }}
+                ></textarea>
+                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', padding: '10px 20px', justifyContent: 'space-between' }}>
+                    <Select
+                        value={selectedModel}
+                        onChange={(e) => setSelectedModel(e.target.value)}
+                        displayEmpty
+                        inputProps={{ 'aria-label': 'Select Model' }}
+                        style={{ marginRight: '10px', minWidth: '150px' }}
+                    >
+                        {models.map((model) => (
+                            <MenuItem key={model} value={model}>
+                                {model}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                    <Button variant="contained" onClick={handleSend} disabled={loading || !message} endIcon={loading ? <CircularProgress size={24} /> : <SendIcon />}>
+                        {loading ? '' : 'Send'}
+                    </Button>
+                </Box>
             </Paper>
         </Box>
     );
