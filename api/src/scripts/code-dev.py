@@ -13,9 +13,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 api_key = "***REMOVED***"
 client = OpenAI(api_key=api_key)
-sub_carpeta=""
 top_k = 10
-
 
 def main():
     parser = argparse.ArgumentParser()
@@ -201,7 +199,7 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model):
     prompt = f"""
     Eres un asistente experto en código. Se te proporciona un proyecto con varios archivos y una instrucción.
     Si cambias un archivo, devuelve el archivo completo con los cambios aplicados
-    Utiliza ---------------------- arriba y abajo para delimitar cada archivo
+    Utiliza SIEMPRE --------------------- arriba y abajo de cada archivo para delimitar cada archivo
     GENERA SOLAMENTE TEXTO PLANO, NO generes NINGÚN marcador como ```jsx ni nada por el estilo, devuelve solo el texto listo para ser sobreescrito en el archivo
 
     ### Instrucción:

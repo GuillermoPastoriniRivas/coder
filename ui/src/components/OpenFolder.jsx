@@ -59,11 +59,11 @@ const OpenFolder = () => {
     const diffEditorRef = useRef(null);
     const [changedFiles, setChangedFiles] = useState({});
     const [selectedFilePath, setSelectedFilePath] = useState(null);
-    const [selectedModel, setSelectedModel] = useState('gpt-4o-mini'); // State for selected model
+    const [selectedModel, setSelectedModel] = useState('o1-mini'); // State for selected model
 
     const [selectedFiles, setSelectedFiles] = useState([]); // State for selected files
 
-    const models = ['gpt-4o-mini', 'o1-mini']; // Available models
+    const models = ['o1-mini', 'gpt-4o-mini']; // Available models
 
     const [directoryWidth, setDirectoryWidth] = useState(300); // Initial width in px
     const [chatWidth, setChatWidth] = useState(300); // Initial width in px
@@ -103,6 +103,7 @@ const OpenFolder = () => {
 
     const handleFileChanges = useCallback(
         (files) => {
+            setChangedFiles({});
             files.forEach(({ path, newContent }) => {
                 const fileEntry = findFileByPath(directoryTree, path);
                 const originalContent = fileEntry?.content || '';
@@ -202,6 +203,7 @@ const OpenFolder = () => {
 
             setSelectedFilePath(file.path);
             setLanguageClassName(`language-${lang}`);
+            setIsDiffView(false)
         } catch (error) {
             console.error('Error opening file:', error);
         }
@@ -238,40 +240,107 @@ const OpenFolder = () => {
         console.log('Selected conversation:', conversation);
         setSelectedConversation(conversation);
         loadFilesFromConversation(conversation);
+        setIsDiffView(true)
     };
 
     const applyChanges = useCallback(async () => {
         if (selectedFilePath && changedFiles[selectedFilePath]) {
             const { modified } = changedFiles[selectedFilePath];
-            const fileEntry = findFileByPath(directoryTree, selectedFilePath);
+            let fileEntry = findFileByPath(directoryTree, selectedFilePath);
 
             if (!fileEntry || !fileEntry.handler) {
-                alert('No se encontró el manejador del archivo. Actualiza el directorio.');
-                return;
-            }
+                try {
+                    // Split the path to handle subdirectories
+                    const pathParts = selectedFilePath.split('/');
+                    let currentHandle = folderHandle;
 
-            try {
-                // Escribir en el archivo usando el handler
-                const writable = await fileEntry.handler.createWritable();
-                await writable.write(modified);
-                await writable.close();
-
-                // Actualizar estados
-                setChangedFiles((prev) => ({
-                    ...prev,
-                    [selectedFilePath]: {
-                        ...prev[selectedFilePath],
-                        original: modified
+                    for (let i = 0; i < pathParts.length - 1; i++) {
+                        const part = pathParts[i];
+                        // Check if the directory exists
+                        let subDir = null;
+                        for await (const entry of currentHandle.values()) {
+                            if (entry.kind === 'directory' && entry.name === part) {
+                                subDir = entry;
+                                break;
+                            }
+                        }
+                        if (!subDir) {
+                            // Create the subdirectory if it does not exist
+                            subDir = await currentHandle.getDirectoryHandle(part, { create: true });
+                        }
+                        currentHandle = subDir;
                     }
-                }));
 
-                handleRefresh();
-            } catch (error) {
-                console.error('Error aplicando cambios:', error);
-                alert('Error al aplicar cambios');
+                    // Create the file
+                    const fileName = pathParts[pathParts.length - 1];
+                    const newFileHandle = await currentHandle.getFileHandle(fileName, { create: true });
+
+                    // Write to the file
+                    const writable = await newFileHandle.createWritable();
+                    await writable.write(modified);
+                    await writable.close();
+
+                    // Update the directory tree
+                    const newFile = { name: fileName, path: selectedFilePath, content: modified, handler: newFileHandle };
+                    setDirectoryTree((prevTree) => {
+                        const addFile = (tree) => {
+                            if (tree.length === 0 && pathParts.length === 1) {
+                                return [...tree, newFile];
+                            }
+                            const [head, ...rest] = pathParts;
+                            const existing = tree.find(item => item.name === head);
+                            if (existing) {
+                                if (existing.children) {
+                                    existing.children = addFile(existing.children);
+                                }
+                            } else {
+                                tree.push({ name: head, path: pathParts.join('/'), children: addFile([]) });
+                            }
+                            return [...tree];
+                        };
+                        return addFile([...prevTree]);
+                    });
+
+                    // Update changedFiles
+                    setChangedFiles((prev) => ({
+                        ...prev,
+                        [selectedFilePath]: {
+                            original: modified,
+                            modified: modified,
+                            language: languageMap[selectedFilePath.split('.').pop().toLowerCase()] || 'plaintext'
+                        }
+                    }));
+
+                    setSelectedFilePath(selectedFilePath);
+                    setLanguageClassName(`language-${languageMap[selectedFilePath.split('.').pop().toLowerCase()] || 'plaintext'}`);
+                } catch (error) {
+                    console.error('Error creating new file:', error);
+                    alert('Error al crear el nuevo archivo.');
+                }
+            } else {
+                try {
+                    // Escribir en el archivo usando el handler
+                    const writable = await fileEntry.handler.createWritable();
+                    await writable.write(modified);
+                    await writable.close();
+
+                    // Actualizar estados
+                    setChangedFiles((prev) => ({
+                        ...prev,
+                        [selectedFilePath]: {
+                            ...prev[selectedFilePath],
+                            original: modified
+                        }
+                    }));
+
+                    handleRefresh();
+                } catch (error) {
+                    console.error('Error aplicando cambios:', error);
+                    alert('Error al aplicar cambios');
+                }
             }
         }
-    }, [selectedFilePath, changedFiles, findFileByPath, directoryTree, handleRefresh]);
+    }, [selectedFilePath, changedFiles, findFileByPath, directoryTree, handleRefresh, folderHandle]);
 
     const loadFilesFromConversation = (conversation) => {
         if (!conversation) {
@@ -283,7 +352,7 @@ const OpenFolder = () => {
         const parsedFiles = parseAIMessageForFiles(folderHandle.name, conversation.messages[0].content);
 
         if (parsedFiles.length > 0) {
-            setChangedFiles({});
+            
             handleFileChanges(parsedFiles);
         }
     };
