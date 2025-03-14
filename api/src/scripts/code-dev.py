@@ -202,9 +202,9 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model):
 
         ### Instructions:
 
-        Analyze the user's instruction and project context to identify exact files requiring changes
+        Analyze the user's instruction and project context to identify exact files requiring changes or be created
 
-        For each modified file, return the complete updated file content using this strict format:
+        For each modified or created file, return the complete updated file content using this strict format:
         --------------------
         [full/file/path/from/root]
         +++++
