@@ -450,3 +450,7 @@ button:focus {
 div[aria-haspopup="listbox"] {
   padding: 7px 32px 11px 9px !important;
 }
+
+.new-conversation-button {
+  background-color: var(--color-secondary) !important; 
+}
