@@ -234,3 +234,9 @@ textarea {
 .textarea-resizer:hover {
     opacity: 1;
 }
+
+/* New styles for ChangedFilesBar */
+.changed-file-button {
+    white-space: nowrap;
+    flex: 0 0 auto;
+}

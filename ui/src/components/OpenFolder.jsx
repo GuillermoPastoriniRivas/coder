@@ -1,4 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import DirectoryTree from './DirectoryTree';
+import ChangedFilesBar from './ChangedFilesBar';
+import FileContent from './FileContent';
 import CodeMirrorMerge from 'react-codemirror-merge';
 import { EditorView } from '@codemirror/view';
 import { javascript } from '@codemirror/lang-javascript';
@@ -10,19 +13,16 @@ import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 import CodeMirror from '@uiw/react-codemirror';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism-tomorrow.css';
-import FolderIcon from '@mui/icons-material/Folder';
-import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
-import '../styles/OpenFolder.css';
-import ChatInterface from './Chat/ChatInterface';
-import { useDirectory } from '../context/DirectoryContext';
 import { Button, Typography, CircularProgress, Checkbox, FormControlLabel } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import api from '../api';
 import ConversationsList from './Chat/Conversations';
 import { parseAIMessageForFiles } from '../utils/functions';
-
-const Original = CodeMirrorMerge.Original;
-const Modified = CodeMirrorMerge.Modified;
+import ChatInterface from './Chat/ChatInterface';
+import FolderIcon from '@mui/icons-material/Folder';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import '../styles/OpenFolder.css';
+import { useDirectory } from '../context/DirectoryContext';
 
 const languageExtensions = {
     js: [javascript()],
@@ -50,19 +50,17 @@ const OpenFolder = () => {
     const [fileContent, setFileContent] = useState('');
     const [expandedDirectories, setExpandedDirectories] = useState({});
     const [languageClassName, setLanguageClassName] = useState('language-plaintext');
-    const { folderHandle, setFolderHandle, directoryTree, setDirectoryTree, setConversations, selectedSubFolders, toggleSubFolder } = useDirectory(); // Added selectedSubFolders and toggleSubFolder
+    const { folderHandle, setFolderHandle, directoryTree, setDirectoryTree, setConversations, selectedSubFolders, toggleSubFolder } = useDirectory();
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [loading, setLoading] = useState(false);
     const [isDiffView, setIsDiffView] = useState(true);
     const [changedFiles, setChangedFiles] = useState({});
     const [selectedFilePath, setSelectedFilePath] = useState(null);
-    const [selectedModel, setSelectedModel] = useState('o1-mini'); 
-
-    const [selectedFiles, setSelectedFiles] = useState([]); 
-
-    const [directoryWidth, setDirectoryWidth] = useState(300); 
-    const [chatWidth, setChatWidth] = useState(300); 
-    const [collapseUnchanged, setCollapseUnchanged] = useState(false); 
+    const [selectedModel, setSelectedModel] = useState('o1-mini');
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [directoryWidth, setDirectoryWidth] = useState(300);
+    const [chatWidth, setChatWidth] = useState(300);
+    const [collapseUnchanged, setCollapseUnchanged] = useState(false);
     const editorRef = useRef(null);
     const resizer1Ref = useRef(null);
     const resizer2Ref = useRef(null);
@@ -139,19 +137,16 @@ const OpenFolder = () => {
     };
 
     const handleRefresh = async () => {
-        setLoading(true); // Start loading
+        setLoading(true);
         const files = await getFilesFromDirectory(folderHandle);
         setDirectoryTree(files);
-
-        // Refresh conversations
         const response = await api.getConversations(folderHandle.name);
         setConversations(response.data);
-
         await api.syncDirectory({
             folder: folderHandle.name,
             directoryTree: directoryTree
         });
-        setLoading(false); // Stop loading
+        setLoading(false);
     };
 
     const getFilesFromDirectory = async (folderHandle, basePath = '') => {
@@ -192,7 +187,7 @@ const OpenFolder = () => {
                 ...prev,
                 [file.path]: {
                     original: file.content,
-                    modified: file.content, // Inicialmente sin cambios
+                    modified: file.content,
                     language: lang
                 }
             }));
@@ -204,22 +199,6 @@ const OpenFolder = () => {
             console.error('Error opening file:', error);
         }
     };
-
-    const ChangedFilesBar = () => (
-        <div className="changed-files-bar">
-            {Object.keys(changedFiles).map((path) => (
-                <Button
-                    key={path}
-                    onClick={() => setSelectedFilePath(path)}
-                    variant={selectedFilePath === path ? 'contained' : 'outlined'}
-                    color="secondary"
-                    style={{ margin: '0 5px' }}
-                >
-                    {path.split('/').pop()}
-                </Button>
-            ))}
-        </div>
-    );
 
     const handleMessageClick = async (content) => {
         try {
@@ -246,13 +225,11 @@ const OpenFolder = () => {
 
             if (!fileEntry || !fileEntry.handler) {
                 try {
-                    // Split the path to handle subdirectories
                     const pathParts = selectedFilePath.split('/');
                     let currentHandle = folderHandle;
 
                     for (let i = 0; i < pathParts.length - 1; i++) {
                         const part = pathParts[i];
-                        // Check if the directory exists
                         let subDir = null;
                         for await (const entry of currentHandle.values()) {
                             if (entry.kind === 'directory' && entry.name === part) {
@@ -261,43 +238,50 @@ const OpenFolder = () => {
                             }
                         }
                         if (!subDir) {
-                            // Create the subdirectory if it does not exist
                             subDir = await currentHandle.getDirectoryHandle(part, { create: true });
                         }
                         currentHandle = subDir;
                     }
 
-                    // Create the file
                     const fileName = pathParts[pathParts.length - 1];
                     const newFileHandle = await currentHandle.getFileHandle(fileName, { create: true });
 
-                    // Write to the file
                     const writable = await newFileHandle.createWritable();
                     await writable.write(modified);
                     await writable.close();
 
-                    // Update the directory tree
                     const newFile = { name: fileName, path: selectedFilePath, content: modified, handler: newFileHandle };
                     setDirectoryTree((prevTree) => {
-                        const addFile = (tree) => {
-                            if (tree.length === 0 && pathParts.length === 1) {
-                                return [...tree, newFile];
+                        const addFile = (tree, parts, currentPath = []) => {
+                          if (parts.length === 0) return tree;
+                          
+                          const [currentPart, ...remainingParts] = parts;
+                          const newPath = [...currentPath, currentPart];
+                          
+                          let dir = tree.find(item => item.name === currentPart && item.children);
+                          
+                          if (remainingParts.length > 0) {
+                            if (!dir) {
+                              dir = {
+                                name: currentPart,
+                                path: newPath.join('/'),
+                                children: []
+                              };
+                              tree.push(dir);
                             }
-                            const [head, ...rest] = pathParts;
-                            const existing = tree.find(item => item.name === head);
-                            if (existing) {
-                                if (existing.children) {
-                                    existing.children = addFile(existing.children);
-                                }
-                            } else {
-                                tree.push({ name: head, path: pathParts.join('/'), children: addFile([]) });
+                            dir.children = addFile(dir.children, remainingParts, newPath);
+                          } else {
+                            if (!tree.some(item => item.name === currentPart)) {
+                              tree.push(newFile);
                             }
-                            return [...tree];
+                          }
+                          
+                          return tree;
                         };
-                        return addFile([...prevTree]);
-                    });
+                      
+                        return addFile([...prevTree], pathParts);
+                      });
 
-                    // Update changedFiles
                     setChangedFiles((prev) => ({
                         ...prev,
                         [selectedFilePath]: {
@@ -315,12 +299,10 @@ const OpenFolder = () => {
                 }
             } else {
                 try {
-                    // Escribir en el archivo usando el handler
                     const writable = await fileEntry.handler.createWritable();
                     await writable.write(modified);
                     await writable.close();
 
-                    // Actualizar estados
                     setChangedFiles((prev) => ({
                         ...prev,
                         [selectedFilePath]: {
@@ -329,7 +311,7 @@ const OpenFolder = () => {
                         }
                     }));
 
-                    handleRefresh();
+                    // handleRefresh();
                 } catch (error) {
                     console.error('Error aplicando cambios:', error);
                     alert('Error al aplicar cambios');
@@ -340,7 +322,6 @@ const OpenFolder = () => {
 
     const loadFilesFromConversation = (conversation) => {
         if (!conversation) {
-            // No files associated with this conversation
             setChangedFiles({});
             return;
         }
@@ -348,7 +329,6 @@ const OpenFolder = () => {
         const parsedFiles = parseAIMessageForFiles(folderHandle.name, conversation.messages[0].content);
 
         if (parsedFiles.length > 0) {
-            
             handleFileChanges(parsedFiles);
         }
     };
@@ -357,43 +337,18 @@ const OpenFolder = () => {
         setSelectedConversation(null);
     };
 
-    const renderDirectoryTree = (files) => {
-        return (
-            <ul>
-                {files.map((file, index) => (
-                    <li key={index}>
-                        {file.children ? (
-                            <span className="folder" onClick={() => handleDirectoryClick(file.name)}>
-                                {expandedDirectories[file.name] ? '-' : '+'} <FolderIcon /> {file.name}
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            checked={selectedSubFolders.includes(file.path)}
-                                            onChange={() => toggleSubFolder(file.path)}
-                                            onClick={(e) => e.stopPropagation()} 
-                                        />
-                                    }
-                                    label="Select"
-                                    style={{ marginLeft: '10px' }}
-                                />
-                            </span>
-                        ) : (
-                            <span className="file" onClick={() => handleFileClick(file)}>
-                                <InsertDriveFileIcon /> {file.name}
-                                <Checkbox
-                                    checked={selectedFiles.includes(file.path)}
-                                    onChange={() => toggleFileSelection(file.path)}
-                                    onClick={(e) => e.stopPropagation()}
-                                    style={{ marginLeft: '10px' }}
-                                />
-                            </span>
-                        )}
-                        {file.children && expandedDirectories[file.name] && renderDirectoryTree(file.children)}
-                    </li>
-                ))}
-            </ul>
-        );
-    };
+    const renderDirectoryTreeComponent = () => (
+        <DirectoryTree
+            files={directoryTree}
+            expandedDirectories={expandedDirectories}
+            onDirectoryClick={handleDirectoryClick}
+            onFileClick={handleFileClick}
+            selectedSubFolders={selectedSubFolders}
+            toggleSubFolder={toggleSubFolder}
+            selectedFiles={selectedFiles}
+            toggleFileSelection={toggleFileSelection}
+        />
+    );
 
     const toggleFileSelection = (filePath) => {
         setSelectedFiles((prev) => {
@@ -428,18 +383,17 @@ const OpenFolder = () => {
         };
     }, [applyChanges]);
 
-    // Resizing Handlers
     useEffect(() => {
         const handleMouseMove = (e) => {
             if (isResizing1.current) {
                 const newWidth = e.clientX - editorRef.current.getBoundingClientRect().left;
-                if (newWidth > 150 && newWidth < window.innerWidth - chatWidth - 150) { // Constraints
+                if (newWidth > 150 && newWidth < window.innerWidth - chatWidth - 150) {
                     setDirectoryWidth(newWidth);
                 }
             }
             if (isResizing2.current) {
-                const newWidth = window.innerWidth - e.clientX; // 300 is minimum chat width
-                if (newWidth > 150 && newWidth < window.innerWidth - directoryWidth - 150) { // Constraints
+                const newWidth = window.innerWidth - e.clientX;
+                if (newWidth > 150 && newWidth < window.innerWidth - directoryWidth - 150) {
                     setChatWidth(newWidth);
                 }
             }
@@ -492,7 +446,7 @@ const OpenFolder = () => {
                         >
                             New Conversation
                         </Button>
-                        <Button variant="contained" onClick={() => setIsDiffView(!isDiffView)} style={{ margin: '10px 0', marginLeft: '20px'     }}>
+                        <Button variant="contained" onClick={() => setIsDiffView(!isDiffView)} style={{ margin: '10px 0', marginLeft: '20px' }}>
                             {isDiffView ? 'Editor View' : 'Changes View'}
                         </Button>
                         {isDiffView && (
@@ -510,7 +464,6 @@ const OpenFolder = () => {
                                 </Button>
                             </>
                         )}
-                        
                     </>
                 )}
             </div>
@@ -518,75 +471,45 @@ const OpenFolder = () => {
             <div className="editor" ref={editorRef}>
                 {folderHandle && (
                     <>
-                        <div
-                            className="directory-tree"
-                            style={{ width: directoryWidth }}
-                        >
+                        <div className="directory-tree" style={{ width: directoryWidth }}>
                             <Typography sx={{ mb: 1, fontWeight: 600, mt: 2 }}>
                                 {folderHandle?.name ? folderHandle.name : ''}
                             </Typography>
-                            {renderDirectoryTree(directoryTree)}
+                            {renderDirectoryTreeComponent()}
                             <ConversationsList onSelectConversation={handleSelectConversation} onStartNewConversation={handleStartNewConversation} />
                         </div>
-                        <div
-                            className="resizer resizer1"
-                            onMouseDown={startResizing1}
-                            ref={resizer1Ref}
-                        />
-                        <div
-                            className="file-content"
-                            style={{ width: `calc(100% - ${directoryWidth + chatWidth + 10}px)` }}
-                        >
-                            {Object.keys(changedFiles).length > 0 && <ChangedFilesBar />}
-
-                            {selectedFilePath ? (
-                                isDiffView ? (
-                                    <CodeMirrorMerge theme={vscodeDark} orientation="a-b" gutter={true} highlightChanges={true} className="cm-merge" collapseUnchanged={collapseUnchanged}>
-                                        <Original
-                                            value={changedFiles[selectedFilePath]?.original || ''}
-                                            extensions={[EditorView.editable.of(false), ...getLanguageExtension(selectedFilePath)]}
-                                        />
-                                        <Modified
-                                            value={changedFiles[selectedFilePath]?.modified || ''}
-                                            onChange={handleModifiedChange}
-                                            extensions={getLanguageExtension(selectedFilePath)}
-                                        />
-                                    </CodeMirrorMerge>
-                                ) : (
-                                    <CodeMirror
-                                        value={changedFiles[selectedFilePath]?.modified || ''}
-                                        onChange={handleModifiedChange}
-                                        theme={vscodeDark}
-                                        extensions={getLanguageExtension(selectedFilePath)}
-                                        height="600px"
-                                    />
-                                )
-                            ) : (
-                                <div className="empty-state">Selecciona un archivo para ver su contenido</div>
+                        <div className="resizer resizer1" onMouseDown={startResizing1} ref={resizer1Ref} />
+                        <div className="file-content" style={{ width: `calc(100% - ${directoryWidth + chatWidth + 10}px)` }}>
+                            {Object.keys(changedFiles).length > 0 && (
+                                <ChangedFilesBar
+                                    changedFiles={changedFiles}
+                                    selectedFilePath={selectedFilePath}
+                                    onSelectFilePath={setSelectedFilePath}
+                                />
                             )}
+                            <FileContent
+                                selectedFilePath={selectedFilePath}
+                                changedFiles={changedFiles}
+                                isDiffView={isDiffView}
+                                handleModifiedChange={handleModifiedChange}
+                                getLanguageExtension={getLanguageExtension}
+                                collapseUnchanged={collapseUnchanged}
+                            />
                         </div>
-                        <div
-                            className="resizer resizer2"
-                            onMouseDown={startResizing2}
-                            ref={resizer2Ref}
-                        />
-                        <div
-                            className="chat"
-                            style={{ width: chatWidth }}
-                        >
+                        <div className="resizer resizer2" onMouseDown={startResizing2} ref={resizer2Ref} />
+                        <div className="chat" style={{ width: chatWidth }}>
                             {folderHandle && (
-                                 <ChatInterface
+                                <ChatInterface
                                     selectedConversation={selectedConversation}
                                     handleMessageClick={handleMessageClick}
                                     onFileChanges={handleFileChanges}
                                     selectedModel={selectedModel}
                                     setSelectedModel={setSelectedModel}
-                                    selectedFiles={selectedFiles} // Pass selectedFiles
-                                    deselectFile={deselectFile} // Pass deselect function
-                                    deselectSubFolder={deselectSubFolder} // Pass deselectSubFolder function
+                                    selectedFiles={selectedFiles}
+                                    deselectFile={deselectFile}
+                                    deselectSubFolder={deselectSubFolder}
                                 />
-                            )}{' '}
-                            {/* Pass selected model to ChatInterface */}
+                            )}
                         </div>
                     </>
                 )}
