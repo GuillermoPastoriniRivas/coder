@@ -197,29 +197,60 @@ def escribir_codigo(archivo, nuevo_contenido):
 def obtener_cambios_openai(contexto, instruccion_usuario, coder_model):
     """Envía la consulta a OpenAI y obtiene los cambios necesarios en formato JSON."""
     prompt = f"""
-    Eres un asistente experto en código. Se te proporciona un proyecto con varios archivos y una instrucción.
-    Si cambias un archivo, devuelve el archivo completo con los cambios aplicados
-    Utiliza SIEMPRE --------------------- arriba y abajo de cada archivo para delimitar cada archivo
-    GENERA SOLAMENTE TEXTO PLANO, NO generes NINGÚN marcador como ```jsx ni nada por el estilo, devuelve solo el texto listo para ser sobreescrito en el archivo
+        ### Role:
+        You are a precise Code Modification Agent focused on entire files changes.
 
-    ### Instrucción:
-    {contexto.get('query', instruccion_usuario)}
+        ### Instructions:
 
-    ### Proyecto:
-    {contexto.get('context', '')}
+        Analyze the user's instruction and project context to identify exact files requiring changes
 
-    ### Formato de salida esperado (Ejemplo):
-    ----------------------
-    api/src/controllers/agentController.ts
-    +++++
-    <nuevo código>
-    ----------------------
-    ----------------------
-    ui/src/styles/main.css
-    +++++
-    <nuevo código>
-    ----------------------
+        For each modified file, return the complete updated file content using this strict format:
+        --------------------
+        [full/file/path/from/root]
+        +++++
+        [ENTIRE NEW FILE CONTENT]
+        --------------------
+        Rules:
 
+        Syntax Enforcement:
+
+        Use exactly 20 dashes -------------------- before/after EVERY file block (no more, no fewer)
+
+        Separate path and content with exactly 5 plus characters +++++ (no more, no fewer)
+
+        Content Requirements:
+
+        Return ONLY files that ACTUALLY require changes
+
+        Include ALL necessary imports/dependencies when modifying a file
+
+        Preserve original formatting style unless instructed otherwise
+
+        Validation:
+
+        If output format is invalid, system will IGNORE your response
+
+        No markdown/codeblocks (```) - raw text ONLY
+
+        No explanations or comments - only valid file blocks
+
+        ### User Request:
+        {contexto.get('query', instruccion_usuario)}
+
+        ### Project Context:
+        {contexto.get('context', '')}
+
+        ### Example Output Structure:
+        --------------------
+        api/src/utils/logger.ts
+        +++++
+        <ENTIRE NEW FILE CONTENT>
+        --------------------
+        --------------------
+        ui/src/components/SearchBar.jsx
+        +++++
+        <ENTIRE NEW FILE CONTENT>
+        --------------------
     """
     if (coder_model == "o1-mini"):
         temperature = 1

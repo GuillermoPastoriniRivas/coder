@@ -7,13 +7,19 @@ import { useDirectory } from '../../context/DirectoryContext';
 import { parseAIMessageForFiles } from '../../utils/functions';
 import { useAuth } from '../../context/AuthContext';
 
-export default function ChatInterface({ selectedConversation, onFileChanges, selectedModel, setSelectedModel, selectedFiles, deselectFile }) {
+export default function ChatInterface({ selectedConversation, onFileChanges, selectedModel, setSelectedModel, selectedFiles, deselectFile, deselectSubFolder }) {
     const [message, setMessage] = useState('');
     const [conversation, setConversation] = useState([]);
     const [loading, setLoading] = useState(false); // State for loading
     const messagesEndRef = useRef(null);
+    const resizerRef = useRef(null); // Ref for the resizer
+    const textareaRef = useRef(null); // Ref for the textarea
     const { folderHandle, selectedSubFolders, setConversations } = useDirectory(); // Access selectedSubFolders
     const { updateSaldo } = useAuth();
+
+    const [isResizing, setIsResizing] = useState(false);
+    const [lastY, setLastY] = useState(0);
+    const [textareaHeight, setTextareaHeight] = useState(100); // Initial height in px
 
     const models = ['o1-mini', 'gpt-4o-mini']; // Available models
 
@@ -84,6 +90,39 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [conversation]);
 
+    // Resizing Handlers
+    useEffect(() => {
+        const handleMouseMove = (e) => {
+            if (!isResizing) return;
+            const deltaY = e.clientY - lastY;
+            setTextareaHeight((prevHeight) => {
+                const newHeight = prevHeight - deltaY;
+                return newHeight > 50 ? newHeight : 50; // Minimum height
+            });
+            setLastY(e.clientY);
+        };
+
+        const handleMouseUp = () => {
+            if (isResizing) {
+                setIsResizing(false);
+            }
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isResizing, lastY]);
+
+    const startResizing = (e) => {
+        e.preventDefault();
+        setIsResizing(true);
+        setLastY(e.clientY);
+    };
+
     return (
         <Box className="chat-container">
             {/* Selected Files/Folders */}
@@ -92,7 +131,7 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
                     <Chip
                         key={index}
                         label={folder}
-                        onDelete={() => deselectFile(folder)}
+                        onDelete={() => deselectSubFolder(folder)}
                         color="secondary"
                         variant="outlined"
                     />
@@ -129,7 +168,15 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
 
             {/* Message Input */}
             <Paper className="chat-input" elevation={1} sx={{ display: 'flex', flexDirection: 'column', boxShadow: 'none', borderRadius: '8px', padding: '0' }}>
+                {/* Resizer */}
+                <div
+                    className="textarea-resizer"
+                    onMouseDown={startResizing}
+                    ref={resizerRef}
+                />
+
                 <textarea
+                    ref={textareaRef}
                     minRows={3}
                     placeholder="Type your message..."
                     value={message}
@@ -140,8 +187,10 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
                         borderRadius: '8px',
                         border: 'none',
                         fontSize: '1rem',
-                        maxHeight: '250px',        // Added maxHeight
-                        overflow: 'auto'           // Added overflow
+                        overflow: 'auto',           // Added overflow
+                        resize: 'none',             // Disable default resize
+                        height: `${textareaHeight}px`,
+                        boxSizing: 'border-box'
                     }}
                 ></textarea>
                 <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', padding: '10px 20px', justifyContent: 'space-between' }}>
