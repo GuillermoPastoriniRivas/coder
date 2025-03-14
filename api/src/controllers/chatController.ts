@@ -62,7 +62,7 @@ export const updateConversationTitle = async (req: Request, res: Response) => {
     }
 };
 
-export const deleteConversation = async (req: Request, res: Response) => { // Nueva función para eliminar conversación
+export const deleteConversation = async (req: Request, res: Response) => {
     const { conversationId } = req.params;
 
     try {
@@ -71,7 +71,7 @@ export const deleteConversation = async (req: Request, res: Response) => { // Nu
             return res.status(404).json({ error: 'Conversation not found' });
         }
 
-        await conversationRepository.deleteConversation(conversationId); // Lógica para eliminar la conversación
+        await conversationRepository.deleteConversation(conversationId);
         res.json({ message: 'Conversation deleted successfully' });
     } catch (error) {
         console.error('Error deleting conversation:', error);

@@ -1,5 +1,5 @@
 export const parseAIMessageForFiles = (folderName, content) => {
-    const sections = content.split('----------------------').filter((s) => s.trim() !== '');
+    const sections = content.split('--------------------').filter((s) => s.trim() !== '');
 
     return sections
         .map((section) => {

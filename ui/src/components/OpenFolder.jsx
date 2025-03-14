@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import CodeMirrorMerge from 'react-codemirror-merge';
-import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { javascript } from '@codemirror/lang-javascript';
 import { python } from '@codemirror/lang-python';
@@ -16,7 +15,7 @@ import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import '../styles/OpenFolder.css';
 import ChatInterface from './Chat/ChatInterface';
 import { useDirectory } from '../context/DirectoryContext';
-import { Button, Typography, CircularProgress, MenuItem, Select, Checkbox, FormControlLabel } from '@mui/material';
+import { Button, Typography, CircularProgress, Checkbox, FormControlLabel } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import api from '../api';
 import ConversationsList from './Chat/Conversations';
@@ -55,15 +54,11 @@ const OpenFolder = () => {
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [loading, setLoading] = useState(false);
     const [isDiffView, setIsDiffView] = useState(true);
-    const containerRef = useRef(null);
-    const diffEditorRef = useRef(null);
     const [changedFiles, setChangedFiles] = useState({});
     const [selectedFilePath, setSelectedFilePath] = useState(null);
     const [selectedModel, setSelectedModel] = useState('o1-mini'); // State for selected model
 
     const [selectedFiles, setSelectedFiles] = useState([]); // State for selected files
-
-    const models = ['o1-mini', 'gpt-4o-mini']; // Available models
 
     const [directoryWidth, setDirectoryWidth] = useState(300); // Initial width in px
     const [chatWidth, setChatWidth] = useState(300); // Initial width in px
@@ -413,6 +408,12 @@ const OpenFolder = () => {
         setSelectedFiles((prev) => prev.filter((path) => path !== filePath));
     };
 
+    const deselectSubFolder = (folderPath) => {
+        if (selectedSubFolders.includes(folderPath)) {
+            toggleSubFolder(folderPath);
+        }
+    };
+
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.ctrlKey && (e.key === 's' || e.key === 'S')) {
@@ -559,6 +560,7 @@ const OpenFolder = () => {
                                     setSelectedModel={setSelectedModel}
                                     selectedFiles={selectedFiles} // Pass selectedFiles
                                     deselectFile={deselectFile} // Pass deselect function
+                                    deselectSubFolder={deselectSubFolder} // Pass deselectSubFolder function
                                 />
                             )}{' '}
                             {/* Pass selected model to ChatInterface */}
