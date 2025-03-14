@@ -71,10 +71,10 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
             }
 
             const aiMessage = {
-                role: 'assistant',
-                content: aiResponse,
+                role: 'default',
+                content: 'Your instruction has been completed. Please review and apply the changes.',
                 timestamp: new Date()
-            };
+            }
             setConversation((prev) => [...prev, aiMessage]);
             fetchSaldo();
             const responseConvs = await api.getConversations(folderHandle.name);
@@ -203,7 +203,8 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
                     >
                         {models.map((model) => (
                             <MenuItem key={model} value={model}>
-                                {model}
+                                {model} {' '}
+                                <i style={{fontSize: '12px', marginLeft: '5px'}}>{model === 'o1-mini' ? ' 1 credit' : ' free'}</i>
                             </MenuItem>
                         ))}
                     </Select>

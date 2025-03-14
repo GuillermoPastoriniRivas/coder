@@ -17,8 +17,10 @@ export async function callAgent(query: string, userId: string, folder: string, s
     }
 
     // Deduct 1 saldo
-    user.saldo -= 1;
-    await user.save();
+    if(model === 'o1-mini') {
+        user.saldo -= 1;
+        await user.save();
+    }
 
     const safeUserId = userId.replace(/[\/\\]/g, '_');
     const safeFolder = folder.replace(/[\/\\]/g, '_');

@@ -56,12 +56,13 @@ const OpenFolder = () => {
     const [isDiffView, setIsDiffView] = useState(true);
     const [changedFiles, setChangedFiles] = useState({});
     const [selectedFilePath, setSelectedFilePath] = useState(null);
-    const [selectedModel, setSelectedModel] = useState('o1-mini'); // State for selected model
+    const [selectedModel, setSelectedModel] = useState('o1-mini'); 
 
-    const [selectedFiles, setSelectedFiles] = useState([]); // State for selected files
+    const [selectedFiles, setSelectedFiles] = useState([]); 
 
-    const [directoryWidth, setDirectoryWidth] = useState(300); // Initial width in px
-    const [chatWidth, setChatWidth] = useState(300); // Initial width in px
+    const [directoryWidth, setDirectoryWidth] = useState(300); 
+    const [chatWidth, setChatWidth] = useState(300); 
+    const [collapseUnchanged, setCollapseUnchanged] = useState(false); 
     const editorRef = useRef(null);
     const resizer1Ref = useRef(null);
     const resizer2Ref = useRef(null);
@@ -482,12 +483,34 @@ const OpenFolder = () => {
                         <Button variant="contained" color="primary" onClick={() => handleRefresh()} startIcon={<RefreshIcon />} disabled={loading}>
                             {loading ? <CircularProgress size={24} /> : 'Refresh'}
                         </Button>
-                        <Button variant="contained" onClick={() => setIsDiffView(!isDiffView)} style={{ margin: '10px 0', marginLeft: 'calc(10% - 8px)' }}>
-                            {isDiffView ? 'Normal View' : 'Diff View'}
+                        <Button
+                            variant="contained"
+                            color="secondary"
+                            className='new-conversation-button'
+                            onClick={handleStartNewConversation}
+                            style={{ margin: '10px 0', marginLeft: '5%' }}
+                        >
+                            New Conversation
                         </Button>
-                        <Button variant="contained" onClick={applyChanges} style={{ margin: '10px 0', marginLeft: '10px' }}>
-                            Apply Changes
+                        <Button variant="contained" onClick={() => setIsDiffView(!isDiffView)} style={{ margin: '10px 0', marginLeft: '20px'     }}>
+                            {isDiffView ? 'Editor View' : 'Changes View'}
                         </Button>
+                        {isDiffView && (
+                            <>
+                                <Button variant="contained" onClick={applyChanges} style={{ margin: '10px 0', marginLeft: '20px' }}>
+                                    Apply Changes
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    onClick={() => setCollapseUnchanged(!collapseUnchanged)}
+                                    style={{ margin: '10px 0', marginLeft: '20px' }}
+                                >
+                                    Toggle Collapse
+                                </Button>
+                            </>
+                        )}
+                        
                     </>
                 )}
             </div>
@@ -518,7 +541,7 @@ const OpenFolder = () => {
 
                             {selectedFilePath ? (
                                 isDiffView ? (
-                                    <CodeMirrorMerge theme={vscodeDark} orientation="a-b" gutter={true} highlightChanges={true} className="cm-merge">
+                                    <CodeMirrorMerge theme={vscodeDark} orientation="a-b" gutter={true} highlightChanges={true} className="cm-merge" collapseUnchanged={collapseUnchanged}>
                                         <Original
                                             value={changedFiles[selectedFilePath]?.original || ''}
                                             extensions={[EditorView.editable.of(false), ...getLanguageExtension(selectedFilePath)]}
