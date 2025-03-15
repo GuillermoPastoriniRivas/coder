@@ -45,13 +45,13 @@ class AIDocumenter:
     def _is_valid_file(self, file_path):
         if any(part in self.excluded_dirs for part in file_path.parts):
             return False
-        return file_path.suffix in {'.ts', '.js', '.tsx', '.jsx', '.css', '.py'} or file_path.name in ["package.json"]
+        return file_path.suffix in {'.ts', '.js', '.tsx', '.jsx', '.css', '.py', '.scss', '.html'} or file_path.name in ["package.json"]
 
     def _get_file_analysis(self, code, file_path):
         prompt = f"""
         Analyze this source file and generate documentation in JSON format. Follow this schema:
         {{
-            "description": "string",  // Technical description in English, porpuse, functionality, etc.
+            "description": "string",  // Concise technical purpose/functionality. Text that will be used for vector search
             "dependencies": [         // ONLY project files, not libraries, skip node_modules imports
                 {{
                     "file_path": "string", // Copy the exact import path as it is in the file
@@ -66,15 +66,15 @@ class AIDocumenter:
         - Focus on technical functionality
         - Current file path: {file_path}
 
-        Code:
-        {code}
+        Source File:
+        {code[:10000]}
         """
 
         try:
             response = self.client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.2,
+                temperature=0.1,
                 response_format={"type": "json_object"}
             )
 
@@ -124,7 +124,6 @@ class AIDocumenter:
         deleted_files = existing_files - current_files
 
         if deleted_files:
-            print(f"Archivos eliminados o movidos: {deleted_files}")
             for file in deleted_files:
                 del self.docs["project"]["files"][file]
                 self.docs["file_hashes"].pop(file, None) 

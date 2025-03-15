@@ -454,3 +454,8 @@ div[aria-haspopup="listbox"] {
 .new-conversation-button {
   background-color: var(--color-secondary) !important; 
 }
+
+.App {
+  min-width: 1200px;
+  overflow: auto;
+}

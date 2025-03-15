@@ -50,7 +50,7 @@ const OpenFolder = () => {
     const [fileContent, setFileContent] = useState('');
     const [expandedDirectories, setExpandedDirectories] = useState({});
     const [languageClassName, setLanguageClassName] = useState('language-plaintext');
-    const { folderHandle, setFolderHandle, directoryTree, setDirectoryTree, setConversations, selectedSubFolders, toggleSubFolder } = useDirectory();
+    const { folderHandle, setFolderHandle, directoryTree, setDirectoryTree, setConversations, selectedSubFolders, toggleSubFolder, clearSelectedSubFolders } = useDirectory();
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [loading, setLoading] = useState(false);
     const [isDiffView, setIsDiffView] = useState(true);
@@ -335,6 +335,11 @@ const OpenFolder = () => {
 
     const handleStartNewConversation = () => {
         setSelectedConversation(null);
+        setSelectedFiles([]);
+        clearSelectedSubFolders();
+        setSelectedFilePath(null);
+        setChangedFiles({});
+        handleRefresh();
     };
 
     const renderDirectoryTreeComponent = () => (

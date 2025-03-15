@@ -33,14 +33,14 @@ export default function Menu() {
             <Toolbar sx={{ justifyContent: 'space-between' }}>
                 <Button color="inherit" component={Link} to="/">
                     <Typography variant="h6" sx={{ color: 'white' }}>
-                        Coder UI
+                        Geenier
                     </Typography>
                 </Button>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Box className="saldo-container">
                         <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/pricing">
                             {saldo} Credits remaining {' '}
-                            {saldo < 6 ? ' Buy more here' : ''}
+                            <span style={{color: "#5787af", marginLeft: '10px'}}>{saldo < 6 ? ' Buy more here' : ''}</span>
                         </Button>
                     </Box>
                     <Box sx={{ mr: '30px' }}>

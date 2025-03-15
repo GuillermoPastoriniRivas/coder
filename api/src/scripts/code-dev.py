@@ -51,10 +51,14 @@ class CodeRAG:
         self.model = SentenceTransformer('all-mpnet-base-v2')
         self.cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
 
-        with open(json_path) as f:
-            full_data = json.load(f)
-            self.project = full_data.get("project", {})
-            self.data = self.project.get("files", {})
+        if os.path.exists(json_path):
+            with open(json_path) as f:
+                full_data = json.load(f)
+                self.project = full_data.get("project", {})
+                self.data = self.project.get("files", {})
+        else:
+            self.project = {}
+            self.data = {}
 
         self.file_records = []
         for file_path_rel, file_data in self.data.items():
@@ -173,6 +177,12 @@ def generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folde
     code_base_path = carpeta_proyecto + "/"
     rag = CodeRAG(code_base_path, json_path, sub_folders, selected_files).query(instruccion_usuario)
 
+    if 'error' in rag:
+        return {
+            'context': '[]', 
+            'query': instruccion_usuario
+        }
+
     contexto = []
     for item in rag.get('results', []):
         file_path = item['file_path']
@@ -184,16 +194,6 @@ def generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folde
         'query': rag.get('queries', instruccion_usuario),
     }
 
-def leer_codigo(archivo):
-    """Lee el contenido de un archivo de código."""
-    with open(archivo, "r", encoding="utf-8") as f:
-        return f.read()
-
-def escribir_codigo(archivo, nuevo_contenido):
-    """Escribe el código modificado en el archivo original."""
-    with open(archivo, "w", encoding="utf-8") as f:
-        f.write(nuevo_contenido)
-
 def obtener_cambios_openai(contexto, instruccion_usuario, coder_model):
     """Envía la consulta a OpenAI y obtiene los cambios necesarios en formato JSON."""
     prompt = f"""
@@ -202,7 +202,7 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model):
 
         ### Instructions:
 
-        Analyze the user's instruction and project context to identify exact files requiring changes or be created
+        You have to analyze the user's instructions and the project context to identify the exact files requiring changes to be done in order to achieve the user requirements.
 
         For each modified or created file, return the complete updated file content using this strict format:
         --------------------
@@ -230,7 +230,7 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model):
 
         If output format is invalid, system will IGNORE your response
 
-        No markdown/codeblocks (```) - raw text ONLY
+        No markdown/codeblocks - raw text ONLY
 
         No explanations or comments - only valid file blocks
 
@@ -251,6 +251,8 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model):
         +++++
         <ENTIRE NEW FILE CONTENT>
         --------------------
+
+        ### LET'S WORK THIS OUT IN A STEP BY STEP WAY YO BE SURE WE HAVE THE RIGHT ANSWER
     """
     if (coder_model == "o1-mini"):
         temperature = 1
