@@ -37,7 +37,7 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
         setConversation([
             {
                 role: 'default',
-                content: 'Hello! I can help you understand, debug, and improve your code. Ask me about functions, errors, refactoring, or any technical queries.',
+                content: "Hello! I can generate code changes based on your instructions. Just tell me what you want to modify",
                 timestamp: new Date()
             }
         ]);

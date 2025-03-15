@@ -22,6 +22,10 @@ export const DirectoryProvider = ({ children }) => {
         });
     };
 
+    const clearSelectedSubFolders = () => {
+        setSelectedSubFolders([]);
+    };
+
     const value = {
         folderHandle,
         setFolderHandle,
@@ -31,6 +35,7 @@ export const DirectoryProvider = ({ children }) => {
         setConversations,
         selectedSubFolders, // Exposed selectedSubFolders
         toggleSubFolder,    // Function to toggle selection
+        clearSelectedSubFolders, // Function to clear selectedSubFolders
     };
 
     return (
