@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Button, Typography, Paper, TextareaAutosize, CircularProgress, Chip, MenuItem, Select } from '@mui/material';
+import { Box, Button, Typography, Paper, CircularProgress, Chip, MenuItem, Select, LinearProgress, Tooltip } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import api from '../../api';
 import '../../styles/App.css';
@@ -11,11 +11,13 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
     const [message, setMessage] = useState('');
     const [conversation, setConversation] = useState([]);
     const [loading, setLoading] = useState(false); // State for loading
+    const [progress, setProgress] = useState(0); // State for progress bar
+    const progressInterval = useRef(null); // Ref for progress interval
     const messagesEndRef = useRef(null);
     const resizerRef = useRef(null); // Ref for the resizer
     const textareaRef = useRef(null); // Ref for the textarea
     const { folderHandle, selectedSubFolders, setConversations } = useDirectory(); // Access selectedSubFolders
-    const { updateSaldo } = useAuth();
+    const { saldo, updateSaldo } = useAuth();
 
     const [isResizing, setIsResizing] = useState(false);
     const [lastY, setLastY] = useState(0);
@@ -34,13 +36,17 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
     };
 
     const loadConversation = async () => {
-        setConversation([
-            {
-                role: 'default',
-                content: "Hello! I can generate code changes based on your instructions. Just tell me what you want to modify",
-                timestamp: new Date()
-            }
-        ]);
+        if (selectedConversation && selectedConversation.messages) {
+            setConversation(selectedConversation.messages);
+        } else {
+            setConversation([
+                {
+                    role: 'default',
+                    content: "Hello! I can generate code changes based on your instructions. Just tell me what you want to modify",
+                    timestamp: new Date()
+                }
+            ]);
+        }
     };
 
     useEffect(() => {
@@ -53,12 +59,25 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
         const userMessage = { role: 'user', content: message, timestamp: new Date() };
         setConversation((prev) => [...prev, userMessage]);
         setLoading(true); // Start loading
+        setProgress(0); // Initialize progress
         setMessage('');
+        
+        // Start Progress Interval
+        progressInterval.current = setInterval(() => {
+            setProgress((prev) => {
+                if (prev < 20) return prev + 3;
+                if (prev < 40) return prev + 5;
+                if (prev < 60) return prev + 4;
+                if (prev < 80) return prev + 2;
+                return prev;
+            });
+        }, 2000); // Every 2 seconds
+
         try {
             const response = await api.sendMessage({
                 message,
                 folder: folderHandle.name,
-                subFolders: selectedSubFolders, // Include selected subFolders in the request
+                subFolders: selectedSubFolders, // Include selectedSubFolders in the request
                 selectedFiles, // Include selectedFiles in the request
                 model: selectedModel // Include selected model in the request
             });
@@ -79,11 +98,20 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
             fetchSaldo();
             const responseConvs = await api.getConversations(folderHandle.name);
             setConversations(responseConvs.data); 
+
+            // Fast forward progress to 100%
+            clearInterval(progressInterval.current);
+            setProgress(80);
+            setTimeout(() => setProgress(90), 300);
+            setTimeout(() => setProgress(100), 500);
+            setTimeout(() => {
+                setMessage('');
+                setLoading(false); 
+            }, 600);
+            
         } catch (error) {
             console.error('Error sending message:', error);
         }
-        setMessage('');
-        setLoading(false); // Stop loading
     };
 
     useEffect(() => {
@@ -122,6 +150,15 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
         setIsResizing(true);
         setLastY(e.clientY);
     };
+
+    // Cleanup interval on unmount
+    useEffect(() => {
+        return () => {
+            if (progressInterval.current) {
+                clearInterval(progressInterval.current);
+            }
+        };
+    }, []);
 
     return (
         <Box className="chat-container">
@@ -193,6 +230,17 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
                         boxSizing: 'border-box'
                     }}
                 ></textarea>
+
+                {/* Progress Bar */}
+                {loading && (
+                    <LinearProgress
+                        variant="determinate"
+                        color='primary'
+                        value={progress}
+                        sx={{ height: 4, borderRadius: 2, mt: 0, width: '100%' }}
+                    />
+                )}
+
                 <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', padding: '10px 20px', justifyContent: 'space-between' }}>
                     <Select
                         value={selectedModel}
@@ -208,9 +256,19 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
                             </MenuItem>
                         ))}
                     </Select>
-                    <Button variant="contained" onClick={handleSend} disabled={loading || !message} endIcon={loading ? <CircularProgress size={24} /> : <SendIcon />}>
-                        {loading ? '' : 'Send'}
-                    </Button>
+                    {saldo === 0 ? (
+                        <Tooltip title="No tienes creditos para hacer esta consulta">
+                            <span>
+                                <Button variant="contained" onClick={handleSend} disabled={loading || !message || saldo === 0} endIcon={loading ? <CircularProgress size={24} /> : <SendIcon />}>
+                                    {loading ? '' : 'Send'}
+                                </Button>
+                            </span>
+                        </Tooltip>
+                    ) : (
+                        <Button variant="contained" onClick={handleSend} disabled={loading || !message} endIcon={loading ? <CircularProgress size={24} /> : <SendIcon />}>
+                            {loading ? '' : 'Send'}
+                        </Button>
+                    )}
                 </Box>
             </Paper>
         </Box>
