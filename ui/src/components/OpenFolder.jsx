@@ -320,6 +320,115 @@ const OpenFolder = () => {
         }
     }, [selectedFilePath, changedFiles, findFileByPath, directoryTree, handleRefresh, folderHandle]);
 
+    const applyAllChanges = useCallback(async () => {
+        if (Object.keys(changedFiles).length === 0) return;
+
+        setLoading(true);
+        try {
+            for (const filePath of Object.keys(changedFiles)) {
+                const { modified } = changedFiles[filePath];
+                let fileEntry = findFileByPath(directoryTree, filePath);
+
+                if (!fileEntry || !fileEntry.handler) {
+                    try {
+                        const pathParts = filePath.split('/');
+                        let currentHandle = folderHandle;
+
+                        for (let i = 0; i < pathParts.length - 1; i++) {
+                            const part = pathParts[i];
+                            let subDir = null;
+                            for await (const entry of currentHandle.values()) {
+                                if (entry.kind === 'directory' && entry.name === part) {
+                                    subDir = entry;
+                                    break;
+                                }
+                            }
+                            if (!subDir) {
+                                subDir = await currentHandle.getDirectoryHandle(part, { create: true });
+                            }
+                            currentHandle = subDir;
+                        }
+
+                        const fileName = pathParts[pathParts.length - 1];
+                        const newFileHandle = await currentHandle.getFileHandle(fileName, { create: true });
+
+                        const writable = await newFileHandle.createWritable();
+                        await writable.write(modified);
+                        await writable.close();
+
+                        const newFile = { name: fileName, path: filePath, content: modified, handler: newFileHandle };
+                        setDirectoryTree((prevTree) => {
+                            const addFile = (tree, parts, currentPath = []) => {
+                              if (parts.length === 0) return tree;
+                              
+                              const [currentPart, ...remainingParts] = parts;
+                              const newPath = [...currentPath, currentPart];
+                              
+                              let dir = tree.find(item => item.name === currentPart && item.children);
+                              
+                              if (remainingParts.length > 0) {
+                                if (!dir) {
+                                  dir = {
+                                    name: currentPart,
+                                    path: newPath.join('/'),
+                                    children: []
+                                  };
+                                  tree.push(dir);
+                                }
+                                dir.children = addFile(dir.children, remainingParts, newPath);
+                              } else {
+                                if (!tree.some(item => item.name === currentPart)) {
+                                  tree.push(newFile);
+                                }
+                              }
+                              
+                              return tree;
+                            };
+                          
+                            return addFile([...prevTree], pathParts);
+                          });
+
+                        setChangedFiles((prev) => ({
+                            ...prev,
+                            [filePath]: {
+                                original: modified,
+                                modified: modified,
+                                language: languageMap[filePath.split('.').pop().toLowerCase()] || 'plaintext'
+                            }
+                        }));
+                    } catch (error) {
+                        console.error(`Error creating new file ${filePath}:`, error);
+                        alert(`Error al crear el nuevo archivo ${filePath}.`);
+                    }
+                } else {
+                    try {
+                        const writable = await fileEntry.handler.createWritable();
+                        await writable.write(modified);
+                        await writable.close();
+
+                        setChangedFiles((prev) => ({
+                            ...prev,
+                            [filePath]: {
+                                ...prev[filePath],
+                                original: modified
+                            }
+                        }));
+                    } catch (error) {
+                        console.error(`Error aplicando cambios en ${filePath}:`, error);
+                        alert(`Error al aplicar cambios en ${filePath}.`);
+                    }
+                }
+            }
+
+            // After applying all changes, refresh the view
+            await handleRefresh();
+        } catch (error) {
+            console.error('Error aplicando todos los cambios:', error);
+            alert('Error al aplicar todos los cambios.');
+        }
+        setLoading(false);
+    }, [changedFiles, findFileByPath, directoryTree, handleRefresh, folderHandle]);
+
     const loadFilesFromConversation = (conversation) => {
         if (!conversation) {
             setChangedFiles({});
@@ -458,6 +567,9 @@ const OpenFolder = () => {
                             <>
                                 <Button variant="contained" onClick={applyChanges} style={{ margin: '10px 0', marginLeft: '20px' }}>
                                     Apply Changes
+                                </Button>
+                                <Button variant="contained" onClick={applyAllChanges} style={{ margin: '10px 0', marginLeft: '20px' }}>
+                                    Apply All
                                 </Button>
                                 <Button
                                     variant="contained"
