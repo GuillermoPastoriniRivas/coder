@@ -254,21 +254,19 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model):
 
         ### LET'S WORK THIS OUT IN A STEP BY STEP WAY YO BE SURE WE HAVE THE RIGHT ANSWER
     """
+    if (coder_model == "o1-mini"):
+        temperature = 1
+    else:
+        temperature = 0.2
+    
 
     try:
-    
-        response = client.responses.create(
-            model="o3-mini",
-            reasoning={"effort": "high"},
-            input=[
-                {
-                    "role": "user",
-                    "content": prompt,
-                }
-            ]
+        respuesta = client.chat.completions.create(
+            model=coder_model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=temperature
         )
-
-        return response.output_text
+        return respuesta.choices[0].message.content
     except Exception as e:
         print(f"Error al obtener cambios de OpenAI: {e}")
         return ""

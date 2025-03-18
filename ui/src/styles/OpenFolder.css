@@ -193,10 +193,6 @@ textarea {
     color: #d4d4d4;
 }
 
-.cm-gutter {
-    min-width: 30px;
-}
-
 .cm-theme {
     height: 75vh;
 }
