@@ -459,3 +459,15 @@ div[aria-haspopup="listbox"] {
   min-width: 1200px;
   overflow: auto;
 }
+
+.resizer {
+  transition: background-color 0.2s;
+}
+
+.resizer:hover {
+  background-color: #999;
+}
+
+.cm-mergeViewEditor:first-child {
+  flex-grow: 0.75;
+}
