@@ -50,16 +50,21 @@ const OpenFolder = () => {
     const [isDiffView, setIsDiffView] = useState(true);
     const [changedFiles, setChangedFiles] = useState({});
     const [selectedFilePath, setSelectedFilePath] = useState(null);
-    const [selectedModel, setSelectedModel] = useState('o1-mini');
+    const [selectedModel, setSelectedModel] = useState('o3-mini');
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [directoryWidth, setDirectoryWidth] = useState(300);
     const [chatWidth, setChatWidth] = useState(300);
     const [collapseUnchanged, setCollapseUnchanged] = useState(false);
+    const [footerInfoVisible, setFooterInfoVisible] = useState(true);
     const editorRef = useRef(null);
     const resizer1Ref = useRef(null);
     const resizer2Ref = useRef(null);
     const isResizing1 = useRef(false);
     const isResizing2 = useRef(false);
+
+    const toggleFooterInfo = () => {
+        setFooterInfoVisible(prev => !prev);
+    };
 
     const getLanguageExtension = (path) => {
         const extension = path?.split('.').pop().toLowerCase();
@@ -136,10 +141,12 @@ const OpenFolder = () => {
         setDirectoryTree(files);
         const response = await api.getConversations(folderHandle.name);
         setConversations(response.data);
-        await api.syncDirectory({
-            folder: folderHandle.name,
-            directoryTree: directoryTree
-        });
+        const payload = {
+            folder: folderHandle ? folderHandle.name : null,
+            directoryTree: directoryTree,
+            selectedFolders: selectedSubFolders.length > 0 ? selectedSubFolders : null,
+          };
+        await api.syncDirectory(payload);
         setLoading(false);
     };
 
@@ -188,7 +195,7 @@ const OpenFolder = () => {
 
             setSelectedFilePath(file.path);
             setLanguageClassName(`language-${lang}`);
-            setIsDiffView(false)
+            setIsDiffView(false);
         } catch (error) {
             console.error('Error opening file:', error);
         }
@@ -209,7 +216,7 @@ const OpenFolder = () => {
         console.log('Selected conversation:', conversation);
         setSelectedConversation(conversation);
         loadFilesFromConversation(conversation);
-        setIsDiffView(true)
+        setIsDiffView(true);
     };
 
     const applyChanges = useCallback(async () => {
@@ -247,34 +254,34 @@ const OpenFolder = () => {
                     const newFile = { name: fileName, path: selectedFilePath, content: modified, handler: newFileHandle };
                     setDirectoryTree((prevTree) => {
                         const addFile = (tree, parts, currentPath = []) => {
-                          if (parts.length === 0) return tree;
-                          
-                          const [currentPart, ...remainingParts] = parts;
-                          const newPath = [...currentPath, currentPart];
-                          
-                          let dir = tree.find(item => item.name === currentPart && item.children);
-                          
-                          if (remainingParts.length > 0) {
-                            if (!dir) {
-                              dir = {
-                                name: currentPart,
-                                path: newPath.join('/'),
-                                children: []
-                              };
-                              tree.push(dir);
+                            if (parts.length === 0) return tree;
+
+                            const [currentPart, ...remainingParts] = parts;
+                            const newPath = [...currentPath, currentPart];
+
+                            let dir = tree.find((item) => item.name === currentPart && item.children);
+
+                            if (remainingParts.length > 0) {
+                                if (!dir) {
+                                    dir = {
+                                        name: currentPart,
+                                        path: newPath.join('/'),
+                                        children: []
+                                    };
+                                    tree.push(dir);
+                                }
+                                dir.children = addFile(dir.children, remainingParts, newPath);
+                            } else {
+                                if (!tree.some((item) => item.name === currentPart)) {
+                                    tree.push(newFile);
+                                }
                             }
-                            dir.children = addFile(dir.children, remainingParts, newPath);
-                          } else {
-                            if (!tree.some(item => item.name === currentPart)) {
-                              tree.push(newFile);
-                            }
-                          }
-                          
-                          return tree;
+
+                            return tree;
                         };
-                      
+
                         return addFile([...prevTree], pathParts);
-                      });
+                    });
 
                     setChangedFiles((prev) => ({
                         ...prev,
@@ -353,34 +360,34 @@ const OpenFolder = () => {
                         const newFile = { name: fileName, path: filePath, content: modified, handler: newFileHandle };
                         setDirectoryTree((prevTree) => {
                             const addFile = (tree, parts, currentPath = []) => {
-                              if (parts.length === 0) return tree;
-                              
-                              const [currentPart, ...remainingParts] = parts;
-                              const newPath = [...currentPath, currentPart];
-                              
-                              let dir = tree.find(item => item.name === currentPart && item.children);
-                              
-                              if (remainingParts.length > 0) {
-                                if (!dir) {
-                                  dir = {
-                                    name: currentPart,
-                                    path: newPath.join('/'),
-                                    children: []
-                                  };
-                                  tree.push(dir);
+                                if (parts.length === 0) return tree;
+
+                                const [currentPart, ...remainingParts] = parts;
+                                const newPath = [...currentPath, currentPart];
+
+                                let dir = tree.find((item) => item.name === currentPart && item.children);
+
+                                if (remainingParts.length > 0) {
+                                    if (!dir) {
+                                        dir = {
+                                            name: currentPart,
+                                            path: newPath.join('/'),
+                                            children: []
+                                        };
+                                        tree.push(dir);
+                                    }
+                                    dir.children = addFile(dir.children, remainingParts, newPath);
+                                } else {
+                                    if (!tree.some((item) => item.name === currentPart)) {
+                                        tree.push(newFile);
+                                    }
                                 }
-                                dir.children = addFile(dir.children, remainingParts, newPath);
-                              } else {
-                                if (!tree.some(item => item.name === currentPart)) {
-                                  tree.push(newFile);
-                                }
-                              }
-                              
-                              return tree;
+
+                                return tree;
                             };
-                          
+
                             return addFile([...prevTree], pathParts);
-                          });
+                        });
 
                         setChangedFiles((prev) => ({
                             ...prev,
@@ -391,7 +398,7 @@ const OpenFolder = () => {
                             }
                         }));
                     } catch (error) {
-                        console.error(`Error creating new file ${filePath}:`, error);
+                        console.error(`Error creando el nuevo archivo ${filePath}:`, error);
                         alert(`Error al crear el nuevo archivo ${filePath}.`);
                     }
                 } else {
@@ -548,7 +555,7 @@ const OpenFolder = () => {
                         <Button
                             variant="contained"
                             color="secondary"
-                            className='new-conversation-button'
+                            className="new-conversation-button"
                             onClick={handleStartNewConversation}
                             style={{ margin: '10px 0', marginLeft: '5%' }}
                         >
@@ -559,22 +566,22 @@ const OpenFolder = () => {
                         </Button>
                         {isDiffView && (
                             <>
-                                <Button variant="contained" onClick={applyChanges} style={{ margin: '10px 0', marginLeft: '20px' }}>
-                                    Apply Changes
-                                </Button>
-                                <Button variant="contained" onClick={applyAllChanges} style={{ margin: '10px 0', marginLeft: '20px' }}>
-                                    Apply All
-                                </Button>
                                 <Button
                                     variant="contained"
                                     color="primary"
                                     onClick={() => setCollapseUnchanged(!collapseUnchanged)}
                                     style={{ margin: '10px 0', marginLeft: '20px' }}
                                 >
-                                    Toggle Collapse
+                                    {collapseUnchanged ? 'View Unchanged' : 'Hide Unchanged'}
                                 </Button>
                             </>
                         )}
+                        <Button variant="contained" onClick={applyChanges} style={{ margin: '10px 0', marginLeft: '20px' }}>
+                            Apply Changes
+                        </Button>
+                        <Button variant="contained" onClick={applyAllChanges} style={{ margin: '10px 0', marginLeft: '20px' }}>
+                            Apply All
+                        </Button>
                     </>
                 )}
             </div>
@@ -583,20 +590,14 @@ const OpenFolder = () => {
                 {folderHandle && (
                     <>
                         <div className="directory-tree" style={{ width: directoryWidth }}>
-                            <Typography sx={{ mb: 1, fontWeight: 600, mt: 2 }}>
-                                {folderHandle?.name ? folderHandle.name : ''}
-                            </Typography>
+                            <Typography sx={{ mb: 1, fontWeight: 600, mt: 2 }}>{folderHandle?.name ? folderHandle.name : ''}</Typography>
                             {renderDirectoryTreeComponent()}
                             <ConversationsList onSelectConversation={handleSelectConversation} onStartNewConversation={handleStartNewConversation} />
                         </div>
                         <div className="resizer resizer1" onMouseDown={startResizing1} ref={resizer1Ref} />
                         <div className="file-content" style={{ width: `calc(100% - ${directoryWidth + chatWidth + 10}px)` }}>
                             {Object.keys(changedFiles).length > 0 && (
-                                <ChangedFilesBar
-                                    changedFiles={changedFiles}
-                                    selectedFilePath={selectedFilePath}
-                                    onSelectFilePath={setSelectedFilePath}
-                                />
+                                <ChangedFilesBar changedFiles={changedFiles} selectedFilePath={selectedFilePath} onSelectFilePath={setSelectedFilePath} />
                             )}
                             <FileContent
                                 selectedFilePath={selectedFilePath}
@@ -623,6 +624,16 @@ const OpenFolder = () => {
                             )}
                         </div>
                     </>
+                )}
+            </div>
+            <div className="open-folder-footer">
+                <Button variant="contained" color="primary" onClick={toggleFooterInfo}>
+                    {footerInfoVisible ? 'Hide Info' : 'Show Info'}
+                </Button>
+                {footerInfoVisible && (
+                    <div className="footer-info">
+                        {folderHandle ? `Folder: ${folderHandle.name}` : 'No folder selected'} { Object.keys(changedFiles).length ? `| Modified Files: ${Object.keys(changedFiles).length}` : '' } 
+                    </div>
                 )}
             </div>
         </div>

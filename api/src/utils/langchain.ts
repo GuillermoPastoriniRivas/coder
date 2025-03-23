@@ -17,7 +17,7 @@ export async function callAgent(query: string, userId: string, folder: string, s
     }
 
     // Deduct 1 saldo
-    if(model === 'o1-mini') {
+    if(model === 'o3-mini') {
         user.saldo -= 1;
         await user.save();
     }
@@ -32,7 +32,7 @@ export async function callAgent(query: string, userId: string, folder: string, s
         messages: [{ role: 'user', content: query, timestamp: new Date() }]
     };
 
-    await conversationRepository.upsertConversation(conversation, true); 
+    const conversationId = await conversationRepository.upsertConversation(conversation, true); 
 
     const baseDir = path.resolve(process.cwd(), 'sources', safeUserId, safeFolder);
 
@@ -79,7 +79,7 @@ export async function callAgent(query: string, userId: string, folder: string, s
         model,
         messages: [{ role: 'assistant', content: responseContent, timestamp: new Date() }]
     };
-    await conversationRepository.upsertConversation(response);
+    await conversationRepository.upsertConversation(response, false, conversationId);
 
     return responseContent;
 }

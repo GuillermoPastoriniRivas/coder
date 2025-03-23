@@ -23,7 +23,7 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
     const [lastY, setLastY] = useState(0);
     const [textareaHeight, setTextareaHeight] = useState(100); // Initial height in px
 
-    const models = ['o1-mini', 'gpt-4o-mini']; // Available models
+    const models = ['o3-mini', 'gpt-4o-mini']; // Available models
 
     const fetchSaldo = async () => {
         try {
@@ -36,8 +36,20 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
     };
 
     const loadConversation = async () => {
-        if (selectedConversation && selectedConversation.messages) {
-            setConversation(selectedConversation.messages);
+        if (selectedConversation) {
+            if (selectedConversation.userMessages && selectedConversation.userMessages.length > 0) {
+                setConversation([selectedConversation.userMessages[0]]);
+            } else if (selectedConversation.messages && selectedConversation.messages.length > 0) {
+                setConversation(selectedConversation.messages);
+            } else {
+                setConversation([
+                    {
+                        role: 'default',
+                        content: "Hello! I can generate code changes based on your instructions. Just tell me what you want to modify",
+                        timestamp: new Date()
+                    }
+                ]);
+            }
         } else {
             setConversation([
                 {
@@ -250,7 +262,7 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
                         {models.map((model) => (
                             <MenuItem key={model} value={model}>
                                 {model} {' '}
-                                <i style={{fontSize: '12px', marginLeft: '5px'}}>{model === 'o1-mini' ? ' 1 credit' : ' free'}</i>
+                                <i style={{fontSize: '12px', marginLeft: '5px'}}>{model === 'o3-mini' ? ' 1 credit' : ' free'}</i>
                             </MenuItem>
                         ))}
                     </Select>

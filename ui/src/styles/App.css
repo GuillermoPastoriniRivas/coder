@@ -471,3 +471,19 @@ div[aria-haspopup="listbox"] {
 .cm-mergeViewEditor:first-child {
   flex-grow: 0.75;
 }
+
+.cm-mergeView {
+  height: 100%;
+}
+
+.cm-mergeViewEditors {
+  height: 100%;
+}
+
+.cm-editor {
+  height: 100% !important;
+}
+
+.cm-mergeView .ͼ1, .cm-mergeView .ͼ1 {
+  height: 100% !important;
+}

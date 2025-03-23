@@ -26,7 +26,7 @@ const FileContent = ({
                     <Modified
                         value={changedFiles[selectedFilePath]?.modified || ''}
                         onChange={handleModifiedChange}
-                        extensions={getLanguageExtension(selectedFilePath)}
+                        extensions={[EditorView.editable.of(true), ...getLanguageExtension(selectedFilePath)]}
                     />
                 </CodeMirrorMerge>
             ) : (
