@@ -13,7 +13,7 @@ export const syncController = {
             const directoryTree = req.body.directoryTree;
 
             if (!userId || !folder || !directoryTree) {
-                return res.status(400).json({ error: 'Datos incompletos' });
+                return res.status(200).json({ error: 'Datos incompletos' });
             }
 
             // Sanitizar nombres

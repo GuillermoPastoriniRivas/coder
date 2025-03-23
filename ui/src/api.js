@@ -6,6 +6,26 @@ const API = axios.create({
   baseURL: 'http://localhost:5000',
 });
 
+// Add automatic sync interceptor before every request except for sync calls
+// API.interceptors.request.use(
+//   async (config) => {
+//     if (!localStorage.getItem('token')) {
+//       return config;
+//     }
+//     if (config.url !== '/sync') {
+//       try {
+//         await API.post('/sync', {}); // Automatically sync before sending any request
+//       } catch (error) {
+//         console.error('Auto-sync error:', error);
+//       }
+//     }
+//     return config;
+//   },
+//   (error) => {
+//     return Promise.reject(error);
+//   }
+// );
+
 // Función para configurar el token
 const setAuthToken = (token) => {
   if (token) {
@@ -14,6 +34,41 @@ const setAuthToken = (token) => {
     delete API.defaults.headers.common['Authorization'];
   }
 };
+
+// Función para mostrar notificación de error
+function showNotification(message) {
+  const notification = document.createElement('div');
+  notification.innerText = message;
+  notification.style.position = 'fixed';
+  notification.style.bottom = '00px';
+  notification.style.left = '00px';
+  notification.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+  notification.style.color = '#fff';
+  notification.style.padding = '10px 20px';
+  notification.style.borderRadius = '4px';
+  notification.style.zIndex = '9999';
+  document.body.appendChild(notification);
+  setTimeout(() => {
+    document.body.removeChild(notification);
+  }, 3000);
+}
+
+API.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('token');
+      localStorage.removeItem('saldo');
+      delete API.defaults.headers.common['Authorization'];
+      window.location.href = '/login';
+    }
+    if (error.response && error.response.status === 500) {
+      showNotification("Ocurrio un Error, vuelva a intentarlo");
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Componente que envuelve las llamadas a la API
 export const ApiProvider = ({ children }) => {
@@ -46,7 +101,7 @@ const api = {
   createAccount: (accountData) => API.post('/signup', accountData),
   login: (loginData) => API.post('/login', loginData),
 
-  // Account
+  // Sync Directory
   syncDirectory: (data) => API.post('/sync', data),
 
   getSaldo: () => API.get('/saldo'), // New method to get saldo

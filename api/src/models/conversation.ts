@@ -13,6 +13,7 @@ interface IConversation extends Document {
     userMessages: IMessage[]; // Nuevo atributo para mensajes del usuario
     title?: string; 
     aiModel?: string;
+    created_at?: Date;
 }
 
 const messageSchema = new Schema<IMessage>({
@@ -27,7 +28,8 @@ const conversationSchema = new Schema<IConversation>({
     userMessages: [messageSchema], // Definición del nuevo atributo en el esquema
     title: { type: String, required: false },
     folder: { type: String, required: true },
-    aiModel: { type: String, required: false }
+    aiModel: { type: String, required: false },
+    created_at: { type: Date, required: true, default: Date.now }
 });
 
 export const Conversation = mongoose.model<IConversation>('Conversation', conversationSchema);

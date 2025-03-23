@@ -20,7 +20,7 @@ export default function Menu() {
     };
 
     useEffect(() => {
-        fetchSaldo();
+        // fetchSaldo();
     }, []);
 
     const handleLogout = () => {
@@ -33,7 +33,7 @@ export default function Menu() {
             <Toolbar sx={{ justifyContent: 'space-between' }}>
                 <Button color="inherit" component={Link} to="/">
                     <Typography variant="h6" sx={{ color: 'white' }}>
-                        Geenier
+                        Gecode
                     </Typography>
                 </Button>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
