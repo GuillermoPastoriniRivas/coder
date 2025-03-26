@@ -7,24 +7,24 @@ const API = axios.create({
 });
 
 // Add automatic sync interceptor before every request except for sync calls
-// API.interceptors.request.use(
-//   async (config) => {
-//     if (!localStorage.getItem('token')) {
-//       return config;
-//     }
-//     if (config.url !== '/sync') {
-//       try {
-//         await API.post('/sync', {}); // Automatically sync before sending any request
-//       } catch (error) {
-//         console.error('Auto-sync error:', error);
-//       }
-//     }
-//     return config;
-//   },
-//   (error) => {
-//     return Promise.reject(error);
-//   }
-// );
+API.interceptors.request.use(
+  async (config) => {
+    if (!localStorage.getItem('token')) {
+      return config;
+    }
+    if (config.url === '/call') {
+      try {
+        await API.post('/sync', {}); // Automatically sync before sending any request
+      } catch (error) {
+        console.error('Auto-sync error:', error);
+      }
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // Función para configurar el token
 const setAuthToken = (token) => {
@@ -103,6 +103,7 @@ const api = {
 
   // Sync Directory
   syncDirectory: (data) => API.post('/sync', data),
+  updateVectors: (data) => API.post('/update-vectors', data),
 
   getSaldo: () => API.get('/saldo'), // New method to get saldo
 

@@ -47,6 +47,7 @@ const OpenFolder = () => {
     const { folderHandle, setFolderHandle, directoryTree, setDirectoryTree, setConversations, selectedSubFolders, toggleSubFolder, clearSelectedSubFolders } = useDirectory();
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [vectorLoading, setVectorLoading] = useState(false);
     const [isDiffView, setIsDiffView] = useState(true);
     const [changedFiles, setChangedFiles] = useState({});
     const [selectedFilePath, setSelectedFilePath] = useState(null);
@@ -139,15 +140,30 @@ const OpenFolder = () => {
         setLoading(true);
         const files = await getFilesFromDirectory(folderHandle);
         setDirectoryTree(files);
-        const response = await api.getConversations(folderHandle.name);
-        setConversations(response.data);
         const payload = {
             folder: folderHandle ? folderHandle.name : null,
             directoryTree: directoryTree,
             selectedFolders: selectedSubFolders.length > 0 ? selectedSubFolders : null,
-          };
+        };
         await api.syncDirectory(payload);
+        const response = await api.getConversations(folderHandle.name);
+        setConversations(response.data);
         setLoading(false);
+    };
+
+    const handleUpdateVectors = async () => {
+        try {
+            setVectorLoading(true);
+            const payload = {
+                folder: folderHandle ? folderHandle.name : null,
+                selectedFolders: selectedSubFolders.length > 0 ? selectedSubFolders : null,
+            };
+            await api.updateVectors(payload);
+        } catch (error) {
+            console.error("Error updating vectors:", error);
+        } finally {
+            setVectorLoading(false);
+        }
     };
 
     const getFilesFromDirectory = async (folderHandle, basePath = '') => {
@@ -552,6 +568,9 @@ const OpenFolder = () => {
                         <Button variant="contained" color="primary" onClick={() => handleRefresh()} startIcon={<RefreshIcon />} disabled={loading}>
                             {loading ? <CircularProgress size={24} /> : 'Refresh'}
                         </Button>
+                        <Button variant="contained" color="primary" onClick={handleUpdateVectors} style={{ marginLeft: '10px' }} disabled={vectorLoading}>
+                            {vectorLoading ? <CircularProgress size={24} /> : 'Update Vectors'}
+                        </Button>
                         <Button
                             variant="contained"
                             color="secondary"
@@ -562,7 +581,7 @@ const OpenFolder = () => {
                             New Conversation
                         </Button>
                         <Button variant="contained" onClick={() => setIsDiffView(!isDiffView)} style={{ margin: '10px 0', marginLeft: '20px' }}>
-                            {isDiffView ? 'Editor View' : 'Changes View'}
+                            {isDiffView ? 'View Editor' : 'View Changes'}
                         </Button>
                         {isDiffView && (
                             <>
@@ -577,7 +596,7 @@ const OpenFolder = () => {
                             </>
                         )}
                         <Button variant="contained" onClick={applyChanges} style={{ margin: '10px 0', marginLeft: '20px' }}>
-                            Apply Changes
+                            Apply
                         </Button>
                         <Button variant="contained" onClick={applyAllChanges} style={{ margin: '10px 0', marginLeft: '20px' }}>
                             Apply All

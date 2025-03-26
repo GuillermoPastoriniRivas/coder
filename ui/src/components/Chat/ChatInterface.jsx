@@ -77,7 +77,7 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
         // Start Progress Interval
         progressInterval.current = setInterval(() => {
             setProgress((prev) => {
-                if (prev < 20) return prev + 8;
+                if (prev < 20) return prev + 7;
                 if (prev < 80) return prev + 4;
                 return prev;
             });
