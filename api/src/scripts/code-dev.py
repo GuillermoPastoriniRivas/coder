@@ -9,6 +9,7 @@ from aidoc import AIDocumenter
 import argparse
 from datetime import datetime
 import sys
+from pymongo import MongoClient
 sys.stdout.reconfigure(encoding='utf-8')
 
 api_key = "sk-proj-iZUIWIoul2uPT3Si0x1DT3BlbkFJ0fSNIi1EVUCjp5ReYkJu"
@@ -40,7 +41,7 @@ def main():
 
     documenter.generate_documentation()
     contexto = generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folders, selected_files)
-    cambios = obtener_cambios_openai(contexto, instruccion_usuario, coder_model)
+    cambios = obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_proyecto)
     print(cambios)
 
 
@@ -194,7 +195,34 @@ def generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folde
         'query': rag.get('queries', instruccion_usuario),
     }
 
-def obtener_cambios_openai(contexto, instruccion_usuario, coder_model):
+def _update_tokens_usage(prompt_tokens, completion_tokens, project_name, model):
+    try:
+        mongo_uri = "mongodb+srv://guillermo:guillermo@cluster0.7gaga4b.mongodb.net/coder"
+        if not mongo_uri:
+            print("MongoDB URI is not set.")
+            return
+        
+        # Connect to MongoDB and get the database
+        client = MongoClient(mongo_uri)
+        db = client.get_database()  # Gets the 'coder' database from the URI
+        
+        # Get the collection
+        tokens_collection = db["tokensUsage"]  # or db.tokensUsage
+        
+        # Update the document in the collection
+        tokens_collection.update_one(
+            {"project_name": project_name, "model": model},
+            {"$inc": {"input_tokens": prompt_tokens, "output_tokens": completion_tokens}},
+            upsert=True
+        )
+        
+        # Close the connection (optional as MongoClient manages connections)
+        client.close()
+        
+    except Exception as e:
+        print(f"MongoDB update error: {str(e)}")
+
+def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_proyecto):
     """Envía la consulta a OpenAI y obtiene los cambios necesarios en formato JSON."""
     prompt = f"""
         ### Role:
@@ -256,7 +284,6 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model):
     """
 
     try:
-    
         response = client.responses.create(
             model="o3-mini",
             reasoning={"effort": "high"},
@@ -267,7 +294,16 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model):
                 }
             ]
         )
-
+        
+        try:
+            usage = response.usage
+            if usage:
+                input_tokens = usage.input_tokens
+                output_tokens = usage.output_tokens
+                _update_tokens_usage(input_tokens, output_tokens, carpeta_proyecto, "o3-mini")
+        except Exception as e:
+            print(f"Error updating token usage: {e}")
+        
         return response.output_text
     except Exception as e:
         print(f"Error al obtener cambios de OpenAI: {e}")
