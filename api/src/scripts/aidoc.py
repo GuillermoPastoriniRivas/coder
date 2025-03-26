@@ -5,6 +5,7 @@ import tiktoken
 from openai import OpenAI
 from pathlib import Path
 import re
+from pymongo import MongoClient
 
 class AIDocumenter:
     def __init__(self, api_key, code_path, output_file):
@@ -77,7 +78,14 @@ class AIDocumenter:
                 temperature=0.1,
                 response_format={"type": "json_object"}
             )
-
+            try:
+                usage = getattr(response, "usage", None)
+                if usage:
+                    prompt_tokens = usage.prompt_tokens
+                    completion_tokens = usage.completion_tokens
+                    self._update_tokens_usage(prompt_tokens, completion_tokens, "gpt-4o-mini")
+            except Exception as e:
+                print(f"Error updating token usage for {file_path}: {e}")
             try:
                 response_text = response.choices[0].message.content.strip() 
                 return json.loads(response.choices[0].message.content)
@@ -183,10 +191,39 @@ class AIDocumenter:
         
         self.docs["project"]["overview"] = response.choices[0].message.content
         self._save_progress()
+        
+    def _update_tokens_usage(self, prompt_tokens, completion_tokens, model):
+        try:
+            mongo_uri = "***REMOVED***"
+            if not mongo_uri:
+                print("MongoDB URI is not set.")
+                return
+            
+            # Connect to MongoDB and get the database
+            client = MongoClient(mongo_uri)
+            db = client.get_database()  # Gets the 'coder' database from the URI
+            
+            # Get the collection
+            tokens_collection = db["tokensUsage"]  # or db.tokensUsage
+            
+            project_name = self.docs["project"]["name"]
+            
+            # Update the document in the collection
+            tokens_collection.update_one(
+                {"project_name": project_name, "model": model},
+                {"$inc": {"input_tokens": prompt_tokens, "output_tokens": completion_tokens}},
+                upsert=True
+            )
+            
+            # Close the connection (optional as MongoClient manages connections)
+            client.close()
+            
+        except Exception as e:
+            print(f"MongoDB update error: {str(e)}")
 
 # API_KEY = "***REMOVED***"
-# PROJECT_PATH = "../turnos"
-# JSON_PATH = "./turnos.json"
+# PROJECT_PATH = "C:/Users/Usuario/Desktop/guille/coder/api/sources/67c48e76f8288aad11d6bdf9/coder"
+# JSON_PATH = "C:/Users/Usuario/Desktop/guille/coder/api/sources/67c48e76f8288aad11d6bdf9/coder.json"
 
 # documenter = AIDocumenter(
 #     api_key=API_KEY,

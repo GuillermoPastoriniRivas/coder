@@ -6,7 +6,6 @@ import { spawn } from 'child_process';
 export const syncController = {
     async sync(req: Request, res: Response) {
         try {
-            // Validar datos del request
             //@ts-ignore
             const userId = req.user?.id;
             const folder = req.body.folder;
@@ -20,61 +19,70 @@ export const syncController = {
             const safeUserId = userId.replace(/[\/\\]/g, '_');
             const safeFolder = folder.replace(/[\/\\]/g, '_');
 
-            // Crear ruta base
             const baseDir = path.resolve(process.cwd(), 'sources', safeUserId, safeFolder);
-
-            // Validar seguridad de rutas
             if (!baseDir.startsWith(process.cwd())) {
                 return res.status(400).json({ error: 'Ruta inválida' });
             }
 
-            // Crear directorio base
             await fs.mkdir(baseDir, { recursive: true });
 
-            // Función recursiva para crear estructura
             const processNode = async (node: any, currentPath: string) => {
                 const nodeName = node.name.replace(/[\/\\]/g, '_'); // Sanitizar nombre
                 const nodePath = path.join(currentPath, nodeName);
 
                 if (node.children) {
-                    // Es directorio
                     await fs.mkdir(nodePath, { recursive: true });
                     for (const child of node.children) {
                         await processNode(child, nodePath);
                     }
                 } else if (node.content !== undefined) {
-                    // Es archivo
                     await fs.writeFile(nodePath, node.content);
                 }
             };
 
-            // Procesar cada nodo raíz
             for (const node of directoryTree) {
                 await processNode(node, baseDir);
             }
 
-            
-            console.log("Creando documentacion...")
-            const project = baseDir;
+            res.json({ message: 'Estructura creada exitosamente' });
+        } catch (error) {
+            console.error('Error en syncController:', error);
+            res.status(500).json({ error: 'Error al sincronizar estructura' });
+        }
+    },
+
+    async updateVectors(req: Request, res: Response) {
+        try {
+            //@ts-ignore
+            const userId = req.user?.id;
+            const folder = req.body.folder;
+            if (!userId || !folder) {
+                return res.status(200).json({ error: 'Datos incompletos' });
+            }
+
+            const safeUserId = userId.replace(/[\/\\]/g, '_');
+            const safeFolder = folder.replace(/[\/\\]/g, '_');
+
+            const baseDir = path.resolve(process.cwd(), 'sources', safeUserId, safeFolder);
+            if (!baseDir.startsWith(process.cwd())) {
+                return res.status(400).json({ error: 'Ruta inválida' });
+            }
+
             const config = path.resolve(process.cwd(), 'sources', safeUserId, `${safeFolder}.json`);
 
-            const pythonProcess = spawn('python', ['src/scripts/call_documenter.py', '--project', project, '--config', config]);
+            const pythonProcess = spawn('python', ['src/scripts/call_documenter.py', '--project', baseDir, '--config', config]);
 
             await new Promise((resolve, reject) => {
                 let output = '';
-
                 pythonProcess.stdout.on('data', (data) => {
                     output += data.toString();
                 });
-
                 pythonProcess.stderr.on('data', (data) => {
                     console.error(`stderr: ${data}`);
                     reject(new Error(`Error in call_documenter.py: ${data}`));
                 });
-
                 pythonProcess.on('close', (code) => {
                     console.log(`call_documenter.py exited with code ${code}`);
-                    console.log("Documentacion creada exitosamente")
                     if (code === 0) {
                         resolve(output.trim());
                     } else {
@@ -83,11 +91,10 @@ export const syncController = {
                 });
             });
 
-            res.json({ message: 'Estructura creada exitosamente' });
-
+            res.json({ message: 'Documentacion creada exitosamente' });
         } catch (error) {
-            console.error('Error en syncController:', error);
-            res.status(500).json({ error: 'Error al sincronizar estructura' });
+            console.error('Error in updateVectors:', error);
+            res.status(500).json({ error: 'Error al actualizar vectores' });
         }
     }
 };

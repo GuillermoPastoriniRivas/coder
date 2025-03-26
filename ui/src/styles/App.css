@@ -487,3 +487,7 @@ div[aria-haspopup="listbox"] {
 .cm-mergeView .ͼ1, .cm-mergeView .ͼ1 {
   height: 100% !important;
 }
+
+.InputElement {
+  color: #fff !important;
+}

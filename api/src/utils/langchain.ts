@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { conversationRepository } from '../repositories/conversationRepository';
 import { spawn } from 'child_process';
 import path from 'path';
-import { User } from '../models/User'; 
+import { User } from '../models/User';
 
 export async function callAgent(query: string, userId: string, folder: string, subFolders: string[], model: string, selectedFiles: string[]) {
     const user = await User.findById(userId);
@@ -11,16 +11,15 @@ export async function callAgent(query: string, userId: string, folder: string, s
         throw new Error('User not found');
     }
 
-    // Check if user has sufficient saldo
     if (user.saldo < 1) {
         throw new Error('Insufficient saldo. Please purchase more tokens.');
     }
 
-    // Deduct 1 saldo
     if(model === 'o3-mini') {
         user.saldo -= 1;
         await user.save();
     }
+    
 
     const safeUserId = userId.replace(/[\/\\]/g, '_');
     const safeFolder = folder.replace(/[\/\\]/g, '_');
@@ -32,7 +31,7 @@ export async function callAgent(query: string, userId: string, folder: string, s
         messages: [{ role: 'user', content: query, timestamp: new Date() }]
     };
 
-    const conversationId = await conversationRepository.upsertConversation(conversation, true); 
+    const conversationId = await conversationRepository.upsertConversation(conversation, true);
 
     const baseDir = path.resolve(process.cwd(), 'sources', safeUserId, safeFolder);
 
