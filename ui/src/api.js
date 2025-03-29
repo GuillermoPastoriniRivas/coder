@@ -94,6 +94,9 @@ const api = {
   getAccount: () => API.get('/account'),
   updateAccount: (accountData) => API.put('/account', accountData),
 
+  // Payment
+  createPaymentIntent: (amount, payment_method) => API.post('/create-payment-intent', { amount, payment_method }),
+
   // Purchase Tokens
   purchaseTokens: (tokens) => API.post('/purchase-tokens', { tokens }),
 

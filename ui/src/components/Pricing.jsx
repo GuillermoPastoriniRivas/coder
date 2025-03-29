@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Container, Box, Typography, Button, Grid, Snackbar, Alert, TextField, FormControl, FormLabel, RadioGroup, Radio, FormControlLabel } from '@mui/material';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
+import api from '../api';
 
 // Initialize Stripe with your publishable key
 const stripePromise = loadStripe('pk_test_51R6WMSJKjJZ1brsJeiejXniqKyTzfo6XXjlfXNmWyrx4RzhyMo2UvJkJMAHEtwTZiml07SYRPZDwQU85t0MOHrHl00pBnExPXy');
@@ -33,7 +34,6 @@ const CARD_ELEMENT_OPTIONS = {
   hidePostalCode: true,
 };
 
-// Main Payment Component
 function PaymentForm() {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState('');
@@ -89,15 +89,10 @@ function PaymentForm() {
       setOpen(true);
       return;
     }
-
+    
     setProcessing(true);
     try {
-      const response = await fetch('http://localhost:5000/create-payment-intent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: amount * 100, payment_method: paymentMethod })
-      });
-      const data = await response.json();
+      const { data } = await api.createPaymentIntent(amount * 100, paymentMethod);
       const clientSecret = data.clientSecret;
       const cardElement = elements.getElement(CardElement);
       const result = await stripe.confirmCardPayment(clientSecret, {
@@ -167,7 +162,7 @@ function PaymentForm() {
           <FormLabel component="legend">Payment Method</FormLabel>
           <RadioGroup row value={paymentMethod} onChange={handlePaymentMethodChange}>
             <FormControlLabel value="debito" control={<Radio />} label="Debit/Credit" />
-            <FormControlLabel value="paypal" control={<Radio />} label="PayPal" />
+            <FormControlLabel value="paypal" control={<Radio />} label="PayPal" disabled/>
           </RadioGroup>
         </FormControl>
       </Box>
@@ -201,7 +196,6 @@ function PaymentForm() {
   );
 }
 
-// Wrapper component that provides Stripe context
 export default function Pricing() {
   return (
     <Elements stripe={stripePromise}>
