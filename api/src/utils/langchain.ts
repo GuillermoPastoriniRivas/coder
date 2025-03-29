@@ -48,6 +48,7 @@ export async function callAgent(query: string, userId: string, folder: string, s
         '--subfolders', (subFolders || []).join(','),
         '--selectedFiles', (selectedFiles || []).join(',')
     ]);
+
     const responsePromise = new Promise((resolve, reject) => {
         let output = '';
 
