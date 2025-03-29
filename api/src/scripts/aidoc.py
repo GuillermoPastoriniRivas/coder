@@ -147,6 +147,10 @@ class AIDocumenter:
 
             if self.docs["file_hashes"].get(relative_path) == current_hash:
                 continue
+            
+            # For now we only add new files
+            if self.docs["file_hashes"].get(relative_path):
+                continue
 
             try:
                 self._process_file(file)

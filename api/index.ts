@@ -8,6 +8,7 @@ import { syncController } from './src/controllers/syncController';
 import { postCall, getConversations, getConversation, updateConversationTitle, deleteConversation } from './src/controllers/chatController'; // Agregado deleteConversation
 import { userController } from './src/controllers/userController';
 import { purchaseController } from './src/controllers/purchaseController';
+import { paymentController } from './src/controllers/paymentController';
 
 const app: Express = express();
 app.use(express.json({ limit: "50mb" }));
@@ -39,6 +40,8 @@ app.get('/conversations/:folder', authMiddleware, getConversations);
 app.get('/saldo', authMiddleware, userController.getSaldo);
 
 app.post('/purchase-tokens', authMiddleware, purchaseController.purchaseTokens);
+
+app.post('/create-payment-intent', paymentController.createPaymentIntent);
 
 app.put('/conversation/:conversationId/title', authMiddleware, updateConversationTitle);
 

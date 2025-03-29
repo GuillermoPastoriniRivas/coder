@@ -328,7 +328,7 @@ const OpenFolder = () => {
                         }
                     }));
 
-                    // handleRefresh();
+                    handleRefresh();
                 } catch (error) {
                     console.error('Error aplicando cambios:', error);
                     alert('Error al aplicar cambios');
@@ -568,7 +568,7 @@ const OpenFolder = () => {
                         <Button variant="contained" color="primary" onClick={() => handleRefresh()} startIcon={<RefreshIcon />} disabled={loading}>
                             {loading ? <CircularProgress size={24} /> : 'Refresh'}
                         </Button>
-                        <Button variant="contained" color="primary" onClick={handleUpdateVectors} style={{ marginLeft: '10px' }} disabled={vectorLoading}>
+                        <Button variant="contained" color="primary" onClick={handleUpdateVectors} disabled={vectorLoading}>
                             {vectorLoading ? <CircularProgress size={24} /> : 'Update Vectors'}
                         </Button>
                         <Button
@@ -576,7 +576,7 @@ const OpenFolder = () => {
                             color="secondary"
                             className="new-conversation-button"
                             onClick={handleStartNewConversation}
-                            style={{ margin: '10px 0', marginLeft: '5%' }}
+                            style={{ margin: '10px 0', marginLeft: '10%'}}
                         >
                             New Conversation
                         </Button>
