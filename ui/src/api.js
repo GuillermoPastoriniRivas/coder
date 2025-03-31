@@ -33,7 +33,7 @@ API.defaults.headers.common['ngrok-skip-browser-warning'] = "69420";
 const setAuthToken = (token) => {
   if (token) {
     API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    
+
   } else {
     delete API.defaults.headers.common['Authorization'];
   }
@@ -101,8 +101,8 @@ const api = {
   // Payment
   createPaymentIntent: (amount, payment_method) => API.post('/create-payment-intent', { amount, payment_method }),
 
-  // Purchase Tokens
-  purchaseTokens: (tokens) => API.post('/purchase-tokens', { tokens }),
+  // Purchase Tokens - Now purchasing credits with USD amount
+  purchaseTokens: (amount) => API.post('/purchase-tokens', { amount: amount }),
 
   // Account
   createAccount: (accountData) => API.post('/signup', accountData),
