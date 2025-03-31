@@ -10,11 +10,28 @@ import argparse
 from datetime import datetime
 import sys
 from pymongo import MongoClient
+import time 
+from bson import ObjectId
+from datetime import datetime
+
 sys.stdout.reconfigure(encoding='utf-8')
 
-api_key = "***REMOVED***"
-client = OpenAI(api_key=api_key)
-top_k = 10
+# api_key = "***REMOVED***"
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key="***REMOVED***",
+)
+top_k = 40
+
+input_price_usd_per_M = 1.1
+output_price_usd_per_M = 4.4
+
+current_model = "google/gemini-2.0-flash-thinking-exp:free"
+# google/gemini-2.5-pro-exp-03-25:free
+# google/gemini-2.0-pro-exp-02-05:free
+# google/gemini-2.0-flash-thinking-exp:free
+
+# google/gemini-2.0-flash-exp
 
 def main():
     parser = argparse.ArgumentParser()
@@ -24,6 +41,7 @@ def main():
     parser.add_argument("--model", required=True)
     parser.add_argument("--subfolders", required=True)
     parser.add_argument("--selectedFiles", required=False, default="")
+    parser.add_argument("--userId", required=True, default="")
     args = parser.parse_args()
 
     sub_folders = args.subfolders.split(',') if args.subfolders else []
@@ -32,6 +50,7 @@ def main():
     instruccion_usuario = args.instruction
     json_path = args.config
     coder_model = args.model
+    userId = args.userId
 
     # documenter = AIDocumenter(
     #     api_key=api_key,
@@ -41,7 +60,7 @@ def main():
 
     # documenter.generate_documentation()
     contexto = generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folders, selected_files)
-    cambios = obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_proyecto)
+    cambios = obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_proyecto, userId)
     print(cambios)
 
 
@@ -195,34 +214,47 @@ def generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folde
         'query': rag.get('queries', instruccion_usuario),
     }
 
-def _update_tokens_usage(prompt_tokens, completion_tokens, project_name, model):
+def _update_tokens_usage(prompt_tokens, completion_tokens, project_name, model, userId):
     try:
         mongo_uri = "***REMOVED***/coder"
         if not mongo_uri:
             print("MongoDB URI is not set.")
             return
         
-        # Connect to MongoDB and get the database
         client = MongoClient(mongo_uri)
-        db = client.get_database()  # Gets the 'coder' database from the URI
-        
-        # Get the collection
-        tokens_collection = db["tokensUsage"]  # or db.tokensUsage
-        
-        # Update the document in the collection
-        tokens_collection.update_one(
-            {"project_name": project_name, "model": model},
-            {"$inc": {"input_tokens": prompt_tokens, "output_tokens": completion_tokens}},
-            upsert=True
+        db = client.get_database()
+
+        # Calcular costos
+        input_cost = (prompt_tokens * input_price_usd_per_M) / 1_000_000
+        output_cost = (completion_tokens * output_price_usd_per_M) / 1_000_000
+        total_cost = input_cost + output_cost
+
+        # Actualizar saldo del usuario
+        users_collection = db["users"]
+        users_collection.update_one(
+            {"_id": ObjectId(userId)},
+            {"$inc": {"saldo": -total_cost}}
         )
+
+        # Registrar transacción
+        transaction = {
+            "userId": ObjectId(userId),
+            "project_name": project_name,
+            "model": model,
+            "input_tokens": prompt_tokens,
+            "output_tokens": completion_tokens,
+            "input_cost": input_cost,
+            "output_cost": output_cost,
+            "timestamp": datetime.now()
+        }
         
-        # Close the connection (optional as MongoClient manages connections)
+        db["tokensUsage"].insert_one(transaction)
         client.close()
         
     except Exception as e:
-        print(f"MongoDB update error: {str(e)}")
+        print(f"Error en actualización de tokens: {str(e)}")
 
-def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_proyecto):
+def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_proyecto, userId):
     """Envía la consulta a OpenAI y obtiene los cambios necesarios en formato JSON."""
     prompt = f"""
         ### Role:
@@ -283,31 +315,67 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
         ### LET'S WORK THIS OUT IN A STEP BY STEP WAY YO BE SURE WE HAVE THE RIGHT ANSWER
     """
 
-    try:
-        response = client.responses.create(
-            model="o3-mini",
-            reasoning={"effort": "high"},
-            input=[
-                {
-                    "role": "user",
-                    "content": prompt,
-                }
-            ]
-        )
-        
+    max_retries = 3
+    retry_count = 0
+    last_exception = None
+
+    while retry_count < max_retries:
         try:
-            usage = response.usage
-            if usage:
-                input_tokens = usage.input_tokens
-                output_tokens = usage.output_tokens
-                _update_tokens_usage(input_tokens, output_tokens, carpeta_proyecto, "o3-mini")
-        except Exception as e:
-            print(f"Error updating token usage: {e}")
-        
-        return response.output_text
-    except Exception as e:
-        print(f"Error al obtener cambios de OpenAI: {e}")
-        return ""
+            response = client.chat.completions.create(
+                model=current_model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    }
+                ]
+            )
+
+            # Robust check for response structure before accessing content
+            if response and response.choices and len(response.choices) > 0 and response.choices[0].message:
+                content = response.choices[0].message.content
+                # If successful, update usage and return content
+                try:
+                    usage = response.usage
+                    if usage:
+                        input_tokens = usage.prompt_tokens
+                        output_tokens = usage.completion_tokens
+                        # Use the actual model called for usage tracking
+                        _update_tokens_usage(input_tokens, output_tokens, carpeta_proyecto, coder_model, userId)
+                except Exception as e:
+                    print(f"Error updating token usage: {e}", file=sys.stderr)
+
+                return content # Success, return content
+            else:
+                 # Handle cases where the response structure is not as expected
+                 raise AttributeError("Unexpected response structure from API.")
+
+
+        except (TypeError, AttributeError, IndexError) as e: # Catch potential errors accessing potentially None objects or incorrect structure
+            last_exception = e
+            retry_count += 1
+            print(f"Attempt {retry_count}/{max_retries} failed: Error processing response - {e}. Response: {response}", file=sys.stderr) # Log the response for debugging
+            if retry_count < max_retries:
+                print("Retrying in 1 second...", file=sys.stderr)
+                time.sleep(1) # Wait before retrying
+            else:
+                print(f"Max retries reached. Error processing OpenAI response: {e}", file=sys.stderr)
+                return "" # Return empty string after max retries
+
+        except Exception as e: # Catch other potential API errors (network, auth, etc.)
+            last_exception = e
+            retry_count += 1
+            print(f"Attempt {retry_count}/{max_retries} failed: OpenAI API Error - {e}", file=sys.stderr)
+            if retry_count < max_retries:
+                 print("Retrying in 1 second...", file=sys.stderr)
+                 time.sleep(1) # Wait before retrying
+            else:
+                print(f"Max retries reached. Error al obtener cambios de OpenAI: {e}", file=sys.stderr)
+                return "" # Return empty string after max retries
+
+    # Fallback if loop somehow exits without returning
+    print(f"Failed after {max_retries} attempts. Last error: {last_exception}", file=sys.stderr)
+    return ""
 
 if __name__ == "__main__":
     main()
