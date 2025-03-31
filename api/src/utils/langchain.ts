@@ -11,16 +11,6 @@ export async function callAgent(query: string, userId: string, folder: string, s
         throw new Error('User not found');
     }
 
-    if (user.saldo < 1) {
-        throw new Error('Insufficient saldo. Please purchase more tokens.');
-    }
-
-    if(model === 'o3-mini') {
-        user.saldo -= 1;
-        await user.save();
-    }
-    
-
     const safeUserId = userId.replace(/[\/\\]/g, '_');
     const safeFolder = folder.replace(/[\/\\]/g, '_');
 
@@ -46,7 +36,8 @@ export async function callAgent(query: string, userId: string, folder: string, s
         '--config', config,
         '--model', model,
         '--subfolders', (subFolders || []).join(','),
-        '--selectedFiles', (selectedFiles || []).join(',')
+        '--selectedFiles', (selectedFiles || []).join(','),
+        '--userId', userId
     ]);
 
     const responsePromise = new Promise((resolve, reject) => {

@@ -14,7 +14,10 @@ class AIDocumenter:
         self.output_file = output_file
         self.encoder = tiktoken.get_encoding("cl100k_base")
         self.excluded_dirs = {'node_modules', 'dist', 'build', '__pycache__', '.git'}
-        self.client = OpenAI(api_key=self.api_key)
+        self.client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key="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",
+        )
         
         # Cargar o inicializar documentación
         if Path(output_file).exists():
@@ -73,10 +76,8 @@ class AIDocumenter:
 
         try:
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.1,
-                response_format={"type": "json_object"}
+                model="deepseek/deepseek-chat-v3-0324:free",
+                messages=[{"role": "user", "content": prompt}]
             )
             try:
                 usage = getattr(response, "usage", None)
