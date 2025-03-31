@@ -5,18 +5,20 @@ export const conversationRepository = {
         const { userId, folder, model } = conversation;
 
         if (isUserMessage) {
-            const updatedConversation = await Conversation.findOneAndUpdate(
-                { userId, folder },
-                { $set: { userMessages: conversation.messages, aiModel: model } },
-                { upsert: true, new: true }
-            );
-            return updatedConversation?._id?.toString();
-        }   
+            const newConversation = new Conversation({
+                userId: conversation.userId,
+                folder: conversation.folder,
+                userMessages: conversation.messages,
+            });
+    
+            const savedConversation = await newConversation.save();
+            return savedConversation?._id?.toString();
+        }
 
         if (conversationId) {
             await Conversation.findOneAndUpdate(
                 { _id: conversationId },
-                { $set: { messages: conversation.messages } }
+                { $push: { messages: { $each: conversation.messages } } }
             );
             return conversationId?.toString();
         }
@@ -27,7 +29,7 @@ export const conversationRepository = {
             messages: conversation.messages,
         });
 
-        const savedConversation = await newConversation.save(); 
+        const savedConversation = await newConversation.save();
         return savedConversation?._id?.toString();
     },
 

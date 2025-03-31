@@ -3,6 +3,7 @@ import { useAuth } from './context/AuthContext';
 import { useEffect } from 'react';
 
 const API = axios.create({
+  // baseURL: 'https://169f-200-55-69-248.ngrok-free.app',
   baseURL: 'http://localhost:5000',
 });
 
@@ -26,10 +27,13 @@ API.interceptors.request.use(
   }
 );
 
+API.defaults.headers.common['ngrok-skip-browser-warning'] = "69420";
+
 // Función para configurar el token
 const setAuthToken = (token) => {
   if (token) {
     API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    
   } else {
     delete API.defaults.headers.common['Authorization'];
   }

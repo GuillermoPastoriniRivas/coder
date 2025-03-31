@@ -26,6 +26,18 @@ export const syncController = {
 
             await fs.mkdir(baseDir, { recursive: true });
 
+            // 1. List files on the server
+            const serverFiles = await listFilesRecursively(baseDir);
+            const clientFiles = getAllFilePathsFromTree(directoryTree, baseDir);
+
+            // 2 & 3. Identify deleted files
+            const filesToDelete = serverFiles.filter(serverFile => !clientFiles.includes(serverFile));
+
+            // 4. Delete files on server
+            for (const fileToDelete of filesToDelete) {
+                await fs.unlink(fileToDelete);
+            }
+
             const processNode = async (node: any, currentPath: string) => {
                 const nodeName = node.name.replace(/[\/\\]/g, '_'); // Sanitizar nombre
                 const nodePath = path.join(currentPath, nodeName);
@@ -44,7 +56,7 @@ export const syncController = {
                 await processNode(node, baseDir);
             }
 
-            res.json({ message: 'Estructura creada exitosamente' });
+            res.json({ message: 'Estructura sincronizada exitosamente' });
         } catch (error) {
             console.error('Error en syncController:', error);
             res.status(500).json({ error: 'Error al sincronizar estructura' });
@@ -98,3 +110,37 @@ export const syncController = {
         }
     }
 };
+
+
+async function listFilesRecursively(dir: string): Promise<string[]> {
+    let fileList: string[] = [];
+    try {
+        const items = await fs.readdir(dir);
+        for (const item of items) {
+            const itemPath = path.join(dir, item);
+            const stat = await fs.stat(itemPath);
+            if (stat.isDirectory()) {
+                fileList = fileList.concat(await listFilesRecursively(itemPath));
+            } else {
+                fileList.push(itemPath);
+            }
+        }
+    } catch (error) {
+        console.error('Error listing directory:', error);
+    }
+    return fileList;
+}
+
+
+function getAllFilePathsFromTree(tree: any[], basePath: string): string[] {
+    let files: string[] = [];
+    for (const node of tree) {
+        const nodePath = path.join(basePath, node.name);
+        if (node.children) {
+            files = files.concat(getAllFilePathsFromTree(node.children, nodePath));
+        } else if (node.content !== undefined) {
+            files.push(nodePath);
+        }
+    }
+    return files;
+}

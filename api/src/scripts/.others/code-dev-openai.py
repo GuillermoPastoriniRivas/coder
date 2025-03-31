@@ -12,11 +12,8 @@ import sys
 from pymongo import MongoClient
 sys.stdout.reconfigure(encoding='utf-8')
 
-# api_key = "***REMOVED***"
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key="***REMOVED***",
-)
+api_key = "***REMOVED***"
+client = OpenAI(api_key=api_key)
 top_k = 10
 
 def main():
@@ -36,13 +33,13 @@ def main():
     json_path = args.config
     coder_model = args.model
 
-    # documenter = AIDocumenter(
-    #     api_key=api_key,
-    #     code_path=carpeta_proyecto,
-    #     output_file=json_path
-    # )
+    documenter = AIDocumenter(
+        api_key=api_key,
+        code_path=carpeta_proyecto,
+        output_file=json_path
+    )
 
-    # documenter.generate_documentation()
+    documenter.generate_documentation()
     contexto = generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folders, selected_files)
     cambios = obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_proyecto)
     print(cambios)
@@ -287,9 +284,10 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
     """
 
     try:
-        response = client.chat.completions.create(
-            model="deepseek/deepseek-r1:free",
-            messages=[
+        response = client.responses.create(
+            model="o3-mini",
+            reasoning={"effort": "high"},
+            input=[
                 {
                     "role": "user",
                     "content": prompt,
@@ -300,13 +298,13 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
         try:
             usage = response.usage
             if usage:
-                input_tokens = usage.prompt_tokens
-                output_tokens = usage.completion_tokens
+                input_tokens = usage.input_tokens
+                output_tokens = usage.output_tokens
                 _update_tokens_usage(input_tokens, output_tokens, carpeta_proyecto, "o3-mini")
         except Exception as e:
             print(f"Error updating token usage: {e}")
         
-        return response.choices[0].message.content
+        return response.output_text
     except Exception as e:
         print(f"Error al obtener cambios de OpenAI: {e}")
         return ""
