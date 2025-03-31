@@ -3,6 +3,7 @@ import { Container, Box, Typography, Button, Grid, Snackbar, Alert, TextField, F
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import api from '../api';
+import { useAuth } from '../context/AuthContext';
 
 // Initialize Stripe with your publishable key
 const stripePromise = loadStripe('pk_test_51R6WMSJKjJZ1brsJeiejXniqKyTzfo6XXjlfXNmWyrx4RzhyMo2UvJkJMAHEtwTZiml07SYRPZDwQU85t0MOHrHl00pBnExPXy');
@@ -42,6 +43,7 @@ function PaymentForm() {
   const [customAmount, setCustomAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('debito');
   const [processing, setProcessing] = useState(false);
+  const { updateSaldo } = useAuth();
 
   const stripe = useStripe();
   const elements = useElements();
@@ -89,7 +91,7 @@ function PaymentForm() {
       setOpen(true);
       return;
     }
-    
+
     setProcessing(true);
     try {
       const { data } = await api.createPaymentIntent(amount * 100, paymentMethod);
@@ -106,9 +108,18 @@ function PaymentForm() {
         setOpen(true);
       } else {
         if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
-          setMessage("Pago exitoso de $" + amount);
-          setSeverity("success");
-          setOpen(true);
+          // Call purchaseTokens to update credits
+          try {
+            await api.purchaseTokens(amount);
+            setMessage("Pago exitoso de $" + amount + ". Créditos agregados.");
+            setSeverity("success");
+            setOpen(true);
+          } catch (purchaseError) {
+            setMessage("Pago exitoso, pero error al actualizar créditos.");
+            setSeverity("warning");
+            setOpen(true);
+            console.error("Error purchasing tokens after payment:", purchaseError);
+          }
         }
       }
     } catch (error) {
@@ -116,8 +127,19 @@ function PaymentForm() {
       setSeverity("error");
       setOpen(true);
     }
+    await fetchSaldo();
     setProcessing(false);
   };
+
+  const fetchSaldo = async () => {
+    try {
+        const response = await api.getSaldo();
+        updateSaldo(response.data.saldo);
+    } catch (error) {
+        console.error('Error fetching saldo:', error);
+        updateSaldo(0);
+    }
+};
 
   const handleClose = () => {
     setOpen(false);

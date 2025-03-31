@@ -7,13 +7,26 @@ export const purchaseController = {
             // @ts-ignore
             const userId = req.user.id;
             const { tokens } = req.body;
+            const usdAmount = req.body.amount; // Get USD amount from request
 
-            if (!tokens || tokens <= 0) {
-                return res.status(400).json({ error: 'Invalid token amount' });
+            let creditsToAdd = 0;
+
+            if (usdAmount) {
+                // If USD amount is provided, calculate credits based on USD amount (e.g., 1 USD = 1 credit)
+                creditsToAdd = parseFloat(usdAmount); // Assuming 1 USD = 1 credit for now. Adapt logic as needed.
+                if (creditsToAdd <= 0) {
+                    return res.status(400).json({ error: 'Invalid purchase amount' });
+                }
+            } else if (tokens) {
+                // If tokens are directly provided (e.g., for admin or specific scenarios), use that value
+                if (!tokens || tokens <= 0) {
+                    return res.status(400).json({ error: 'Invalid token amount' });
+                }
+                creditsToAdd = parseInt(tokens, 10);
+            } else {
+                return res.status(400).json({ error: 'Amount or tokens must be specified' });
             }
 
-            // Here, you should handle payment processing.
-            // For simplicity, we'll assume payment is successful.
 
             // Update user's saldo
             const user = await User.findById(userId);
@@ -21,12 +34,12 @@ export const purchaseController = {
                 return res.status(404).json({ error: 'User not found' });
             }
 
-            user.saldo += tokens;
+            user.saldo += creditsToAdd;
             await user.save();
 
-            res.json({ message: 'Tokens purchased successfully', saldo: user.saldo });
+            res.json({ message: 'Credits added successfully', saldo: user.saldo });
         } catch (error) {
-            console.error('Error purchasing tokens:', error);
+            console.error('Error purchasing tokens/credits:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }

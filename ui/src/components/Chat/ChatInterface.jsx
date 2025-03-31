@@ -23,7 +23,7 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
     const [lastY, setLastY] = useState(0);
     const [textareaHeight, setTextareaHeight] = useState(100); // Initial height in px
 
-    const models = ['o3-mini', 'gpt-4o-mini']; // Available models
+    const models = ['coder']; // Available models
 
     const fetchSaldo = async () => {
         try {
@@ -262,7 +262,7 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
                         {models.map((model) => (
                             <MenuItem key={model} value={model}>
                                 {model} {' '}
-                                <i style={{fontSize: '12px', marginLeft: '5px'}}>{model === 'o3-mini' ? ' 1 credit' : ' free'}</i>
+                                {/* <i style={{fontSize: '12px', marginLeft: '5px'}}>{model === 'o3-mini' ? ' 1 credit' : ' free'}</i> */}
                             </MenuItem>
                         ))}
                     </Select>

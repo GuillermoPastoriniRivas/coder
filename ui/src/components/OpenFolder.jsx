@@ -51,7 +51,7 @@ const OpenFolder = () => {
     const [isDiffView, setIsDiffView] = useState(true);
     const [changedFiles, setChangedFiles] = useState({});
     const [selectedFilePath, setSelectedFilePath] = useState(null);
-    const [selectedModel, setSelectedModel] = useState('o3-mini');
+    const [selectedModel, setSelectedModel] = useState('coder');
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [directoryWidth, setDirectoryWidth] = useState(300);
     const [chatWidth, setChatWidth] = useState(300);
