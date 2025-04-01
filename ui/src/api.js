@@ -7,29 +7,11 @@ const API = axios.create({
   baseURL: 'http://localhost:5000',
 });
 
-// Add automatic sync interceptor before every request except for sync calls
-API.interceptors.request.use(
-  async (config) => {
-    if (!localStorage.getItem('token')) {
-      return config;
-    }
-    if (config.url === '/call') {
-      try {
-        await API.post('/sync', {}); // Automatically sync before sending any request
-      } catch (error) {
-        console.error('Auto-sync error:', error);
-      }
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+// No automatic sync interceptor anymore
 
 API.defaults.headers.common['ngrok-skip-browser-warning'] = "69420";
 
-// Función para configurar el token
+// Funci\u00f3n para configurar el token
 const setAuthToken = (token) => {
   if (token) {
     API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -39,7 +21,7 @@ const setAuthToken = (token) => {
   }
 };
 
-// Función para mostrar notificación de error
+// Funci\u00f3n para mostrar notificaci\u00f3n de error
 function showNotification(message) {
   const notification = document.createElement('div');
   notification.innerText = message;
@@ -90,9 +72,12 @@ export const ApiProvider = ({ children }) => {
 const api = {
   // Conversations
   getConversation: (conversationId) => API.post(`/conversation/`, { conversationId }),
-  deleteConversation: (conversationId) => API.delete(`/conversation/${conversationId}`), // Agregado método para eliminar conversación
+  deleteConversation: (conversationId) => API.delete(`/conversation/${conversationId}`), // Agregado m\u00e9todo para eliminar conversaci\u00f3n
   getConversations: (folder) => API.get(`/conversations/${folder}`),
-  sendMessage: (messageData) => API.post('/call', messageData),
+  sendMessage: async (messageData) => {
+    await api.syncDirectory({}); // Refresh before sending message
+    return API.post('/call', messageData);
+  },
 
   // Account
   getAccount: () => API.get('/account'),
@@ -108,9 +93,9 @@ const api = {
   createAccount: (accountData) => API.post('/signup', accountData),
   login: (loginData) => API.post('/login', loginData),
 
-  // Sync Directory
+  // Sync Directory and update vectors
   syncDirectory: (data) => API.post('/sync', data),
-  updateVectors: (data) => API.post('/update-vectors', data),
+  //updateVectors: (data) => API.post('/update-vectors', data), // Deprecated endpoint
 
   getSaldo: () => API.get('/saldo'), // New method to get saldo
 

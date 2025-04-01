@@ -39,7 +39,7 @@ export default function Menu() {
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Box className="saldo-container">
                         <Button sx={{ mr: 2 }} color="inherit" component={Link} to="/pricing">
-                            {saldo.toFixed(3)} Credits remaining {' '}
+                            {saldo.toFixed(2)} Credits remaining {' '}
                             <span style={{color: "#5787af", marginLeft: '10px'}}>{saldo < 6 ? ' Buy more here' : ''}</span>
                         </Button>
                     </Box>

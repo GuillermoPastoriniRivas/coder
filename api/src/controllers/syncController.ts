@@ -56,32 +56,8 @@ export const syncController = {
                 await processNode(node, baseDir);
             }
 
-            res.json({ message: 'Estructura sincronizada exitosamente' });
-        } catch (error) {
-            console.error('Error en syncController:', error);
-            res.status(500).json({ error: 'Error al sincronizar estructura' });
-        }
-    },
-
-    async updateVectors(req: Request, res: Response) {
-        try {
-            //@ts-ignore
-            const userId = req.user?.id;
-            const folder = req.body.folder;
-            if (!userId || !folder) {
-                return res.status(200).json({ error: 'Datos incompletos' });
-            }
-
-            const safeUserId = userId.replace(/[\/\\]/g, '_');
-            const safeFolder = folder.replace(/[\/\\]/g, '_');
-
-            const baseDir = path.resolve(process.cwd(), 'sources', safeUserId, safeFolder);
-            if (!baseDir.startsWith(process.cwd())) {
-                return res.status(400).json({ error: 'Ruta inválida' });
-            }
-
+            // Update vectors after sync is complete
             const config = path.resolve(process.cwd(), 'sources', safeUserId, `${safeFolder}.json`);
-
             const pythonProcess = spawn('python', ['src/scripts/call_documenter.py', '--project', baseDir, '--config', config]);
 
             await new Promise((resolve, reject) => {
@@ -103,11 +79,17 @@ export const syncController = {
                 });
             });
 
-            res.json({ message: 'Documentacion creada exitosamente' });
+
+            res.json({ message: 'Estructura sincronizada y vectores actualizados exitosamente' });
         } catch (error) {
-            console.error('Error in updateVectors:', error);
-            res.status(500).json({ error: 'Error al actualizar vectores' });
+            console.error('Error en syncController:', error);
+            res.status(500).json({ error: 'Error al sincronizar estructura' });
         }
+    },
+
+    // updateVectors endpoint is now deprecated and its logic is included in sync
+    async updateVectors(req: Request, res: Response) {
+        return res.status(410).json({ error: 'Endpoint deprecated. Use /sync instead.' });
     }
 };
 

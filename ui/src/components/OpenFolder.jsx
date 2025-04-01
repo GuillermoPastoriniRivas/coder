@@ -568,9 +568,6 @@ const OpenFolder = () => {
                         <Button variant="contained" color="primary" onClick={() => handleRefresh()} startIcon={<RefreshIcon />} disabled={loading}>
                             {loading ? <CircularProgress size={24} /> : 'Refresh'}
                         </Button>
-                        <Button variant="contained" color="primary" onClick={handleUpdateVectors} disabled={vectorLoading}>
-                            {vectorLoading ? <CircularProgress size={24} /> : 'Update Vectors'}
-                        </Button>
                         <Button
                             variant="contained"
                             color="secondary"
