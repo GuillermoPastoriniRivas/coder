@@ -27,13 +27,13 @@ app.post('/login', authController.login);
 app.post('/call', authMiddleware, postCall);
 
 app.post('/conversation', authMiddleware, getConversation);
-app.delete('/conversation/:conversationId', authMiddleware, deleteConversation); // Agregado endpoint para eliminar conversación
+app.delete('/conversation/:conversationId', authMiddleware, deleteConversation); // Agregado endpoint para eliminar conversaci\u00f3n
 
 app.get('/account', authMiddleware, accountController.getAccount);
 app.put('/account', authMiddleware, accountController.updateAccount);
 
 app.post('/sync', authMiddleware, syncController.sync);
-app.post('/update-vectors', authMiddleware, syncController.updateVectors);
+//app.post('/update-vectors', authMiddleware, syncController.updateVectors); // Deprecated route
 
 app.get('/conversations/:folder', authMiddleware, getConversations);
 

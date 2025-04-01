@@ -21,16 +21,16 @@ client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key="***REMOVED***",
 )
-top_k = 40
+top_k = 30
 
 input_price_usd_per_M = 1.1
 output_price_usd_per_M = 4.4
 
-current_model = "google/gemini-2.0-flash-thinking-exp:free"
+current_model = "google/gemini-2.5-pro-exp-03-25:free"
 # google/gemini-2.5-pro-exp-03-25:free
 # google/gemini-2.0-pro-exp-02-05:free
-# google/gemini-2.0-flash-thinking-exp:free
 
+# google/gemini-2.0-flash-thinking-exp:free
 # google/gemini-2.0-flash-exp
 
 def main():
