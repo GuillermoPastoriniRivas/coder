@@ -1,63 +1,76 @@
 import React, { useState } from 'react';
-import { Container, Box, Typography, Button, Grid, Snackbar, Alert, TextField, FormControl, FormLabel, RadioGroup, Radio, FormControlLabel } from '@mui/material';
+import { Container, Box, Typography, Button, Grid, Snackbar, Alert, TextField, FormControl, FormLabel, RadioGroup, Radio, FormControlLabel, Paper, CircularProgress } from '@mui/material';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
 
-// Initialize Stripe with your publishable key
-const stripePromise = loadStripe('pk_test_51R6WMSJKjJZ1brsJeiejXniqKyTzfo6XXjlfXNmWyrx4RzhyMo2UvJkJMAHEtwTZiml07SYRPZDwQU85t0MOHrHl00pBnExPXy');
+// Initialize Stripe with your publishable key (ensure this is loaded securely, e.g., from env vars)
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY || 'pk_test_51R6WMSJKjJZ1brsJeiejXniqKyTzfo6XXjlfXNmWyrx4RzhyMo2UvJkJMAHEtwTZiml07SYRPZDwQU85t0MOHrHl00pBnExPXy'); // Fallback for local dev
 
-const CARD_ELEMENT_OPTIONS = {
+// Style options for the CardElement
+const CARD_ELEMENT_OPTIONS = (themeMode) => ({
   style: {
     base: {
-      color: '#d4d4d4',
-      fontSize: '16px',
-      fontFamily: '"Consolas", "Courier New", monospace',
+      color: themeMode === 'dark' ? '#d4d4d4' : '#32325d',
+      fontFamily: '"Consolas", "Courier New", monospace', // Monospace font for card details
       fontSmoothing: 'antialiased',
+      fontSize: '16px',
       '::placeholder': {
-        color: '#d4d4d4',
+        color: themeMode === 'dark' ? '#858585' : '#aab7c4',
       },
-      ':focus': {
-        color: '#d4d4d4',
-      },
+       iconColor: themeMode === 'dark' ? '#d4d4d4' : '#32325d', // Match icon color to text
     },
     invalid: {
-      color: '#ad323b',
-      ':focus': {
-        color: '#ad323b',
-      },
+      color: '#fa755a', // Error color
+      iconColor: '#fa755a',
     },
     complete: {
-      color: '#5787af',
+      color: themeMode === 'dark' ? '#4caf50' : '#4caf50', // Use success color for completion
+      iconColor: themeMode === 'dark' ? '#4caf50' : '#4caf50',
     }
   },
-  hidePostalCode: true,
-};
+  hidePostalCode: true, // Optional: Hide postal code field if not needed
+});
 
 function PaymentForm() {
-  const [open, setOpen] = useState(false);
-  const [message, setMessage] = useState('');
-  const [severity, setSeverity] = useState('success');
-  const [selectedAmount, setSelectedAmount] = useState(5);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [selectedAmount, setSelectedAmount] = useState(10); // Default selected amount
   const [customAmount, setCustomAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('debito');
+  const [paymentMethod, setPaymentMethod] = useState('card'); // Default to card
   const [processing, setProcessing] = useState(false);
-  const { updateSaldo } = useAuth();
+  const { updateSaldo, saldo } = useAuth(); // Get saldo update function and current saldo
 
   const stripe = useStripe();
   const elements = useElements();
 
-  const predefinedAmounts = [2, 5, 10, 20, 50, 100, 500];
+  // Use theme mode to adjust card element style (assuming theme context or similar is available if needed)
+  // For now, let's assume a dark theme context is implicitly applied via ThemeProvider
+  const themeMode = 'dark'; // Replace with dynamic theme detection if necessary
+
+  const predefinedAmounts = [5, 10, 20, 50, 100]; // Common top-up amounts
+
+  // Snackbar handler
+  const handleSnackbarOpen = (message, severity = 'success') => {
+    setSnackbar({ open: true, message, severity });
+  };
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') return;
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
 
   const handleAmountSelect = (amount) => {
     setSelectedAmount(amount);
-    setCustomAmount('');
+    setCustomAmount(''); // Clear custom amount when predefined is selected
   };
 
   const handleCustomAmountChange = (e) => {
-    setCustomAmount(e.target.value);
-    setSelectedAmount(null);
+    const value = e.target.value;
+    // Allow only numbers (optional: allow decimal for custom amounts)
+    if (/^\d*\.?\d*$/.test(value)) {
+      setCustomAmount(value);
+      setSelectedAmount(null); // Clear predefined selection
+    }
   };
 
   const handlePaymentMethodChange = (e) => {
@@ -66,162 +79,219 @@ function PaymentForm() {
 
   const handlePayment = async (e) => {
     e.preventDefault();
-    let amount = selectedAmount;
-    if (!amount && customAmount) {
-      amount = parseFloat(customAmount);
+
+    let amountToCharge = selectedAmount;
+    if (!amountToCharge && customAmount) {
+      amountToCharge = parseFloat(customAmount);
     }
-    if (!amount || amount <= 0) {
-      setMessage("Por favor, ingresa o selecciona un monto válido.");
-      setSeverity("error");
-      setOpen(true);
+
+    if (!amountToCharge || amountToCharge <= 0) {
+      handleSnackbarOpen("Please select or enter a valid amount.", "error");
       return;
     }
+    if (amountToCharge < 1) { // Example minimum charge amount
+        handleSnackbarOpen("Minimum top-up amount is $1.", "error");
+        return;
+    }
+
 
     if (paymentMethod === 'paypal') {
-      setMessage("Redirigiendo a PayPal...");
-      setSeverity("info");
-      setOpen(true);
-      window.location.href = "https://www.paypal.com";
+      // PayPal integration logic would go here
+      handleSnackbarOpen("PayPal is not yet integrated.", "info");
       return;
     }
 
+    // Card payment logic
     if (!stripe || !elements) {
-      setMessage("Stripe no está disponible.");
-      setSeverity("error");
-      setOpen(true);
+      handleSnackbarOpen("Payment system is not ready. Please try again later.", "error");
+      console.error("Stripe.js has not loaded yet.");
       return;
+    }
+
+    const cardElement = elements.getElement(CardElement);
+    if (!cardElement) {
+        handleSnackbarOpen("Card details are missing or invalid.", "error");
+        console.error("CardElement not found.");
+        return;
     }
 
     setProcessing(true);
     try {
-      const { data } = await api.createPaymentIntent(amount * 100, paymentMethod);
+      // 1. Create Payment Intent on the backend
+      // Amount should be in cents
+      const { data } = await api.createPaymentIntent(Math.round(amountToCharge * 100), paymentMethod);
       const clientSecret = data.clientSecret;
-      const cardElement = elements.getElement(CardElement);
+
+      // 2. Confirm the card payment with Stripe.js
       const result = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
           card: cardElement,
+          // billing_details: { name: 'Customer Name' }, // Optional: Add billing details if needed
         }
       });
+
       if (result.error) {
-        setMessage(result.error.message || "Error en el pago.");
-        setSeverity("error");
-        setOpen(true);
+        // Show error to your customer (e.g., insufficient funds, card declined)
+        console.error("Stripe payment confirmation error:", result.error);
+        handleSnackbarOpen(result.error.message || "Payment failed. Please try again.", "error");
       } else {
+        // Payment succeeded
         if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
-          // Call purchaseTokens to update credits
+          console.log("PaymentIntent succeeded:", result.paymentIntent);
+          // 3. Call backend to update user's credits/saldo based on the successful payment
           try {
-            await api.purchaseTokens(amount);
-            setMessage("Pago exitoso de $" + amount + ". Créditos agregados.");
-            setSeverity("success");
-            setOpen(true);
+            // Pass the amount in dollars (or the intended credit value)
+            await api.purchaseTokens(amountToCharge);
+            const newSaldo = saldo + amountToCharge; // Calculate expected new saldo locally for immediate feedback
+            updateSaldo(newSaldo); // Update context immediately
+            handleSnackbarOpen(`Payment of $${amountToCharge.toFixed(2)} successful! Credits added. New balance: $${newSaldo.toFixed(2)}`, "success");
+            // Clear form elements after success
+            cardElement.clear();
+            setSelectedAmount(10); // Reset to default amount
+            setCustomAmount('');
           } catch (purchaseError) {
-            setMessage("Pago exitoso, pero error al actualizar créditos.");
-            setSeverity("warning");
-            setOpen(true);
-            console.error("Error purchasing tokens after payment:", purchaseError);
+            console.error("Error updating credits after successful payment:", purchaseError);
+            handleSnackbarOpen("Payment successful, but failed to update credits. Please contact support.", "warning");
+             // Fetch saldo again to ensure consistency despite error
+            fetchSaldo();
           }
+        } else {
+            // Handle unexpected payment intent status
+             console.warn("Unexpected PaymentIntent status:", result.paymentIntent?.status);
+             handleSnackbarOpen("Payment status uncertain. Please check your balance or contact support.", "warning");
+             fetchSaldo(); // Fetch saldo to get latest status
         }
       }
     } catch (error) {
-      setMessage("Error procesando el pago.");
-      setSeverity("error");
-      setOpen(true);
+      console.error("Error processing payment:", error);
+      const errorMessage = error.response?.data?.message || "An unexpected error occurred during payment.";
+      handleSnackbarOpen(errorMessage, "error");
+    } finally {
+      setProcessing(false);
     }
-    await fetchSaldo();
-    setProcessing(false);
   };
 
-  const fetchSaldo = async () => {
-    try {
-        const response = await api.getSaldo();
-        updateSaldo(response.data.saldo);
-    } catch (error) {
-        console.error('Error fetching saldo:', error);
-        updateSaldo(0);
-    }
-};
+   // Function to fetch saldo (useful after operations)
+   const fetchSaldo = async () => {
+     try {
+         const response = await api.getSaldo();
+         updateSaldo(response.data.saldo);
+     } catch (error) {
+         console.error('Error fetching saldo:', error);
+         // Handle error silently or show a message
+     }
+   };
 
-  const handleClose = () => {
-    setOpen(false);
-  };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 8 }}>
-      <Box sx={{ textAlign: 'center', mb: 4 }}>
-        <Typography variant="h5" gutterBottom>
-          Top Up
-        </Typography>
-      </Box>
+    // Use a Paper component for better visual structure in dark mode
+    <Paper elevation={0} sx={{ p: { xs: 2, md: 4 }, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+      <Typography variant="h5" gutterBottom sx={{ mb: 3, textAlign: 'center' }}>
+        Add Credits
+      </Typography>
+
+      {/* Amount Selection */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="subtitle1" gutterBottom>
-          Select amount:
+        <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'medium' }}>
+          Select Amount ($USD):
         </Typography>
-        <Grid container spacing={2}>
+        <Grid container spacing={2} sx={{ mb: 2 }}>
           {predefinedAmounts.map((amount) => (
             <Grid item key={amount}>
               <Button
-                sx={{padding: '15px'}}
                 variant={selectedAmount === amount ? "contained" : "outlined"}
                 onClick={() => handleAmountSelect(amount)}
+                disabled={processing}
+                sx={{ py: 1.5, px: 2.5 }} // Adjust padding for better button size
               >
                 ${amount}
               </Button>
             </Grid>
           ))}
-          <Grid item xs={12} sm={6} md={4}>
-            <TextField
-              fullWidth
-              label="Custom Amount"
-              type="number"
-              value={customAmount}
-              onChange={handleCustomAmountChange}
-            />
+          <Grid>
+          <TextField
+          fullWidth
+          label="Or Enter Custom Amount ($)"
+          type="text" // Use text to allow decimal input with validation
+          inputMode='decimal' // Hint for mobile keyboards
+          value={customAmount}
+          sx={{
+            marginLeft: '1rem',
+            marginTop: '10px',
+            maxWidth: '187px'
+          }}
+          onChange={handleCustomAmountChange}
+          disabled={processing}
+          placeholder=" 12.25"
+          InputProps={{
+            startAdornment: <Typography sx={{ ml: 0.5 }}>$</Typography>, // Show $ sign
+          }}
+        />
           </Grid>
         </Grid>
+         
       </Box>
+
+      {/* Payment Method Selection */}
       <Box sx={{ mb: 4 }}>
-        <FormControl component="fieldset">
+        <FormControl component="fieldset" disabled={processing}>
           <FormLabel component="legend">Payment Method</FormLabel>
           <RadioGroup row value={paymentMethod} onChange={handlePaymentMethodChange}>
-            <FormControlLabel value="debito" control={<Radio />} label="Debit/Credit" />
-            <FormControlLabel value="paypal" control={<Radio />} label="PayPal" disabled/>
+            <FormControlLabel value="card" control={<Radio />} label="Debit/Credit Card" />
+            <FormControlLabel value="paypal" control={<Radio />} label="PayPal" disabled /> {/* Keep PayPal disabled for now */}
           </RadioGroup>
         </FormControl>
       </Box>
-      {paymentMethod !== 'paypal' && (
+
+      {/* Card Details Form */}
+      {paymentMethod === 'card' && (
         <Box sx={{ mb: 4 }}>
-          <Typography variant="subtitle1" gutterBottom>
-            Enter your card details:
+          <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'medium' }}>
+            Enter Card Details:
           </Typography>
-          <Box sx={{ p: 2, border: '1px solid #ccc', borderRadius: 2 }}>
-            <CardElement options={CARD_ELEMENT_OPTIONS} />
-          </Box>
+           {/* Container for Stripe CardElement with background and border */}
+           <Box className="StripeElement" sx={{ p: 0, borderRadius: 1 }}> {/* Use class for styling */}
+             <CardElement options={CARD_ELEMENT_OPTIONS(themeMode)} />
+           </Box>
         </Box>
       )}
+
+      {/* Pay Button */}
       <Box sx={{ textAlign: 'center' }}>
         <Button
           variant="contained"
           color="primary"
           onClick={handlePayment}
-          disabled={processing}
-          sx={{ textTransform: 'none', fontWeight: 600, paddingY: 1.5 }}
+          disabled={processing || !stripe || !elements || (paymentMethod === 'card' && !elements.getElement(CardElement))} // More robust disable check
+          size="large"
+          sx={{ fontWeight: 600, px: 5, py: 1.5 }} // Make button prominent
         >
-          {processing ? "Procesando..." : "Pagar"}
+          {processing ? <CircularProgress size={24} color="inherit" /> : `Add $${(selectedAmount || parseFloat(customAmount || 0)).toFixed(2)} Credits`}
         </Button>
       </Box>
-      <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
-        <Alert onClose={handleClose} severity={severity} sx={{ width: '100%' }}>
-          {message}
-        </Alert>
-      </Snackbar>
-    </Container>
+
+       {/* Snackbar for feedback */}
+       <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={handleSnackbarClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }} variant="filled">
+              {snackbar.message}
+          </Alert>
+       </Snackbar>
+    </Paper>
   );
 }
 
 export default function Pricing() {
   return (
-    <Elements stripe={stripePromise}>
-      <PaymentForm />
-    </Elements>
+     // Center the payment form on the page
+     <Container maxWidth="md" sx={{ mt: { xs: 4, md: 8 }, mb: 4 }}>
+        <Elements stripe={stripePromise}>
+          <PaymentForm />
+        </Elements>
+     </Container>
   );
 }

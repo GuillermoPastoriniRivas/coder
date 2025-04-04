@@ -5,7 +5,6 @@ import tiktoken
 from openai import OpenAI
 from pathlib import Path
 import re
-from pymongo import MongoClient
 
 class AIDocumenter:
     def __init__(self, api_key, code_path, output_file):
@@ -18,7 +17,8 @@ class AIDocumenter:
             base_url="https://openrouter.ai/api/v1",
             api_key="***REMOVED***",
         )
-        
+        print("Initializing AIDocumenter...")
+        print(f"Code path: {self.code_path}")
         # Cargar o inicializar documentación
         if Path(output_file).exists():
             with open(output_file, 'r') as f:
@@ -56,47 +56,45 @@ class AIDocumenter:
         Analyze this source file and generate documentation in JSON format. Follow this schema:
         {{
             "description": "string",  // Concise technical purpose/functionality. Text that will be used for vector search
-            "dependencies": [         // ONLY project files, not libraries, skip node_modules imports
-                {{
-                    "file_path": "string", // Copy the exact import path as it is in the file
-                    "items": [ ] // Enum the items imported from that file
-                }}
-            ]
         }}
 
         Important:
+        - ONLY return a valid JSON with the above schema.
         - All text in English
-        - Ignore external dependencies (node_modules, etc.)
         - Focus on technical functionality
-        - Current file path: {file_path}
 
         Source File:
         {code[:10000]}
         """
-
         try:
             response = self.client.chat.completions.create(
-                model="deepseek/deepseek-chat-v3-0324:free",
-                messages=[{"role": "user", "content": prompt}]
+                model="deepseek/deepseek-r1-distill-qwen-32b:free",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    }
+                ]
             )
-            try:
-                usage = getattr(response, "usage", None)
-                if usage:
-                    prompt_tokens = usage.prompt_tokens
-                    completion_tokens = usage.completion_tokens
-                    self._update_tokens_usage(prompt_tokens, completion_tokens, "gpt-4o-mini")
-            except Exception as e:
-                print(f"Error updating token usage for {file_path}: {e}")
-            try:
-                response_text = response.choices[0].message.content.strip() 
-                return json.loads(response.choices[0].message.content)
-            except json.JSONDecodeError:
-                print(f"Error parsing JSON for {file_path}: {response_text}")
-                return {}
 
-        except Exception as e:
-            print(f"OpenAI API Error for {file_path}: {str(e)}")
+            content = response.choices[0].message.content
+            
+            # Extraer JSON del bloque Markdown
+            json_match = re.search(r'```json\s*({.*?})\s*```', content, re.DOTALL)
+            if json_match:
+                json_str = json_match.group(1)
+            else:
+                json_str = content  # Intentar parsear directamente si no hay backticks
+                
+            return json.loads(json_str)
+        except (json.JSONDecodeError, AttributeError) as e:
+            print(f"Error parsing JSON for {file_path}: {str(e)}")
+            print(f"Raw response: {content}")
             return {}
+        except Exception as e:
+            print(f"Error in Gemini API call for {file_path}: {str(e)}")
+            return {}
+
         
     def _process_file(self, file_path):
         try:
@@ -142,7 +140,7 @@ class AIDocumenter:
         for file in all_files:
             current_hash = self._compute_file_hash(file)
             relative_path = file.relative_to(self.code_path).as_posix()
-
+            print(f"Processing {relative_path}...")
             if not current_hash:
                 continue
 
@@ -160,80 +158,21 @@ class AIDocumenter:
             except Exception as e:
                 print(f"Error en {file}: {str(e)}")
 
-        # self._generate_project_overview()
         return self.docs
 
     def _save_progress(self):
         with open(self.output_file, 'w') as f:
             json.dump(self.docs, f, indent=2)
 
-    def _generate_project_overview(self):
 
-        if self.docs["project"]["overview"] != "":
-            return
-        
-        architecture = {
-            "components": len(self.docs["project"]["files"]),
-        }
-        
-        prompt = f"""
-        Generate a technical project overview in English based on this structure:
-        {json.dumps(architecture, indent=2)}
+API_KEY = "***REMOVED***"
+PROJECT_PATH = "C:/Users/Usuario/Desktop/guille/coder2/api/sources/67c48e76f8288aad11d6bdf9/coder2"
+JSON_PATH = "C:/Users/Usuario/Desktop/guille/coder2/api/sources/67c48e76f8288aad11d6bdf9/coder2.json"
 
-        Include:
-        - System architecture type
-        - Main data flows
-        - Critical components
-        - Notable patterns
-        - Security considerations
-        """
+documenter = AIDocumenter(
+    api_key=API_KEY,
+    code_path=PROJECT_PATH,
+    output_file=JSON_PATH
+)
 
-        response = self.client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3
-        )
-        
-        self.docs["project"]["overview"] = response.choices[0].message.content
-        self._save_progress()
-        
-    def _update_tokens_usage(self, prompt_tokens, completion_tokens, model):
-        try:
-            mongo_uri = "***REMOVED***/coder"
-            if not mongo_uri:
-                print("MongoDB URI is not set.")
-                return
-            
-            # Connect to MongoDB and get the database
-            client = MongoClient(mongo_uri)
-            db = client.get_database()  # Gets the 'coder' database from the URI
-            
-            # Get the collection
-            tokens_collection = db["tokensUsage"]  # or db.tokensUsage
-            
-            project_name = self.docs["project"]["name"]
-            
-            # Update the document in the collection
-            tokens_collection.update_one(
-                {"project_name": project_name, "model": model},
-                {"$inc": {"input_tokens": prompt_tokens, "output_tokens": completion_tokens}},
-                upsert=True
-            )
-            
-            # Close the connection (optional as MongoClient manages connections)
-            client.close()
-            
-        except Exception as e:
-            print(f"MongoDB update error: {str(e)}")
-
-# API_KEY = "***REMOVED***"
-# PROJECT_PATH = "C:/Users/Usuario/Desktop/guille/coder/api/sources/67c48e76f8288aad11d6bdf9/coder"
-# JSON_PATH = "C:/Users/Usuario/Desktop/guille/coder/api/sources/67c48e76f8288aad11d6bdf9/coder.json"
-
-# documenter = AIDocumenter(
-#     api_key=API_KEY,
-#     code_path=PROJECT_PATH,
-#     output_file=JSON_PATH
-# )
-
-# documentation = documenter.generate_documentation()
+documentation = documenter.generate_documentation()

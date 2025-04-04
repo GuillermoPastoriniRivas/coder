@@ -13,12 +13,14 @@ from pymongo import MongoClient
 import time 
 from bson import ObjectId
 from datetime import datetime
-from google import genai
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-
-client = genai.Client(api_key="***REMOVED***")
+# api_key = "***REMOVED***"
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key="***REMOVED***",
+)
 top_k = 30
 
 input_price_usd_per_M = 1.1
@@ -333,19 +335,27 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
 
     while retry_count < max_retries:
         try:
-            response = client.models.generate_content(
-                model="gemini-2.5-pro-exp-03-25", contents=prompt
+            response = client.chat.completions.create(
+                model=current_model,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    }
+                ]
             )
 
             # Robust check for response structure before accessing content
-            if response and response.text and response.usage_metadata.candidates_token_count:
-                content = response.text
+            if response and response.choices and len(response.choices) > 0 and response.choices[0].message:
+                content = response.choices[0].message.content
                 # If successful, update usage and return content
                 try:
-                    input_tokens = response.usage_metadata.prompt_token_count
-                    output_tokens = response.usage_metadata.candidates_token_count
-                    # Use the actual model called for usage tracking
-                    _update_tokens_usage(input_tokens, output_tokens, carpeta_proyecto, coder_model, userId)
+                    usage = response.usage
+                    if usage:
+                        input_tokens = usage.prompt_tokens
+                        output_tokens = usage.completion_tokens
+                        # Use the actual model called for usage tracking
+                        _update_tokens_usage(input_tokens, output_tokens, carpeta_proyecto, coder_model, userId)
                 except Exception as e:
                     print(f"Error updating token usage: {e}", file=sys.stderr)
 
