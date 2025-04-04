@@ -1,154 +1,214 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Button, Typography, Paper, CircularProgress, Chip, MenuItem, Select, LinearProgress, Tooltip } from '@mui/material';
+import { Box, Button, Typography, Paper, CircularProgress, Chip, MenuItem, Select, LinearProgress, Tooltip, IconButton } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
+import InfoIcon from '@mui/icons-material/Info'; // For info tooltip
+import FolderIcon from '@mui/icons-material/Folder'; // For folder chip icon
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile'; // For file chip icon
 import api from '../../api';
-import '../../styles/App.css';
+import '../../styles/App.css'; // Keep general app styles
 import { useDirectory } from '../../context/DirectoryContext';
 import { parseAIMessageForFiles } from '../../utils/functions';
 import { useAuth } from '../../context/AuthContext';
 
-export default function ChatInterface({ selectedConversation, onFileChanges, selectedModel, setSelectedModel, selectedFiles, deselectFile, deselectSubFolder }) {
+export default function ChatInterface({
+    selectedConversation,
+    onFileChanges, // Callback when AI provides file changes
+    selectedModel,
+    setSelectedModel,
+    selectedFiles,    // Array of selected file paths
+    selectedSubFolders, // Array of selected folder paths
+    deselectFile,
+    deselectSubFolder
+}) {
     const [message, setMessage] = useState('');
-    const [conversation, setConversation] = useState([]);
-    const [loading, setLoading] = useState(false); // State for loading
-    const [progress, setProgress] = useState(0); // State for progress bar
-    const progressInterval = useRef(null); // Ref for progress interval
-    const messagesEndRef = useRef(null);
-    const resizerRef = useRef(null); // Ref for the resizer
-    const textareaRef = useRef(null); // Ref for the textarea
-    const { folderHandle, selectedSubFolders, setConversations } = useDirectory(); // Access selectedSubFolders
+    const [conversation, setConversation] = useState([]); // Stores message objects { role, content, timestamp }
+    const [loading, setLoading] = useState(false); // For send message loading state
+    const [progress, setProgress] = useState(0);
+    const progressInterval = useRef(null);
+    const messagesEndRef = useRef(null); // To scroll chat to bottom
+    const textareaRef = useRef(null); // To manage textarea focus and height potentially
+    const resizerRef = useRef(null); // For the textarea resizer handle
+
+    const { folderHandle, setConversations } = useDirectory();
     const { saldo, updateSaldo } = useAuth();
 
     const [isResizing, setIsResizing] = useState(false);
     const [lastY, setLastY] = useState(0);
-    const [textareaHeight, setTextareaHeight] = useState(100); // Initial height in px
+    const [textareaHeight, setTextareaHeight] = useState(80); // Initial height (adjust as needed)
 
-    const models = ['coder']; // Available models
+    const models = ['coder']; // Available models (update if more are added)
 
-    const fetchSaldo = async () => {
+    // Debounced saldo fetch function (optional, to avoid rapid fetches)
+    const fetchSaldoDebounced = useRef(debounce(async () => {
+         if (!localStorage.getItem('token')) return; // Don't fetch if logged out
         try {
             const response = await api.getSaldo();
             updateSaldo(response.data.saldo);
         } catch (error) {
             console.error('Error fetching saldo:', error);
-            updateSaldo(0);
+             // Handle error appropriately, maybe logout or show message
+             // updateSaldo(0); // Reset saldo on error?
         }
-    };
+    }, 500)).current; // 500ms debounce
 
-    const loadConversation = async () => {
-        if (selectedConversation) {
-            if (selectedConversation.userMessages && selectedConversation.userMessages.length > 0) {
-                setConversation([selectedConversation.userMessages[0]]);
-            } else if (selectedConversation.messages && selectedConversation.messages.length > 0) {
-                setConversation(selectedConversation.messages);
+
+    // Load conversation history when selectedConversation changes
+    useEffect(() => {
+        const loadInitialConversation = () => {
+            if (selectedConversation && selectedConversation.messages && selectedConversation.messages.length > 0) {
+                 // Filter out assistant messages if they only contain file diffs (handled by FileContent)
+                 // Or decide how to display them (e.g., "Assistant proposed changes...")
+                 setConversation(selectedConversation.userMessages);
             } else {
+                // Default initial message if no conversation history
                 setConversation([
                     {
-                        role: 'default',
-                        content: "Hello! I can generate code changes based on your instructions. Just tell me what you want to modify",
+                        role: 'default', // Use 'default' or 'system'
+                        content: "Hello! I can generate code changes based on your instructions. Just tell me what changes you need.",
                         timestamp: new Date()
                     }
                 ]);
             }
-        } else {
-            setConversation([
-                {
-                    role: 'default',
-                    content: "Hello! I can generate code changes based on your instructions. Just tell me what you want to modify",
-                    timestamp: new Date()
-                }
-            ]);
-        }
-    };
+             // Scroll to bottom after loading
+             scrollToBottom();
+        };
+        loadInitialConversation();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedConversation]); // Rerun only when the selected conversation object changes
 
-    useEffect(() => {
-        loadConversation();
-    }, [selectedConversation]);
 
+    // Send message handler
     const handleSend = async () => {
-        if (!message) return;
+        if (!message.trim() || loading || !folderHandle) return; // Basic validation
 
-        const userMessage = { role: 'user', content: message, timestamp: new Date() };
-        setConversation((prev) => [...prev, userMessage]);
-        setLoading(true); // Start loading
-        setProgress(0); // Initialize progress
-        setMessage('');
-        
-        // Start Progress Interval
-        progressInterval.current = setInterval(() => {
-            setProgress((prev) => {
-                if (prev < 20) return prev + 7;
-                if (prev < 80) return prev + 4;
-                return prev;
-            });
-        }, 2000); // Every 2 seconds
+         const userMessage = { role: 'user', content: message.trim(), timestamp: new Date() };
+         // Update local conversation state immediately for responsiveness
+         setConversation((prev) => [...prev, userMessage]);
+         setMessage(''); // Clear input field
+         setLoading(true); // Set loading state
+         setProgress(0); // Reset progress bar
 
-        try {
-            const response = await api.sendMessage({
-                message,
-                folder: folderHandle.name,
-                subFolders: selectedSubFolders, // Include selectedSubFolders in the request
-                selectedFiles, // Include selectedFiles in the request
-                model: selectedModel // Include selected model in the request
-            });
+         // Reset textarea height after sending (optional)
+         // setTextareaHeight(80);
 
-            const aiResponse = response.data.response;
-            const parsedFiles = parseAIMessageForFiles(folderHandle.name, aiResponse);
+         // Simulate progress (replace with actual progress if available)
+         progressInterval.current = setInterval(() => {
+             setProgress((prev) => {
+                 if (prev >= 95) { // Don't let simulated progress reach 100%
+                     clearInterval(progressInterval.current);
+                     return 95;
+                 }
+                 // Simulate slower progress towards the end
+                 const increment = prev < 60 ? 10 : (prev < 90 ? 3 : 1);
+                 return Math.min(prev + increment, 95);
+             });
+         }, 500); // Update interval
 
-            if (parsedFiles.length > 0 && onFileChanges) {
-                onFileChanges(parsedFiles);
-            }
+         try {
+             const response = await api.sendMessage({
+                 message: userMessage.content, // Send the trimmed message content
+                 folder: folderHandle.name,
+                 // Send selected paths relative to the root folder handle
+                 subFolders: selectedSubFolders,
+                 selectedFiles: selectedFiles,
+                 model: selectedModel,
+                 conversationId: selectedConversation?._id // Pass current conversation ID if exists
+             });
 
-            const aiMessage = {
-                role: 'default',
-                content: 'Your instruction has been completed. Please review and apply the changes.',
-                timestamp: new Date()
-            }
-            setConversation((prev) => [...prev, aiMessage]);
-            fetchSaldo();
-            const responseConvs = await api.getConversations(folderHandle.name);
-            setConversations(responseConvs.data); 
+             // Stop simulated progress
+             clearInterval(progressInterval.current);
+             setProgress(100); // Mark as complete
 
-            // Fast forward progress to 100%
-            clearInterval(progressInterval.current);
-            setProgress(80);
-            setTimeout(() => setProgress(90), 300);
-            setTimeout(() => setProgress(100), 500);
-            setTimeout(() => {
-                setMessage('');
-                setLoading(false); 
-            }, 600);
-            
-        } catch (error) {
-            console.error('Error sending message:', error);
-        }
+             const aiResponseContent = response.data.response; // The raw response from AI
+             const newConversationId = response.data.conversationId; // ID of the created/updated conversation
+
+             // Parse the AI response for file changes
+             const parsedFiles = parseAIMessageForFiles(folderHandle.name, aiResponseContent);
+
+             let displayMessageContent = '';
+             if (parsedFiles.length > 0 && onFileChanges) {
+                 onFileChanges(parsedFiles); // Pass changes to parent to update editor
+                 displayMessageContent = `Assistant proposed changes to ${parsedFiles.length} file(s). Review the changes in the editor.`;
+             } else if (aiResponseContent.includes('--------------------') && aiResponseContent.includes('+++++')) {
+                  // It looks like a diff but parsing failed or was empty
+                  displayMessageContent = "Assistant provided a response, but no file changes were detected or applied automatically. Check the response format if expecting code changes.";
+                  console.warn("AI response looked like a diff but parsing yielded no files:", aiResponseContent);
+             }
+              else {
+                 // If no parseable files, display the raw response (or a summary)
+                 displayMessageContent = aiResponseContent; // Or potentially summarize if too long
+             }
+
+             const aiMessage = {
+                 role: 'assistant', // Use 'assistant' role
+                 content: displayMessageContent,
+                 timestamp: new Date()
+             };
+             setConversation((prev) => [...prev, aiMessage]); // Add AI message to local state
+
+             // Fetch updated saldo and conversations list
+              fetchSaldoDebounced();
+             const updatedConversations = await api.getConversations(folderHandle.name);
+             setConversations(updatedConversations.data || []);
+
+             // If it was a new conversation, select it
+              if (!selectedConversation && newConversationId) {
+                 const newConv = updatedConversations.data.find(c => c._id === newConversationId);
+                 if (newConv) {
+                     // Need a way to inform the parent (OpenFolder) to select this new conversation
+                     // This might require lifting state up or using a context update
+                     console.log("New conversation created, need to select it:", newConv);
+                 }
+             }
+
+
+         } catch (error) {
+              console.error('Error sending message:', error);
+              clearInterval(progressInterval.current); // Stop progress on error
+              setProgress(0); // Reset progress
+              // Add error message to chat
+              const errorMessage = {
+                   role: 'system', // Or 'error' role
+                   content: `Error: ${error.response?.data?.message || error.message || 'Failed to get response.'}`,
+                   timestamp: new Date()
+              };
+              setConversation((prev) => [...prev, errorMessage]);
+         } finally {
+             setLoading(false); // End loading state
+             // Hide progress bar after a short delay
+              setTimeout(() => setProgress(0), 1000);
+             // Ensure textarea is focused after sending
+             textareaRef.current?.focus();
+         }
+     };
+
+    // Scroll chat to the bottom
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
+    useEffect(scrollToBottom, [conversation]); // Scroll whenever conversation updates
 
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [conversation]);
-
-    // Resizing Handlers
+    // Textarea Resizing Logic
     useEffect(() => {
         const handleMouseMove = (e) => {
             if (!isResizing) return;
             const deltaY = e.clientY - lastY;
             setTextareaHeight((prevHeight) => {
                 const newHeight = prevHeight - deltaY;
-                return newHeight > 50 ? newHeight : 50; // Minimum height
+                // Clamp height between min and max values
+                return Math.max(50, Math.min(newHeight, window.innerHeight * 0.6)); // Min 50px, Max 60% of viewport height
             });
             setLastY(e.clientY);
         };
-
         const handleMouseUp = () => {
             if (isResizing) {
                 setIsResizing(false);
+                 document.body.style.cursor = 'default';
+                 document.body.style.userSelect = 'auto';
             }
         };
-
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('mouseup', handleMouseUp);
-
         return () => {
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
@@ -159,9 +219,11 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
         e.preventDefault();
         setIsResizing(true);
         setLastY(e.clientY);
+        document.body.style.cursor = 'row-resize';
+        document.body.style.userSelect = 'none';
     };
 
-    // Cleanup interval on unmount
+    // Cleanup progress interval on unmount
     useEffect(() => {
         return () => {
             if (progressInterval.current) {
@@ -170,117 +232,155 @@ export default function ChatInterface({ selectedConversation, onFileChanges, sel
         };
     }, []);
 
+     // Handle Enter key press in textarea (Shift+Enter for newline)
+     const handleKeyDown = (e) => {
+         if (e.key === 'Enter' && !e.shiftKey) {
+             e.preventDefault(); // Prevent default newline insertion
+             handleSend(); // Send message
+         }
+     };
+
+
     return (
-        <Box className="chat-container">
-            {/* Selected Files/Folders */}
-            <Box className="selected-items" sx={{ padding: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                {selectedSubFolders.map((folder, index) => (
-                    <Chip
-                        key={index}
-                        label={folder}
-                        onDelete={() => deselectSubFolder(folder)}
-                        color="secondary"
-                        variant="outlined"
-                    />
-                ))}
-                {selectedFiles.map((file, index) => (
-                    <Chip
-                        key={index}
-                        label={file}
-                        onDelete={() => deselectFile(file)}
-                        color="primary"
-                        variant="outlined"
-                    />
-                ))}
-            </Box>
+        <Box className="chat-container"> {/* Uses class from App.css */}
 
-            {/* Chat Messages */}
-            <Box className="chat-messages">
-                {conversation.map(
-                    (msg, index) =>
-                        msg.role !== 'assistant' && (
-                            <Box key={index} className={`chat-message ${msg.role === 'user' ? 'user' : 'assistant'}`}>
-                                <Typography variant="body1">{msg.content}</Typography>
-                                <hr />
-                                <Typography variant="caption" sx={{ color: '#ffffff86' }}>
-                                    {new Date(msg.timestamp).toDateString().split(' ')[2]} {new Date(msg.timestamp).toDateString().split(' ')[1]},
-                                    {' '}
-                                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </Typography>
-                            </Box>
-                        )
-                )}
-                <div ref={messagesEndRef} />
-            </Box>
-
-            {/* Message Input */}
-            <Paper className="chat-input" elevation={1} sx={{ display: 'flex', flexDirection: 'column', boxShadow: 'none', borderRadius: '8px', padding: '0' }}>
-                {/* Resizer */}
-                <div
-                    className="textarea-resizer"
-                    onMouseDown={startResizing}
-                    ref={resizerRef}
-                />
-
-                <textarea
-                    ref={textareaRef}
-                    minRows={3}
-                    placeholder="Type your message..."
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    style={{
-                        width: '100%',
-                        padding: '20px',
-                        borderRadius: '8px',
-                        border: 'none',
-                        fontSize: '1rem',
-                        overflow: 'auto',           // Added overflow
-                        resize: 'none',             // Disable default resize
-                        height: `${textareaHeight}px`,
-                        boxSizing: 'border-box'
-                    }}
-                ></textarea>
-
-                {/* Progress Bar */}
-                {loading && (
-                    <LinearProgress
-                        variant="determinate"
-                        color='primary'
-                        value={progress}
-                        sx={{ height: 4, borderRadius: 2, mt: 0, width: '100%' }}
-                    />
-                )}
-
-                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', padding: '10px 20px', justifyContent: 'space-between' }}>
-                    <Select
-                        value={selectedModel}
-                        onChange={(e) => setSelectedModel(e.target.value)}
-                        displayEmpty
-                        inputProps={{ 'aria-label': 'Select Model' }}
-                        style={{ marginRight: '10px', minWidth: '150px' }}
-                    >
-                        {models.map((model) => (
-                            <MenuItem key={model} value={model}>
-                                {model} {' '}
-                                {/* <i style={{fontSize: '12px', marginLeft: '5px'}}>{model === 'o3-mini' ? ' 1 credit' : ' free'}</i> */}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                    {saldo === 0 ? (
-                        <Tooltip title="No tienes creditos para hacer esta consulta">
-                            <span>
-                                <Button variant="contained" onClick={handleSend} disabled={loading || !message || saldo === 0} endIcon={loading ? <CircularProgress size={24} /> : <SendIcon />}>
-                                    {loading ? '' : 'Send'}
-                                </Button>
-                            </span>
+            {/* Selected Files/Folders Context Display */}
+             {(selectedFiles.length > 0 || selectedSubFolders.length > 0) && (
+                <Box className="selected-items-container"> {/* Class from App.css */}
+                     {selectedSubFolders.map((folderPath) => (
+                        <Tooltip title={`Folder context: ${folderPath}`} key={`folder-${folderPath}`}>
+                            <Chip
+                                icon={<FolderIcon fontSize="small" />}
+                                label={folderPath.split('/').pop()} // Show last part of path
+                                size="small"
+                                onDelete={() => deselectSubFolder(folderPath)}
+                                color="secondary" // Use theme's secondary color chip
+                            />
                         </Tooltip>
-                    ) : (
-                        <Button variant="contained" onClick={handleSend} disabled={loading || !message} endIcon={loading ? <CircularProgress size={24} /> : <SendIcon />}>
-                            {loading ? '' : 'Send'}
-                        </Button>
-                    )}
+                     ))}
+                     {selectedFiles.map((filePath) => (
+                          <Tooltip title={`File context: ${filePath}`} key={`file-${filePath}`}>
+                             <Chip
+                                icon={<InsertDriveFileIcon fontSize="small" />}
+                                label={filePath.split('/').pop()} // Show filename
+                                size="small"
+                                onDelete={() => deselectFile(filePath)}
+                                color="primary" // Use theme's primary color chip
+                            />
+                         </Tooltip>
+                     ))}
                 </Box>
-            </Paper>
+             )}
+
+            {/* Chat Messages Area */}
+            <Box className="chat-messages">
+                 {conversation.map((msg, index) => (
+                     <Paper
+                         key={index}
+                         elevation={0} // Use theme's elevation/styling, remove default shadow
+                         className={`chat-message ${msg.role}`} // Classes: user, assistant, system, default
+                         sx={{ bgcolor: msg.role === 'user' ? 'primary.dark' : 'background.paper' }} // Example specific styling
+                     >
+                         {/* Render content based on role or type if needed */}
+                         <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}> {/* Preserve whitespace/newlines */}
+                             {msg.content}
+                         </Typography>
+                         {msg.timestamp && (
+                            <>
+                              <hr /> {/* Use styled hr or border */}
+                              <Typography variant="caption" display="block" align="right">
+                                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </Typography>
+                             </>
+                         )}
+                     </Paper>
+                 ))}
+                <div ref={messagesEndRef} /> {/* Anchor to scroll to */}
+            </Box>
+
+            {/* Message Input Area */}
+            <Box className="chat-input-container">
+                <Paper className="chat-input-paper">
+                     {/* Resizer Handle */}
+                     <Box
+                        className="textarea-resizer" // Class from OpenFolder.css
+                        onMouseDown={startResizing}
+                        ref={resizerRef}
+                        title="Drag to resize input area"
+                    />
+
+                    {/* Textarea */}
+                     <textarea
+                        ref={textareaRef}
+                        rows={1} // Start with 1 row, height is controlled by state/css
+                        placeholder="Type your instruction... (e.g., 'Refactor the login component to use async/await')"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        onKeyDown={handleKeyDown} // Handle Enter key
+                        className="chat-input-textarea" // Class from App.css
+                        style={{ height: `${textareaHeight}px` }} // Dynamic height
+                        disabled={loading} // Disable input while loading
+                    />
+
+                    {/* Progress Bar */}
+                     {loading && (
+                        <LinearProgress
+                            variant={progress < 100 ? "determinate" : "indeterminate"} // Show determinate or indeterminate
+                            value={progress}
+                            sx={{ height: '2px', width: '100%', position: 'absolute', bottom: 0, left: 0 }} // Fine progress line at bottom
+                        />
+                     )}
+
+                    {/* Controls: Model Select & Send Button */}
+                     <Box className="chat-input-controls">
+                         <Select
+                             value={selectedModel}
+                             onChange={(e) => setSelectedModel(e.target.value)}
+                             variant="outlined"
+                             size="small"
+                             disabled={loading}
+                             sx={{ minWidth: 120, '& .MuiSelect-select': { py: 0.8 } }} // Adjust padding
+                         >
+                             {models.map((model) => (
+                                 <MenuItem key={model} value={model}>
+                                     {model}
+                                     {/* Optional: Add cost/info badge */}
+                                     {/* <Chip size="small" label="Free" sx={{ml: 1}}/> */}
+                                 </MenuItem>
+                             ))}
+                         </Select>
+
+                         {/* Send Button */}
+                         <Tooltip title={saldo === 0 ? "Insufficient credits to send message" : "Send message (Enter)"}>
+                            <span> {/* Span required for tooltip on disabled button */}
+                                 <Button
+                                     variant="contained"
+                                     color="primary"
+                                     onClick={handleSend}
+                                     disabled={loading || !message.trim() || saldo === 0} // Disable if loading, no message, or no credits
+                                     endIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
+                                     sx={{ ml: 1 }}
+                                 >
+                                     Send
+                                 </Button>
+                             </span>
+                         </Tooltip>
+                     </Box>
+                </Paper>
+            </Box>
         </Box>
     );
+}
+
+// Simple debounce function
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
 }
