@@ -1,10 +1,11 @@
 import axios from 'axios';
 import { useAuth } from './context/AuthContext';
 import { useEffect } from 'react';
+import { showNotification } from './utils/functions';
 
 const API = axios.create({
   // baseURL: 'https://169f-200-55-69-248.ngrok-free.app',
-  baseURL: 'http://localhost:5000',
+  baseURL: 'http://localhost:5001',
 });
 
 // No automatic sync interceptor anymore
@@ -21,33 +22,11 @@ const setAuthToken = (token) => {
   }
 };
 
-// Funci\u00f3n para mostrar notificaci\u00f3n de error
-function showNotification(message) {
-  const notification = document.createElement('div');
-  notification.innerText = message;
-  notification.style.position = 'fixed';
-  notification.style.bottom = '00px';
-  notification.style.left = '00px';
-  notification.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-  notification.style.color = '#fff';
-  notification.style.padding = '10px 20px';
-  notification.style.borderRadius = '4px';
-  notification.style.zIndex = '9999';
-  document.body.appendChild(notification);
-  setTimeout(() => {
-    document.body.removeChild(notification);
-  }, 3000);
-}
-
 API.interceptors.response.use(
   response => response,
   error => {
     if (error.response && error.response.status === 401) {
-      localStorage.removeItem('userEmail');
-      localStorage.removeItem('token');
-      localStorage.removeItem('saldo');
-      delete API.defaults.headers.common['Authorization'];
-      window.location.href = '/login';
+      // window.location.reload();
     }
     if (error.response && error.response.status === 500) {
       showNotification("Ocurrio un Error, vuelva a intentarlo");
@@ -72,7 +51,7 @@ export const ApiProvider = ({ children }) => {
 const api = {
   // Conversations
   getConversation: (conversationId) => API.post(`/conversation/`, { conversationId }),
-  deleteConversation: (conversationId) => API.delete(`/conversation/${conversationId}`), // Agregado m\u00e9todo para eliminar conversaci\u00f3n
+  deleteConversation: (conversationId) => API.delete(`/conversation/${conversationId}`),
   getConversations: (folder) => API.get(`/conversations/${folder}`),
   sendMessage: async (messageData) => {
     await api.syncDirectory({}); // Refresh before sending message
@@ -95,9 +74,8 @@ const api = {
 
   // Sync Directory and update vectors
   syncDirectory: (data) => API.post('/sync', data),
-  //updateVectors: (data) => API.post('/update-vectors', data), // Deprecated endpoint
 
-  getSaldo: () => API.get('/saldo'), // New method to get saldo
+  getSaldo: () => API.get('/saldo'), 
 
   updateConversationTitle: (conversationId, data) => API.put(`/conversation/${conversationId}/title`, data),
 };

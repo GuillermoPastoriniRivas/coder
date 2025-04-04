@@ -59,7 +59,7 @@ export const syncController = {
             // Update vectors after sync is complete
             const config = path.resolve(process.cwd(), 'sources', safeUserId, `${safeFolder}.json`);
             const pythonProcess = spawn('python', ['src/scripts/call_documenter.py', '--project', baseDir, '--config', config]);
-
+            console.log(`python src/scripts/call_documenter.py --project ${baseDir} --config ${config}`)
             await new Promise((resolve, reject) => {
                 let output = '';
                 pythonProcess.stdout.on('data', (data) => {

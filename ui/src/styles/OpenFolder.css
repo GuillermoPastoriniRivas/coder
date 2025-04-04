@@ -1,261 +1,398 @@
-h1 {
-    font-size: 24px;
-    margin-bottom: 20px;
-    color: #d4d4d4;
+/* Styles specific to the OpenFolder component and its children */
+
+.open-folder-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 50px); /* Full height minus AppBar height (adjust if AppBar height changes) */
+    overflow: hidden; /* Prevent container scroll */
+    background-color: var(--color-background-primary);
 }
 
-ul {
+.actions-bar {
+    padding: 8px 16px;
+    background-color: var(--color-background-secondary);
+    border-bottom: 1px solid var(--color-border-primary);
+    display: flex;
+    flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+    gap: 10px; /* Spacing between buttons */
+    align-items: center;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+/* Style action buttons */
+.actions-bar .MuiButton-root {
+    padding: 6px 12px; /* Smaller buttons for the bar */
+    font-size: 0.875rem;
+}
+
+.actions-bar .alert-typography { /* Specific class for the "Select a folder" text */
+    color: var(--color-text-secondary);
+    margin-right: 10px;
+}
+
+/* Main content area with panels */
+.main-content-area {
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden; /* Prevent this level from scrolling */
+    position: relative; /* For resizer positioning */
+}
+
+/* Directory Tree Panel */
+.directory-tree-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: var(--color-background-secondary);
+    border-right: 1px solid var(--color-border-primary);
+    flex-shrink: 0; /* Prevent shrinking */
+    overflow: hidden; /* Let inner content scroll */
+}
+
+.directory-tree-header {
+    padding: 10px 16px;
+    font-weight: var(--font-weight-bold);
+    border-bottom: 1px solid var(--color-border-primary);
+    flex-shrink: 0; /* Prevent header from shrinking */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.directory-tree-content {
+    flex-grow: 1;
+    overflow-y: auto; /* Enable scrolling for the tree */
+    padding: 8px 0; /* Padding top/bottom */
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-primary) transparent;
+}
+.directory-tree-content::-webkit-scrollbar { width: 6px; }
+.directory-tree-content::-webkit-scrollbar-track { background: transparent; }
+.directory-tree-content::-webkit-scrollbar-thumb { background-color: var(--color-border-primary); border-radius: 3px; }
+
+/* Style the tree items */
+.directory-tree-list {
     list-style-type: none;
-    padding: 0 20px;
-    color: #d4d4d4;
+    padding: 0;
+    margin: 0;
 }
 
-li {
+.directory-tree-item {
+    padding: 4px 16px 4px 16px; /* Default padding */
     cursor: pointer;
-    margin: 5px 0;
-    color: #d4d4d4;
-}
-
-pre {
-    background-color: #2d2d2d;
-    padding: 10px;
-    border-radius: 5px;
-    overflow: auto;
-    color: #d4d4d4;
-    max-height: 700px;
-    margin: 0;
-}
-
-.file-content {
-    flex: 1;
-    padding: 20px;
-    overflow: auto;
-    padding-top: 0;
-    background-color: #1e1e1e;
-    padding-right: 0;
-    padding-bottom: 0;
-}
-
-.editor {
-    display: flex;
-    height: 100%;
-}
-
-.open-folder {
-    padding: 20px;
-    background-color: #1e1e1e;
-    color: #d4d4d4;
-    max-height: 90vh;
-    padding-top: 10px;
-}
-
-.open-folder button {
-    margin-right: 20px;
-    color: #d4d4d4;
-}
-
-.changed-files-bar button {
-    background: none;
-}
-
-.changed-files-bar button.css-1899hjk-MuiButtonBase-root-MuiButton-root {
-    background: #8a6787;
-}
-
-.directory-tree button  {
-    margin-right: 0px;
-    background-color: #1e1e1e;
-    border-radius: 0;
-    height: 100%;
-}
-
-.directory-tree button:hover {
-    background-color: #2d2d2d;
-}
-
-.open-folder .alert {
-    color: #d4d4d4;
-    margin-bottom: 1rem;
-}
-
-.folder,
-.file {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-}
-
-.folder svg {
-    width: 1rem;
-    color: #f1b770;
-}
-
-.file svg {
-    width: 1rem;
-    color: #8a8a8a;
-}
-
-.chat {
-    background-color: #1e1e1e;
-    color: #d4d4d4;
-    padding: 10px;
-    border-radius: 5px;
-}
-
-.chat-messages {
-    min-width: auto !important;
-    max-width: 100%;
-}
-
-.chat-input {
-    margin: 0 10px;
-    align-items: flex-start;
-    max-width: 100%;
-    background-color: #2d2d2d;
-    border-radius: 5px;
-    padding: 10px;
-}
-
-.chat-input button {
-    padding: 10px;
-    background-color: #007acc;
-    color: #ffffff;
-    margin: 0;
-}
-
-textarea:active,
-textarea:focus {
-    border: none !important;
-    outline: none !important;
-    background-color: #3c3c3c;
-    color: #d4d4d4;
-}
-
-textarea {
-    max-height: 60vh;
-    resize: vertical;
-    overflow: auto;
-    background-color: #2d2d2d;
-    color: #d4d4d4;
-}
-
-.directory-tree {
-    max-height: 80vh;
-    overflow: auto;
-    background-color: #1e1e1e;
-    color: #d4d4d4;
-}
-
-.language-markdown {
-    max-width: 100%;
-    overflow-x: auto !important;
-    white-space: pre-wrap !important;
-    word-wrap: break-word !important;
-    overflow-wrap: break-word !important;
-}
-
-/* New styles for loading indicator */
-.loading {
     display: flex;
     align-items: center;
-    justify-content: center;
-    margin-left: 10px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: relative; /* For nesting indicator */
+    transition: background-color var(--transition-speed-fast);
 }
 
-.monaco-editor {
-    height: 100% !important;
-    width: 100% !important;
+.directory-tree-item:hover {
+    background-color: rgba(255, 255, 255, 0.08);
 }
 
+/* Indentation for nested items */
+.directory-tree-item .MuiListItemText-root { /* Target text for indentation */
+    margin-left: calc(var(--indent-level, 0) * 16px); /* Use CSS variable for indentation */
+}
+
+.tree-item-icon {
+    margin-right: 6px;
+    font-size: 1.1rem !important; /* Control icon size */
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+.tree-item-icon.folder-icon {
+    color: #87ceeb; /* Sky blue for folders */
+}
+.tree-item-icon.file-icon {
+    color: var(--color-text-secondary); /* Dimmer color for files */
+}
+
+.tree-item-content { /* Wrapper for icon, name, controls */
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    overflow: hidden;
+}
+.tree-item-name {
+    margin-left: 4px;
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tree-item-controls {
+    margin-left: auto; /* Push controls to the right */
+    display: flex;
+    align-items: center;
+}
+.tree-item-controls .MuiCheckbox-root {
+    padding: 2px; /* Smaller padding for checkbox */
+}
+.tree-item-controls .MuiFormControlLabel-label {
+   font-size: 0.8rem; /* Smaller label */
+   color: var(--color-text-secondary);
+}
+
+
+/* Expand/Collapse Icon */
+.expand-icon {
+    font-size: 1rem !important;
+    margin-right: 4px;
+    transition: transform var(--transition-speed-fast);
+    color: var(--color-text-secondary);
+}
+.expand-icon.expanded {
+    transform: rotate(90deg);
+}
+
+/* Conversation List Section */
+.conversations-section {
+    border-top: 1px solid var(--color-border-primary);
+    padding-top: 8px;
+    flex-shrink: 0; /* Prevent shrinking */
+    max-height: 40%; /* Limit height */
+    display: flex;
+    flex-direction: column;
+}
+.conversations-header {
+    padding: 8px 16px;
+    font-weight: var(--font-weight-bold);
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+.conversations-list-container {
+    flex-grow: 1;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-primary) transparent;
+}
+.conversations-list-container::-webkit-scrollbar { width: 6px; }
+.conversations-list-container::-webkit-scrollbar-track { background: transparent; }
+.conversations-list-container::-webkit-scrollbar-thumb { background-color: var(--color-border-primary); border-radius: 3px; }
+
+
+/* Center Panel (Editor) */
+.editor-panel {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Prevent scroll, let CodeMirror handle it */
+    position: relative; /* If needed for absolute positioning inside */
+}
+
+/* Changed Files Bar */
 .changed-files-bar {
     display: flex;
-    overflow-x: auto;
-    padding: 10px 0;
-    border-bottom: 1px solid #3a3a3a;
-    margin-bottom: 10px;
-    background-color: #1e1e1e;
+    overflow-x: auto; /* Allow horizontal scroll if needed */
+    padding: 6px 8px; /* Reduced padding */
+    border-bottom: 1px solid var(--color-border-primary);
+    background-color: var(--color-background-secondary); /* Match sidebar */
+    flex-shrink: 0; /* Prevent shrinking */
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-primary) transparent;
 }
-
-.empty-state {
-    padding: 20px;
-    text-align: center;
-    color: #666;
-}
-
-.cm-merge {
-    height: 74vh;
-    border: 1px solid #3a3a3a;
-    margin: 10px 0;
-    background-color: #1e1e1e;
-}
-
-.cm-editor {
-    height: 100%;
-    color: #d4d4d4;
-}
-
-.cm-theme {
-    height: 75vh;
-}
-
-/* Resizer styles */
-.resizer {
-    width: 5px;
-    cursor: col-resize;
-    background-color: #555;
-    opacity: 0.5;
-    z-index: 1;
-}
-
-.resizer:hover {
-    opacity: 1;
-}
-
-.editor .resizer1 {
-    /* Position between directory-tree and file-content */
-}
-
-.editor .resizer2 {
-    /* Position between file-content and chat */
-}
-
-/* Textarea Resizer */
-.textarea-resizer {
-    width: 100%;
-    height: 4px;
-    cursor: row-resize;
-    background-color: #555;
-    opacity: 0.5;
-}
-
-.textarea-resizer:hover {
-    opacity: 1;
-}
+.changed-files-bar::-webkit-scrollbar { height: 4px; }
+.changed-files-bar::-webkit-scrollbar-track { background: transparent; }
+.changed-files-bar::-webkit-scrollbar-thumb { background-color: var(--color-border-primary); border-radius: 2px; }
 
 .changed-file-button {
     white-space: nowrap;
-    flex: 0 0 auto;
+    flex: 0 0 auto; /* Prevent stretching */
+    padding: 4px 10px !important; /* Smaller padding */
+    font-size: 0.85rem !important;
+    min-width: auto !important; /* Allow button to be narrow */
+    margin: 0 4px !important; /* Spacing */
+    border-radius: var(--border-radius-small) !important;
+    text-transform: none !important; /* Ensure normal case */
+}
+/* Style for the selected button */
+.changed-file-button.MuiButton-containedSecondary {
+    background-color: var(--color-background-tertiary) !important; /* Use tertiary background for active tab */
+    color: var(--color-text-primary) !important;
+}
+/* Style for non-selected buttons */
+.changed-file-button.MuiButton-outlinedSecondary {
+    border-color: transparent !important; /* Hide border for inactive tabs */
+    color: var(--color-text-secondary) !important;
+}
+.changed-file-button.MuiButton-outlinedSecondary:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-color: transparent !important;
 }
 
-.open-folder-footer {
-    position: fixed;
-    bottom: 10px;
-    left: 20px;
-    z-index: 1000;
+
+/* File Content Area */
+.file-content-area {
+    flex-grow: 1;
+    overflow: hidden; /* Let CodeMirror handle scroll */
+    position: relative; /* Needed for CodeMirror */
+    background-color: var(--color-background-primary); /* Editor background */
+}
+
+/* Empty state message */
+.empty-state-message {
     display: flex;
-    flex-direction: row;
-    align-items: flex-end;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    color: var(--color-text-secondary);
+    font-size: 1rem;
+}
+
+/* CodeMirror Specific Styles */
+.cm-editor { /* Ensure editor takes full height */
+  height: 100%;
+  font-size: 0.9rem; /* Adjust editor font size */
+  background-color: var(--color-background-primary) !important; /* Ensure background consistency */
+}
+
+.cm-gutters {
+    background-color: var(--color-background-primary) !important;
+    border-right: 1px solid var(--color-border-primary) !important;
+}
+
+.cm-activeLineGutter {
+     background-color: rgba(255, 255, 255, 0.05) !important; /* Subtle highlight for active line number */
+}
+
+.cm-mergeView { /* Container for diff view */
+    height: 100%;
+    border: none; /* Remove default border */
+    background-color: var(--color-background-primary);
+}
+
+.cm-mergeView > .cm-editor {
+    height: 100%;
+}
+
+/* Ensure nested CodeMirror instances behave */
+.cm-mergeViewEditors {
+    height: 100%;
+}
+.cm-mergeView .cm-scroller {
+    height: 100% !important; /* Force scroller height */
+}
+
+.cm-theme { /* Wrapper for single editor view */
+    height: 100% !important; /* Ensure CodeMirror takes full height */
+    overflow: hidden;
+}
+.cm-theme > .cm-editor {
+     height: 100% !important;
+}
+
+.cm-mergeViewEditor {
+    overflow: auto !important;
+}
+
+/* Resizer Styles */
+.resizer {
+    flex-shrink: 0; /* Prevent resizing elements from shrinking */
+    width: 5px; /* Resizer width */
+    background-color: var(--color-border-primary); /* Visible resizer */
+    cursor: col-resize;
+    transition: background-color var(--transition-speed-fast);
+    z-index: 10; /* Ensure it's above content */
+    position: relative;
+}
+
+.resizer:hover {
+    background-color: var(--color-primary-action); /* Highlight on hover */
+}
+
+/* Textarea resizer (horizontal) */
+.textarea-resizer {
     width: 100%;
+    height: 5px;
+    cursor: row-resize;
+    background-color: var(--color-border-primary);
+    transition: background-color var(--transition-speed-fast);
+    z-index: 10;
+    flex-shrink: 0; /* Prevent shrinking */
 }
 
-.open-folder-footer button {
-    padding: 5px 10px;
+.textarea-resizer:hover {
+    background-color: var(--color-primary-action);
 }
 
-.footer-info {
-    background-color: #2d2d2d;
-    padding: 5px 10px;
-    border-radius: 5px;
-    color: #d4d4d4;
-    text-align: right;
+
+/* Chat Panel */
+.chat-panel {
+    flex-shrink: 0; /* Prevent shrinking */
+    height: 100%;
+    display: flex; /* Use flex for children */
+    flex-direction: column; /* Stack chat content vertically */
+    /* Chat specific styles are in App.css under .chat-container etc. */
+    /* Border is handled by the resizer or the adjacent panel */
+}
+
+
+/* Footer (moved to App.css as .app-footer) */
+/* .open-folder-footer { ... remove ... } */
+/* .footer-info { ... remove ... } */
+
+
+/* Loading indicators */
+.loading-overlay { /* Optional: For overlaying loading state */
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+/* Clean up old/conflicting styles */
+h1 { /* Remove specific h1 styles if handled by theme/MUI */
+   /* font-size: 24px; */
+   /* margin-bottom: 20px; */
+   /* color: #d4d4d4; */
+}
+ul { /* Remove base ul styles if using MUI Lists */
+   /* list-style-type: none; */
+   /* padding: 0 20px; */
+   /* color: #d4d4d4; */
+}
+li { /* Remove base li styles if using MUI ListItems */
+   /* cursor: pointer; */
+   /* margin: 5px 0; */
+   /* color: #d4d4d4; */
+}
+pre { /* Remove if using CodeMirror */
+   /* background-color: #2d2d2d; */
+   /* padding: 10px; */
+   /* border-radius: 5px; */
+   /* overflow: auto; */
+   /* color: #d4d4d4; */
+   /* max-height: 700px; */
+   /* margin: 0; */
+}
+.folder, .file { /* Handled by .directory-tree-item styles */
+  /* display: none; */
+}
+.folder svg, .file svg { /* Handled by .tree-item-icon styles */
+  /* display: none; */
+}
+.chat { /* Handled by .chat-panel and .chat-container */
+  /* display: none; */
+}
+.language-markdown { /* Ensure CodeMirror handles markdown correctly */
+   /* Maybe keep word-wrap if needed */
+   /* word-wrap: break-word !important; */
+   /* overflow-wrap: break-word !important; */
+}
+
+.cm-mergeViewEditor:first-child {
+    flex-grow: 0.8;
 }

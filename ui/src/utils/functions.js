@@ -21,3 +21,21 @@ export const parseAIMessageForFiles = (folderName, content) => {
         })
         .filter((file) => file.path);
 };
+
+
+export const showNotification = (message) => {
+    const notification = document.createElement('div');
+    notification.innerText = message;
+    notification.style.position = 'fixed';
+    notification.style.bottom = '00px';
+    notification.style.left = '00px';
+    notification.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    notification.style.color = '#fff';
+    notification.style.padding = '10px 20px';
+    notification.style.borderRadius = '4px';
+    notification.style.zIndex = '9999';
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 3000);
+  }

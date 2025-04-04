@@ -1,71 +1,112 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { Container, Box, Typography, Button, TextField, Link } from '@mui/material';
+import { Container, Box, Typography, Button, TextField, Link, Alert, CircularProgress } from '@mui/material'; // Added Alert, CircularProgress
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import { useAuth } from '../../context/AuthContext';
 
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState(''); // State for login errors
+    const [loading, setLoading] = useState(false); // State for loading indicator
     const navigate = useNavigate();
     const { email: authEmail, login } = useAuth();
 
+    // Redirect if already logged in (e.g., navigated back to /login)
     useEffect(() => {
         if (authEmail) {
-            navigate('/signup');
+            navigate('/'); // Redirect to the main app view (OpenFolder)
         }
     }, [authEmail, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError(''); // Clear previous errors
+        setLoading(true); // Start loading indicator
         try {
             await login(email, password);
-            navigate('/');
-        } catch (error) {
-            console.error('Login failed:', error);
-            // Puedes agregar manejo de errores aquí
+            navigate('/'); // Navigate to main app view on successful login
+        } catch (err) {
+            console.error('Login failed:', err);
+            // Provide more specific error messages if possible
+            const errorMessage = err.response?.data?.message || err.message || 'Login failed. Please check your credentials.';
+            setError(errorMessage);
+            setLoading(false); // Stop loading on error
         }
+        // No need to setLoading(false) on success because navigation happens
     };
 
     return (
-        <Container maxWidth="xs" className="section_gap_top">
-            <Box className="box-shadow border-radius p-25 text-center mb-50">
-                <LockOpenIcon className="icon-large primary-color mb-15" />
-                <Typography variant="h4" className="main-title mb-25">
-                    Bienvenido de Nuevo
+        // Use Container to center content with max width
+        <Container component="main" maxWidth="xs" sx={{ display: 'flex', alignItems: 'center', minHeight: 'calc(100vh - 64px)' }}>
+             {/* Box provides the styled form container */}
+            <Box
+                className="auth-container" // Use class from App.css for common auth styling
+                sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    width: '100%', // Ensure box takes full width of container
+                    p: 4, // Add padding inside the box
+                }}
+            >
+                <LockOpenIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
+                <Typography component="h1" variant="h5" sx={{ mb: 3 }}>
+                    Welcome Back
                 </Typography>
 
-                <Box component="form" onSubmit={handleSubmit} className="form-container">
+                {/* Display error messages */}
+                {error && (
+                    <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+                        {error}
+                    </Alert>
+                )}
+
+                {/* Login Form */}
+                <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
                     <TextField
-                        fullWidth
                         margin="normal"
-                        label="Email"
-                        type="email"
                         required
+                        fullWidth
+                        id="email"
+                        label="Email Address"
+                        name="email"
+                        autoComplete="email"
+                        autoFocus
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="single-input mb-15"
+                        disabled={loading} // Disable fields while loading
                     />
-
                     <TextField
-                        fullWidth
                         margin="normal"
-                        label="Contraseña"
-                        type="password"
                         required
+                        fullWidth
+                        name="password"
+                        label="Password"
+                        type="password"
+                        id="password"
+                        autoComplete="current-password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="single-input mb-25"
+                        disabled={loading} // Disable fields while loading
                     />
-
-                    <Button type="submit" fullWidth className="primary_btn"  sx={{marginTop: '1rem', color: 'white'}}>
-                        Continuar
+                    <Button
+                        type="submit"
+                        fullWidth
+                        variant="contained"
+                        color="primary"
+                        disabled={loading} // Disable button while loading
+                        sx={{ mt: 3, mb: 2, py: 1.5 }} // Add vertical padding
+                    >
+                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Continue'}
                     </Button>
                 </Box>
 
-                <Typography variant="body2" sx={{marginTop: '30px'}}>
-                    <Link component={RouterLink} to="/signup" className="link-style">
-                        No tienes una cuenta, crea una aqui
+                {/* Link to Sign Up page */}
+                <Typography variant="body2" align="center">
+                    Don't have an account?{' '}
+                    <Link component={RouterLink} to="/signup" variant="body2">
+                        Sign Up here
                     </Link>
                 </Typography>
             </Box>
