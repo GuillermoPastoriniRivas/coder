@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { AppBar, Toolbar, Typography, Button, Box, Tooltip, IconButton, Menu as MuiMenu, MenuItem, Avatar } from '@mui/material'; // Added Tooltip, IconButton, MuiMenu, MenuItem, Avatar
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'; // Default avatar icon
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn'; // Icon for credits
+import HistoryIcon from '@mui/icons-material/History'; // Icon for history
+import HomeIcon from '@mui/icons-material/Home'; // Icon for Home
+import DescriptionIcon from '@mui/icons-material/Description'; // Icon for Docs
+import SettingsIcon from '@mui/icons-material/Settings'; // Icon for Account Settings
+import LogoutIcon from '@mui/icons-material/Logout'; // Icon for Log Out
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
@@ -52,6 +57,12 @@ export default function Menu() {
          handleMenuClose();
          navigate('/account');
     };
+
+    const handleCallHistoryClick = () => {
+        handleMenuClose();
+        navigate('/call-history');
+    };
+
 
     // Get initials for Avatar fallback
     const getInitials = (userEmail) => {
@@ -151,20 +162,24 @@ export default function Menu() {
                             <Typography variant="body2" color="text.secondary">{email}</Typography>
                         </MenuItem>
                          <MenuItem onClick={() => navigate('/')}> {/* Home/Dashboard Link */}
-                             Home
+                             <HomeIcon fontSize="small" sx={{ mr: 1 }} /> Home
                          </MenuItem>
                          {/* Credits link for smaller screens */}
                          <MenuItem component={RouterLink} to="/pricing" sx={{ display: { xs: 'flex', sm: 'none' } }}>
                             <MonetizationOnIcon fontSize="small" sx={{ mr: 1, color: saldo < 5 ? 'warning.main' : 'success.main' }} /> Add Credits (${saldo?.toFixed(2)})
                          </MenuItem>
+                   
+                         <MenuItem onClick={handleCallHistoryClick}>
+                             <HistoryIcon fontSize="small" sx={{ mr: 1 }} /> History
+                         </MenuItem>
                          <MenuItem onClick={() => navigate('/docs')}>
-                             Docs
+                            <DescriptionIcon fontSize="small" sx={{ mr: 1 }} /> Docs
                          </MenuItem>
                         <MenuItem onClick={handleAccountClick}>
-                            Account Settings
+                            <SettingsIcon fontSize="small" sx={{ mr: 1 }} /> Settings
                         </MenuItem>
-                        <MenuItem onClick={handleLogout}>
-                            Log Out
+                        <MenuItem onClick={handleLogout} sx={{paddingBottom: '10px'}}>
+                            <LogoutIcon fontSize="small" sx={{ mr: 1 }} /> Log Out
                         </MenuItem>
                     </MuiMenu>
                 </Box>

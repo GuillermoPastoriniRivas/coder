@@ -23,8 +23,7 @@ export default function ChatInterface({
     const [message, setMessage] = useState('');
     const [conversation, setConversation] = useState([]); // Stores message objects { role, content, timestamp }
     const [loading, setLoading] = useState(false); // For send message loading state
-    const [progress, setProgress] = useState(0);
-    const progressInterval = useRef(null);
+    // Removed progress state and interval ref
     const messagesEndRef = useRef(null); // To scroll chat to bottom
     const textareaRef = useRef(null); // To manage textarea focus and height potentially
     const resizerRef = useRef(null); // For the textarea resizer handle
@@ -33,7 +32,8 @@ export default function ChatInterface({
     const { saldo, updateSaldo } = useAuth();
 
     const [isResizing, setIsResizing] = useState(false);
-    const [lastY, setLastY] = useState(0);
+    const [startY, setStartY] = useState(0); // Store initial Y position on drag start
+    const [startHeight, setStartHeight] = useState(80); // Store initial height on drag start
     const [textareaHeight, setTextareaHeight] = useState(80); // Initial height (adjust as needed)
 
     const models = ['coder']; // Available models (update if more are added)
@@ -86,23 +86,12 @@ export default function ChatInterface({
          setConversation((prev) => [...prev, userMessage]);
          setMessage(''); // Clear input field
          setLoading(true); // Set loading state
-         setProgress(0); // Reset progress bar
+         // Removed progress reset
 
          // Reset textarea height after sending (optional)
          // setTextareaHeight(80);
 
-         // Simulate progress (replace with actual progress if available)
-         progressInterval.current = setInterval(() => {
-             setProgress((prev) => {
-                 if (prev >= 95) { // Don't let simulated progress reach 100%
-                     clearInterval(progressInterval.current);
-                     return 95;
-                 }
-                 // Simulate slower progress towards the end
-                 const increment = prev < 60 ? 10 : (prev < 90 ? 3 : 1);
-                 return Math.min(prev + increment, 95);
-             });
-         }, 500); // Update interval
+         // Removed simulated progress interval logic
 
          try {
              const response = await api.sendMessage({
@@ -115,9 +104,7 @@ export default function ChatInterface({
                  conversationId: selectedConversation?._id // Pass current conversation ID if exists
              });
 
-             // Stop simulated progress
-             clearInterval(progressInterval.current);
-             setProgress(100); // Mark as complete
+             // Removed stop simulated progress and setProgress(100)
 
              const aiResponseContent = response.data.response; // The raw response from AI
              const newConversationId = response.data.conversationId; // ID of the created/updated conversation
@@ -164,8 +151,7 @@ export default function ChatInterface({
 
          } catch (error) {
               console.error('Error sending message:', error);
-              clearInterval(progressInterval.current); // Stop progress on error
-              setProgress(0); // Reset progress
+              // Removed clearInterval and setProgress(0)
               // Add error message to chat
               const errorMessage = {
                    role: 'system', // Or 'error' role
@@ -175,8 +161,7 @@ export default function ChatInterface({
               setConversation((prev) => [...prev, errorMessage]);
          } finally {
              setLoading(false); // End loading state
-             // Hide progress bar after a short delay
-              setTimeout(() => setProgress(0), 1000);
+             // Removed timeout to hide progress bar
              // Ensure textarea is focused after sending
              textareaRef.current?.focus();
          }
@@ -192,13 +177,13 @@ export default function ChatInterface({
     useEffect(() => {
         const handleMouseMove = (e) => {
             if (!isResizing) return;
-            const deltaY = e.clientY - lastY;
-            setTextareaHeight((prevHeight) => {
-                const newHeight = prevHeight - deltaY;
-                // Clamp height between min and max values
-                return Math.max(50, Math.min(newHeight, window.innerHeight * 0.6)); // Min 50px, Max 60% of viewport height
-            });
-            setLastY(e.clientY);
+            // Calculate the change in Y based on the initial position and current position
+            const deltaY = e.clientY - startY;
+            // Calculate new height based on initial height + change
+            const newHeight = startHeight - deltaY;
+            // Clamp height between min and max values
+            const clampedHeight = Math.max(50, Math.min(newHeight, window.innerHeight * 0.6)); // Min 50px, Max 60% viewport height
+            setTextareaHeight(clampedHeight);
         };
         const handleMouseUp = () => {
             if (isResizing) {
@@ -207,42 +192,38 @@ export default function ChatInterface({
                  document.body.style.userSelect = 'auto';
             }
         };
+        // Add listeners to the window to capture mouse events everywhere
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('mouseup', handleMouseUp);
         return () => {
+            // Clean up listeners on component unmount or dependency change
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
         };
-    }, [isResizing, lastY]);
+    }, [isResizing, startY, startHeight]); // Re-run effect if resizing state or start values change
 
     const startResizing = (e) => {
-        e.preventDefault();
+        e.preventDefault(); // Prevent default drag behavior (like text selection)
         setIsResizing(true);
-        setLastY(e.clientY);
-        document.body.style.cursor = 'row-resize';
-        document.body.style.userSelect = 'none';
+        setStartY(e.clientY); // Record the starting Y position
+        setStartHeight(textareaHeight); // Record the starting height
+        document.body.style.cursor = 'row-resize'; // Change cursor to indicate resizing
+        document.body.style.userSelect = 'none'; // Prevent text selection during resize
     };
 
-    // Cleanup progress interval on unmount
-    useEffect(() => {
-        return () => {
-            if (progressInterval.current) {
-                clearInterval(progressInterval.current);
-            }
-        };
-    }, []);
+    // Removed cleanup effect for progress interval
 
      // Handle Enter key press in textarea (Shift+Enter for newline)
      const handleKeyDown = (e) => {
-         if (e.key === 'Enter' && !e.shiftKey) {
-             e.preventDefault(); // Prevent default newline insertion
-             handleSend(); // Send message
-         }
+        //  if (e.key === 'Enter' && !e.shiftKey) {
+        //      e.preventDefault(); // Prevent default newline insertion
+        //      handleSend(); // Send message
+        //  }
      };
 
 
     return (
-        <Box className="chat-container"> {/* Uses class from App.css */}
+        <Box className="chat-container"> 
 
             {/* Selected Files/Folders Context Display */}
              {(selectedFiles.length > 0 || selectedSubFolders.length > 0) && (
@@ -300,6 +281,14 @@ export default function ChatInterface({
 
             {/* Message Input Area */}
             <Box className="chat-input-container">
+                {/* Progress Bar - Moved here, above input paper */}
+                 {loading && (
+                    <LinearProgress
+                        variant="indeterminate" // Changed to indeterminate
+                        sx={{ height: '4px', width: '100%' }} // Adjusted style for new position
+                    />
+                 )}
+
                 <Paper className="chat-input-paper">
                      {/* Resizer Handle */}
                      <Box
@@ -322,14 +311,7 @@ export default function ChatInterface({
                         disabled={loading} // Disable input while loading
                     />
 
-                    {/* Progress Bar */}
-                     {loading && (
-                        <LinearProgress
-                            variant={progress < 100 ? "determinate" : "indeterminate"} // Show determinate or indeterminate
-                            value={progress}
-                            sx={{ height: '2px', width: '100%', position: 'absolute', bottom: 0, left: 0 }} // Fine progress line at bottom
-                        />
-                     )}
+                    {/* Progress Bar removed from here */}
 
                     {/* Controls: Model Select & Send Button */}
                      <Box className="chat-input-controls">

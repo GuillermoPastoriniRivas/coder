@@ -12,7 +12,7 @@ const API = axios.create({
 
 API.defaults.headers.common['ngrok-skip-browser-warning'] = "69420";
 
-// Funci\u00f3n para configurar el token
+// Funcion para configurar el token
 const setAuthToken = (token) => {
   if (token) {
     API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -66,7 +66,8 @@ const api = {
   createPaymentIntent: (amount, payment_method) => API.post('/create-payment-intent', { amount, payment_method }),
 
   // Purchase Tokens - Now purchasing credits with USD amount
-  purchaseTokens: (amount) => API.post('/purchase-tokens', { amount: amount }),
+  // Updated: Pass paymentIntentId if available for history tracking
+  purchaseTokens: (amount, paymentIntentId = null) => API.post('/purchase-tokens', { amount: amount, paymentIntentId: paymentIntentId }),
 
   // Account
   createAccount: (accountData) => API.post('/signup', accountData),
@@ -75,9 +76,15 @@ const api = {
   // Sync Directory and update vectors
   syncDirectory: (data) => API.post('/sync', data),
 
-  getSaldo: () => API.get('/saldo'), 
+  getSaldo: () => API.get('/saldo'),
 
   updateConversationTitle: (conversationId, data) => API.put(`/conversation/${conversationId}/title`, data),
+
+  // Purchase History
+  getPurchaseHistory: () => API.get('/purchase-history'),
+
+  // Call History
+  getCallHistory: () => API.get('/call-history'), // Added endpoint for call history
 };
 
 export default api;

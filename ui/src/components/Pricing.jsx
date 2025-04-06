@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Container, Box, Typography, Button, Grid, Snackbar, Alert, TextField, FormControl, FormLabel, RadioGroup, Radio, FormControlLabel, Paper, CircularProgress } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Container, Box, Typography, Button, Grid, Snackbar, Alert, TextField, FormControl, FormLabel, RadioGroup, Radio, FormControlLabel, Paper, CircularProgress, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Divider } from '@mui/material';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import api from '../api';
@@ -41,6 +41,11 @@ function PaymentForm() {
   const [processing, setProcessing] = useState(false);
   const { updateSaldo, saldo } = useAuth(); // Get saldo update function and current saldo
 
+  // Purchase History State
+  const [purchaseHistory, setPurchaseHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [historyError, setHistoryError] = useState(null);
+
   const stripe = useStripe();
   const elements = useElements();
 
@@ -49,6 +54,11 @@ function PaymentForm() {
   const themeMode = 'dark'; // Replace with dynamic theme detection if necessary
 
   const predefinedAmounts = [5, 10, 20, 50, 100]; // Common top-up amounts
+
+   // Fetch purchase history on mount
+   useEffect(() => {
+       fetchPurchaseHistory();
+   }, []);
 
   // Snackbar handler
   const handleSnackbarOpen = (message, severity = 'success') => {
@@ -76,6 +86,24 @@ function PaymentForm() {
   const handlePaymentMethodChange = (e) => {
     setPaymentMethod(e.target.value);
   };
+
+   // Function to fetch purchase history
+   const fetchPurchaseHistory = async () => {
+       setLoadingHistory(true);
+       setHistoryError(null);
+       try {
+           const response = await api.getPurchaseHistory();
+           setPurchaseHistory(response.data || []); // Assuming API returns an array of history items
+       } catch (error) {
+           console.error('Error fetching purchase history:', error);
+           setHistoryError(error.response?.data?.message || 'Failed to load purchase history.');
+           // Optional: Show snackbar error
+           handleSnackbarOpen('Failed to load purchase history.', 'error');
+       } finally {
+           setLoadingHistory(false);
+       }
+   };
+
 
   const handlePayment = async (e) => {
     e.preventDefault();
@@ -141,6 +169,7 @@ function PaymentForm() {
           // 3. Call backend to update user's credits/saldo based on the successful payment
           try {
             // Pass the amount in dollars (or the intended credit value)
+            // IMPORTANT: The backend '/purchase-tokens' should now also record the purchase history.
             await api.purchaseTokens(amountToCharge);
             const newSaldo = saldo + amountToCharge; // Calculate expected new saldo locally for immediate feedback
             updateSaldo(newSaldo); // Update context immediately
@@ -149,17 +178,22 @@ function PaymentForm() {
             cardElement.clear();
             setSelectedAmount(10); // Reset to default amount
             setCustomAmount('');
+            // Refresh purchase history after successful payment
+            fetchPurchaseHistory();
           } catch (purchaseError) {
             console.error("Error updating credits after successful payment:", purchaseError);
-            handleSnackbarOpen("Payment successful, but failed to update credits. Please contact support.", "warning");
+            handleSnackbarOpen("Payment successful, but failed to update credits or history. Please contact support.", "warning");
              // Fetch saldo again to ensure consistency despite error
             fetchSaldo();
+            // Try fetching history again too
+            fetchPurchaseHistory();
           }
         } else {
             // Handle unexpected payment intent status
              console.warn("Unexpected PaymentIntent status:", result.paymentIntent?.status);
              handleSnackbarOpen("Payment status uncertain. Please check your balance or contact support.", "warning");
              fetchSaldo(); // Fetch saldo to get latest status
+             fetchPurchaseHistory(); // Fetch history as well
         }
       }
     } catch (error) {
@@ -184,104 +218,154 @@ function PaymentForm() {
 
 
   return (
-    // Use a Paper component for better visual structure in dark mode
-    <Paper elevation={0} sx={{ p: { xs: 2, md: 4 }, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-      <Typography variant="h5" gutterBottom sx={{ mb: 3, textAlign: 'center' }}>
-        Add Credits
-      </Typography>
-
-      {/* Amount Selection */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'medium' }}>
-          Select Amount ($USD):
+    <Box> {/* Main container for payment form and history */}
+      {/* Use a Paper component for better visual structure in dark mode */}
+      <Paper elevation={0} sx={{ p: { xs: 2, md: 4 }, borderRadius: 2, border: '1px solid', borderColor: 'divider', mb: 4 }}>
+        <Typography variant="h5" gutterBottom sx={{ mb: 3, textAlign: 'center' }}>
+          Add Credits
         </Typography>
-        <Grid container spacing={2} sx={{ mb: 2 }}>
-          {predefinedAmounts.map((amount) => (
-            <Grid item key={amount}>
-              <Button
-                variant={selectedAmount === amount ? "contained" : "outlined"}
-                onClick={() => handleAmountSelect(amount)}
-                disabled={processing}
-                sx={{ py: 1.5, px: 2.5 }} // Adjust padding for better button size
-              >
-                ${amount}
-              </Button>
-            </Grid>
-          ))}
-          <Grid>
-          <TextField
-          fullWidth
-          label="Or Enter Custom Amount ($)"
-          type="text" // Use text to allow decimal input with validation
-          inputMode='decimal' // Hint for mobile keyboards
-          value={customAmount}
-          sx={{
-            marginLeft: '1rem',
-            marginTop: '10px',
-            maxWidth: '187px'
-          }}
-          onChange={handleCustomAmountChange}
-          disabled={processing}
-          placeholder=" 12.25"
-          InputProps={{
-            startAdornment: <Typography sx={{ ml: 0.5 }}>$</Typography>, // Show $ sign
-          }}
-        />
-          </Grid>
-        </Grid>
-         
-      </Box>
 
-      {/* Payment Method Selection */}
-      <Box sx={{ mb: 4 }}>
-        <FormControl component="fieldset" disabled={processing}>
-          <FormLabel component="legend">Payment Method</FormLabel>
-          <RadioGroup row value={paymentMethod} onChange={handlePaymentMethodChange}>
-            <FormControlLabel value="card" control={<Radio />} label="Debit/Credit Card" />
-            <FormControlLabel value="paypal" control={<Radio />} label="PayPal" disabled /> {/* Keep PayPal disabled for now */}
-          </RadioGroup>
-        </FormControl>
-      </Box>
-
-      {/* Card Details Form */}
-      {paymentMethod === 'card' && (
+        {/* Amount Selection */}
         <Box sx={{ mb: 4 }}>
           <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'medium' }}>
-            Enter Card Details:
+            Select Amount ($USD):
           </Typography>
-           {/* Container for Stripe CardElement with background and border */}
-           <Box className="StripeElement" sx={{ p: 0, borderRadius: 1 }}> {/* Use class for styling */}
-             <CardElement options={CARD_ELEMENT_OPTIONS(themeMode)} />
-           </Box>
+          <Grid container spacing={2} sx={{ mb: 2 }}>
+            {predefinedAmounts.map((amount) => (
+              <Grid item key={amount}>
+                <Button
+                  variant={selectedAmount === amount ? "contained" : "outlined"}
+                  onClick={() => handleAmountSelect(amount)}
+                  disabled={processing}
+                  sx={{ py: 1.5, px: 2.5 }} // Adjust padding for better button size
+                >
+                  ${amount}
+                </Button>
+              </Grid>
+            ))}
+            <Grid>
+            <TextField
+            fullWidth
+            label="Or Enter Custom Amount ($)"
+            type="text" // Use text to allow decimal input with validation
+            inputMode='decimal' // Hint for mobile keyboards
+            value={customAmount}
+            sx={{
+              marginLeft: '1rem',
+              marginTop: '10px',
+              maxWidth: '187px'
+            }}
+            onChange={handleCustomAmountChange}
+            disabled={processing}
+            placeholder=" 12.25"
+            InputProps={{
+              startAdornment: <Typography sx={{ ml: 0.5 }}>$</Typography>, // Show $ sign
+            }}
+          />
+            </Grid>
+          </Grid>
+
         </Box>
-      )}
 
-      {/* Pay Button */}
-      <Box sx={{ textAlign: 'center' }}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handlePayment}
-          disabled={processing || !stripe || !elements || (paymentMethod === 'card' && !elements.getElement(CardElement))} // More robust disable check
-          size="large"
-          sx={{ fontWeight: 600, px: 5, py: 1.5 }} // Make button prominent
-        >
-          {processing ? <CircularProgress size={24} color="inherit" /> : `Add $${(selectedAmount || parseFloat(customAmount || 0)).toFixed(2)} Credits`}
-        </Button>
-      </Box>
+        {/* Payment Method Selection */}
+        <Box sx={{ mb: 4 }}>
+          <FormControl component="fieldset" disabled={processing}>
+            <FormLabel component="legend">Payment Method</FormLabel>
+            <RadioGroup row value={paymentMethod} onChange={handlePaymentMethodChange}>
+              <FormControlLabel value="card" control={<Radio />} label="Debit/Credit Card" />
+              <FormControlLabel value="paypal" control={<Radio />} label="PayPal" disabled /> {/* Keep PayPal disabled for now */}
+            </RadioGroup>
+          </FormControl>
+        </Box>
 
-       {/* Snackbar for feedback */}
-       <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={handleSnackbarClose}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }} variant="filled">
-              {snackbar.message}
-          </Alert>
-       </Snackbar>
-    </Paper>
+        {/* Card Details Form */}
+        {paymentMethod === 'card' && (
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'medium' }}>
+              Enter Card Details:
+            </Typography>
+             {/* Container for Stripe CardElement with background and border */}
+             <Box className="StripeElement" sx={{ p: 0, borderRadius: 1 }}> {/* Use class for styling */}
+               <CardElement options={CARD_ELEMENT_OPTIONS(themeMode)} />
+             </Box>
+          </Box>
+        )}
+
+        {/* Pay Button */}
+        <Box sx={{ textAlign: 'center' }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handlePayment}
+            disabled={processing || !stripe || !elements || (paymentMethod === 'card' && !elements.getElement(CardElement))} // More robust disable check
+            size="large"
+            sx={{ fontWeight: 600, px: 5, py: 1.5 }} // Make button prominent
+          >
+            {processing ? <CircularProgress size={24} color="inherit" /> : `Add $${(selectedAmount || parseFloat(customAmount || 0)).toFixed(2)} Credits`}
+          </Button>
+        </Box>
+
+         {/* Snackbar for feedback */}
+         <Snackbar
+            open={snackbar.open}
+            autoHideDuration={6000}
+            onClose={handleSnackbarClose}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          >
+            <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: '100%' }} variant="filled">
+                {snackbar.message}
+            </Alert>
+         </Snackbar>
+      </Paper>
+
+       {/* Purchase History Section */}
+       <Paper elevation={0} sx={{ p: { xs: 2, md: 4 }, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+          <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+              Purchase History
+          </Typography>
+          {loadingHistory && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
+                  <CircularProgress />
+              </Box>
+          )}
+          {historyError && !loadingHistory && (
+               <Alert severity="error" sx={{ mb: 2 }}>
+                   {historyError}
+               </Alert>
+          )}
+          {!loadingHistory && !historyError && purchaseHistory.length === 0 && (
+               <Typography variant="body2" color="text.secondary">
+                   No purchase history found.
+               </Typography>
+          )}
+          {!loadingHistory && !historyError && purchaseHistory.length > 0 && (
+              <TableContainer>
+                  <Table size="small">
+                      <TableHead>
+                          <TableRow>
+                              <TableCell>Date</TableCell>
+                              <TableCell align="right">Amount ($)</TableCell>
+                              <TableCell>Status</TableCell>
+                              {/* Add more columns if available, e.g., Payment ID */}
+                          </TableRow>
+                      </TableHead>
+                      <TableBody>
+                          {purchaseHistory.map((purchase) => (
+                              <TableRow key={purchase._id || purchase.id}> {/* Use a unique key */}
+                                  <TableCell component="th" scope="row">
+                                      {new Date(purchase.timestamp).toLocaleDateString()} {new Date(purchase.timestamp).toLocaleTimeString()}
+                                  </TableCell>
+                                  <TableCell align="right">{purchase.amount.toFixed(2)}</TableCell>
+                                  <TableCell>{purchase.status || 'Completed'}</TableCell> {/* Assuming status field exists */}
+                                  {/* Render more cells */}
+                              </TableRow>
+                          ))}
+                      </TableBody>
+                  </Table>
+              </TableContainer>
+          )}
+        </Paper>
+    </Box>
   );
 }
 

@@ -27,7 +27,7 @@ app.post('/login', authController.login);
 app.post('/call', authMiddleware, postCall);
 
 app.post('/conversation', authMiddleware, getConversation);
-app.delete('/conversation/:conversationId', authMiddleware, deleteConversation); // Agregado endpoint para eliminar conversaci\u00f3n
+app.delete('/conversation/:conversationId', authMiddleware, deleteConversation); // Agregado endpoint para eliminar conversación
 
 app.get('/account', authMiddleware, accountController.getAccount);
 app.put('/account', authMiddleware, accountController.updateAccount);
@@ -45,6 +45,9 @@ app.get('/purchase-history', authMiddleware, purchaseController.getPurchaseHisto
 app.post('/create-payment-intent', paymentController.createPaymentIntent);
 
 app.put('/conversation/:conversationId/title', authMiddleware, updateConversationTitle);
+
+// Call History Route
+app.get('/call-history', authMiddleware, userController.getCallHistory); // Added call history endpoint
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
