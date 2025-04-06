@@ -69,7 +69,7 @@ export async function callAgent(query: string, userId: string, folder: string, s
     try {
         // Paso 1: Manejar líneas que terminan con \
         // Reemplazar \\\n (que representa una barra invertida seguida de un salto de línea)
-        sanitizedResponseContent = sanitizedResponseContent.replace(/\\\\n/g, '\\\n');
+        sanitizedResponseContent = sanitizedResponseContent.replace(/\\\\\n/g, '\\\n');
 
         // Paso 2: Reemplazar newlines y comillas escapadas
         sanitizedResponseContent = sanitizedResponseContent

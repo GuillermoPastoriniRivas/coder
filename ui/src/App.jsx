@@ -7,6 +7,8 @@ import AccountSettings from './components/AccountSettings.jsx';
 import Menu from './components/Menu.jsx';
 import Pricing from './components/Pricing.jsx';
 import Docs from './components/Docs.jsx';
+import CallHistory from './components/CallHistory.jsx'; // Import the new component
+import LandingPage from './components/LandingPage.jsx'; // Import the new LandingPage component
 import { useAuth } from './context/AuthContext';
 import React from 'react';
 import './styles/App.css'; // Keep custom styles
@@ -48,12 +50,12 @@ function MainApp() {
                     {/* Conditional routing based on auth status */}
                     {!email ? (
                         <>
-                            {/* Redirect root and /login to Login component */}
-                            <Route path="/" element={<Login />} />
+                            {/* Root path shows the Landing Page */}
+                            <Route path="/" element={<LandingPage />} />
                             <Route path="/login" element={<Login />} />
                             <Route path="/signup" element={<SignUp />} />
-                            {/* Fallback for any other route when logged out */}
-                            <Route path="*" element={<Login />} />
+                            {/* Fallback for any other route when logged out, redirect to Landing Page */}
+                            <Route path="*" element={<LandingPage />} />
                         </>
                     ) : (
                         <>
@@ -62,6 +64,7 @@ function MainApp() {
                             <Route path="/account" element={<AccountSettings />} />
                             <Route path="/pricing" element={<Pricing />} />
                             <Route path="/docs" element={<Docs />} />
+                            <Route path="/call-history" element={<CallHistory />} /> {/* Added route for Call History */}
                             {/* Root path shows the main OpenFolder component */}
                             <Route path="/" element={<OpenFolder />} />
                             {/* Fallback for any other route when logged in */}

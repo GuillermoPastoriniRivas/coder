@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, TextField, Tooltip, CircularProgress, Collapse } from '@mui/material'; // Added Tooltip, CircularProgress, Collapse
+import { Box, Typography, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, TextField, Tooltip, CircularProgress, Collapse, ListItemButton } from '@mui/material'; // Added Tooltip, CircularProgress, Collapse, ListItemButton
 import EditIcon from '@mui/icons-material/Edit'; // Edit icon
 import DeleteIcon from '@mui/icons-material/Delete'; // Delete icon
 import SaveIcon from '@mui/icons-material/Save'; // Save icon
@@ -117,92 +117,110 @@ const ConversationsList = ({ onSelectConversation }) => {
                         </ListItem>
                     )}
                     {conversations.map((conversation) => (
-                        <ListItem
-                            button
+                        <ListItemButton // Use ListItemButton for better hover effect
                             key={conversation._id}
                             onClick={() => handleSelect(conversation)}
-                            // secondaryAction provides a container for action buttons
-                            secondaryAction={
-                                // Show actions only if not currently editing this item's title input
-                                editingId !== conversation._id && (
-                                    <Box className="conversation-list-item-actions">
-                                         {/* Show loading spinner if saving or deleting this item */}
-                                         {(savingId === conversation._id || deletingId === conversation._id) ? (
-                                              <CircularProgress size={16} sx={{ mr: 1 }} />
-                                         ) : (
-                                             <>
-                                                 <Tooltip title="Edit Title">
-                                                     <IconButton
-                                                         edge="end"
-                                                         aria-label="edit"
-                                                         size="small"
-                                                         onClick={(e) => handleEditClick(e, conversation)}
-                                                     >
-                                                         <EditIcon fontSize="inherit" />
-                                                     </IconButton>
-                                                 </Tooltip>
-                                                 <Tooltip title="Delete Conversation">
-                                                     <IconButton
-                                                         edge="end"
-                                                         aria-label="delete"
-                                                         size="small"
-                                                         onClick={(e) => handleDeleteConversation(e, conversation._id)}
-                                                     >
-                                                         <DeleteIcon fontSize="inherit" />
-                                                     </IconButton>
-                                                 </Tooltip>
-                                             </>
-                                         )}
-                                    </Box>
-                                )
-                            }
+                            // disableGutters // Remove default padding handled by sx
                             sx={{
-                                pr: editingId !== conversation._id ? 10 : 2, // Adjust paddingRight to accommodate actions or edit input
+                                py: 0.5, // Fine-tune vertical padding
+                                px: 1.5, // Fine-tune horizontal padding
                                 '&:hover .conversation-list-item-actions': { // Show actions on hover
                                     opacity: 1,
                                 },
-                                '.conversation-list-item-actions': { // Hide actions by default
-                                    opacity: 0,
-                                    transition: 'opacity 0.2s',
-                                }
+                                // Ensure secondary action doesn't overlap content
+                                position: 'relative',
+                                // Style adjustments for when editing
+                                pr: editingId === conversation._id ? 2 : (savingId === conversation._id || deletingId === conversation._id ? 6 : 10), // Adjust padding based on state
+                                '& .MuiListItemSecondaryAction-root': {
+                                    right: 12, // Slightly adjust action position
+                                },
                             }}
-                            disablePadding // Let secondaryAction handle padding implicitly
                         >
-                             {/* Use Collapse to animate the switch between text and input field */}
-                             <Collapse in={editingId !== conversation._id} timeout={150} sx={{ width: '100%' }}>
+                            {/* Use Collapse to animate the switch between text and input field */}
+                            <Collapse in={editingId !== conversation._id} timeout={150} sx={{ width: '100%' }}>
                                 <ListItemText
                                     primary={conversation.title || `Chat ${conversation._id.slice(-4)}`}
-                                    primaryTypographyProps={{ variant: 'body2', noWrap: true }}
+                                    primaryTypographyProps={{ variant: 'body2', noWrap: true, sx: { fontWeight: 'medium' } }}
                                     title={conversation.title || `Conversation ${conversation._id}`} // Tooltip for full title/ID
                                 />
-                             </Collapse>
-                             <Collapse in={editingId === conversation._id} timeout={150} sx={{ width: '100%', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                 <TextField
-                                     value={newTitle}
-                                     onChange={(e) => setNewTitle(e.target.value)}
-                                     variant="outlined"
-                                     size="small"
-                                     fullWidth
-                                     autoFocus
-                                     onClick={(e) => e.stopPropagation()} // Prevent selection propagation
-                                     onKeyDown={(e) => {
-                                         if (e.key === 'Enter') handleSaveTitle(e, conversation._id);
-                                         if (e.key === 'Escape') handleCancelEdit(e);
-                                     }}
-                                     sx={{ '.MuiInputBase-input': { py: 0.5 } }} // Reduce input padding
-                                 />
-                                 <Tooltip title="Save Title (Enter)">
-                                      <IconButton size="small" onClick={(e) => handleSaveTitle(e, conversation._id)} disabled={savingId === conversation._id}>
-                                          {savingId === conversation._id ? <CircularProgress size={16}/> : <SaveIcon fontSize="inherit" />}
-                                      </IconButton>
-                                 </Tooltip>
-                                 <Tooltip title="Cancel Edit (Esc)">
-                                      <IconButton size="small" onClick={handleCancelEdit}>
-                                          <CancelIcon fontSize="inherit" />
-                                      </IconButton>
-                                 </Tooltip>
-                             </Collapse>
-                        </ListItem>
+                            </Collapse>
+                            <Collapse in={editingId === conversation._id} timeout={150} sx={{ width: '100%', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <TextField
+                                    value={newTitle}
+                                    onChange={(e) => setNewTitle(e.target.value)}
+                                    variant="outlined"
+                                    size="small"
+                                    fullWidth
+                                    autoFocus
+                                    onClick={(e) => e.stopPropagation()} // Prevent selection propagation
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleSaveTitle(e, conversation._id);
+                                        if (e.key === 'Escape') handleCancelEdit(e);
+                                    }}
+                                    sx={{
+                                        '.MuiInputBase-input': {
+                                            py: 0.5,
+                                            fontSize: '0.875rem' // Match list item text size
+                                        }
+                                    }}
+                                />
+                                <Tooltip title="Save Title (Enter)">
+                                    <span> {/* Span for disabled button tooltip */}
+                                    <IconButton size="small" onClick={(e) => handleSaveTitle(e, conversation._id)} disabled={savingId === conversation._id || !newTitle.trim()}>
+                                        {savingId === conversation._id ? <CircularProgress size={16} /> : <SaveIcon fontSize="inherit" />}
+                                    </IconButton>
+                                    </span>
+                                </Tooltip>
+                                <Tooltip title="Cancel Edit (Esc)">
+                                    <IconButton size="small" onClick={handleCancelEdit}>
+                                        <CancelIcon fontSize="inherit" />
+                                    </IconButton>
+                                </Tooltip>
+                            </Collapse>
+
+                            {/* Secondary Action (Edit/Delete Buttons) */}
+                            <ListItemSecondaryAction
+                                sx={{ // Ensure actions don't shift layout when appearing
+                                    opacity: editingId === conversation._id ? 0 : 'inherit', // Hide actions if editing
+                                    transition: 'opacity 0.2s',
+                                    '&:not(:hover)': { // Apply fade out only when not hovering the action itself
+                                        '.conversation-list-item-actions': {
+                                            opacity: 0,
+                                        }
+                                    }
+                                }}
+                             >
+                                <Box className="conversation-list-item-actions" sx={{ display: 'flex', alignItems: 'center' }}>
+                                    {/* Show loading spinner if saving or deleting this item */}
+                                    {(savingId === conversation._id || deletingId === conversation._id) ? (
+                                        <CircularProgress size={16} sx={{ mr: 1 }} />
+                                    ) : (
+                                        <>
+                                            <Tooltip title="Edit Title">
+                                                <IconButton
+                                                    edge="end"
+                                                    aria-label="edit"
+                                                    size="small"
+                                                    onClick={(e) => handleEditClick(e, conversation)}
+                                                >
+                                                    <EditIcon fontSize="inherit" />
+                                                </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Delete Conversation">
+                                                <IconButton
+                                                    edge="end"
+                                                    aria-label="delete"
+                                                    size="small"
+                                                    onClick={(e) => handleDeleteConversation(e, conversation._id)}
+                                                >
+                                                    <DeleteIcon fontSize="inherit" />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </>
+                                    )}
+                                </Box>
+                            </ListItemSecondaryAction>
+                        </ListItemButton>
                     ))}
                 </List>
             )}
