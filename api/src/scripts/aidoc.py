@@ -17,8 +17,6 @@ class AIDocumenter:
             base_url="https://openrouter.ai/api/v1",
             api_key="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",
         )
-        print("Initializing AIDocumenter...")
-        print(f"Code path: {self.code_path}")
         # Cargar o inicializar documentación
         if Path(output_file).exists():
             with open(output_file, 'r') as f:
@@ -140,7 +138,6 @@ class AIDocumenter:
         for file in all_files:
             current_hash = self._compute_file_hash(file)
             relative_path = file.relative_to(self.code_path).as_posix()
-            print(f"Processing {relative_path}...")
             if not current_hash:
                 continue
 
