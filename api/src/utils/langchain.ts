@@ -62,15 +62,42 @@ export async function callAgent(query: string, userId: string, folder: string, s
         });
     });
 
-    const responseContent = await responsePromise;
+    const rawResponseContent = await responsePromise as string;
+
+    // Sanitize the response content
+    let sanitizedResponseContent = rawResponseContent;
+    try {
+        // Paso 1: Manejar líneas que terminan con \
+        // Reemplazar \\\n (que representa una barra invertida seguida de un salto de línea)
+        sanitizedResponseContent = sanitizedResponseContent.replace(/\\\\n/g, '\\\n');
+
+        // Paso 2: Reemplazar newlines y comillas escapadas
+        sanitizedResponseContent = sanitizedResponseContent
+            .replace(/\\n/g, '\n')
+            .replace(/\\"/g, '"');
+
+        // Paso 3: Decodificar secuencias Unicode
+        sanitizedResponseContent = sanitizedResponseContent.replace(/\\u([0-9a-fA-F]{4})/g, (match, grp) => {
+            return String.fromCharCode(parseInt(grp, 16));
+        });
+
+        // Paso 4: Corregir escape en expresiones regulares (como \/ o \\)
+        // Esto revierte el escape excesivo en patrones como [\/\\] -> [\/\\]
+        sanitizedResponseContent = sanitizedResponseContent
+            .replace(/\\\//g, '/')  // Reemplazar \/ por /
+            .replace(/\\\\/g, '\\'); // Reemplazar \\ por \
+    } catch (e) {
+        console.error("Error sanitizing AI response content:", e);
+    }
+
 
     const response = {
         userId,
         folder,
         model,
-        messages: [{ role: 'assistant', content: responseContent, timestamp: new Date() }]
+        messages: [{ role: 'assistant', content: sanitizedResponseContent, timestamp: new Date() }]
     };
     await conversationRepository.upsertConversation(response, false, conversationId);
 
-    return responseContent;
+    return sanitizedResponseContent;
 }

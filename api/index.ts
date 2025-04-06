@@ -39,8 +39,9 @@ app.get('/conversations/:folder', authMiddleware, getConversations);
 
 app.get('/saldo', authMiddleware, userController.getSaldo);
 
+// Purchase and Payment Routes
 app.post('/purchase-tokens', authMiddleware, purchaseController.purchaseTokens);
-
+app.get('/purchase-history', authMiddleware, purchaseController.getPurchaseHistory); // Added history endpoint
 app.post('/create-payment-intent', paymentController.createPaymentIntent);
 
 app.put('/conversation/:conversationId/title', authMiddleware, updateConversationTitle);
