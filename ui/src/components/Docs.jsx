@@ -33,35 +33,6 @@ export default function Docs() {
           </Typography>
       </InfoCard>
 
-      <InfoCard title="Key Features" icon={<BuildIcon />}>
-          <List dense>
-              <ListItem>
-                  <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main">\u2022</Typography></ListItemIcon>
-                  <ListItemText primary="Open Local Folders: Directly access and work with projects on your machine." />
-              </ListItem>
-               <ListItem>
-                  <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main">\u2022</Typography></ListItemIcon>
-                  <ListItemText primary="AI-Powered Code Modifications: Request changes via chat, specifying files or folders for context." />
-              </ListItem>
-               <ListItem>
-                  <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main">\u2022</Typography></ListItemIcon>
-                  <ListItemText primary="Interactive Diff Viewer: Review AI-proposed changes side-by-side with your original code." />
-              </ListItem>
-               <ListItem>
-                  <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main">\u2022</Typography></ListItemIcon>
-                  <ListItemText primary="Apply Changes Selectively: Apply modifications file-by-file or all at once directly to your local files." />
-              </ListItem>
-              <ListItem>
-                  <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main">\u2022</Typography></ListItemIcon>
-                  <ListItemText primary="Secure Authentication & Account Management: Standard login and account settings." />
-              </ListItem>
-               <ListItem>
-                  <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main">\u2022</Typography></ListItemIcon>
-                  <ListItemText primary="Credit-Based Usage: Manage your usage through a simple credit system." />
-              </ListItem>
-          </List>
-      </InfoCard>
-
       <InfoCard title="How to Use Gecode" icon={<PlayCircleOutlineIcon />}>
            <Typography variant="body1" component="div" sx={{ '& strong': { color: 'primary.main' } }}>
               1. <strong>Sign Up / Log In:</strong> Access your account. <br />
@@ -72,6 +43,35 @@ export default function Docs() {
               6. <strong>Apply Changes:</strong> Use the "Apply" button to save changes for the currently viewed file, or "Apply All" to save all proposed changes. Changes are written directly to your local files. <br />
               7. <strong>Manage Credits:</strong> Visit the "Pricing" page (accessible from the user menu) to add more credits.
           </Typography>
+      </InfoCard>
+
+      <InfoCard title="Key Features" icon={<BuildIcon />}>
+          <List dense>
+              <ListItem>
+                  <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main">•</Typography></ListItemIcon>
+                  <ListItemText primary="Open Local Folders: Directly access and work with projects on your machine." />
+              </ListItem>
+               <ListItem>
+                  <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main">•</Typography></ListItemIcon>
+                  <ListItemText primary="AI-Powered Code Modifications: Request changes via chat, specifying files or folders for context." />
+              </ListItem>
+               <ListItem>
+                  <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main">•</Typography></ListItemIcon>
+                  <ListItemText primary="Interactive Diff Viewer: Review AI-proposed changes side-by-side with your original code." />
+              </ListItem>
+               <ListItem>
+                  <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main">•</Typography></ListItemIcon>
+                  <ListItemText primary="Apply Changes Selectively: Apply modifications file-by-file or all at once directly to your local files." />
+              </ListItem>
+              <ListItem>
+                  <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main">•</Typography></ListItemIcon>
+                  <ListItemText primary="Secure Authentication & Account Management: Standard login and account settings." />
+              </ListItem>
+               <ListItem>
+                  <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main">•</Typography></ListItemIcon>
+                  <ListItemText primary="Credit-Based Usage: Manage your usage through a simple credit system." />
+              </ListItem>
+          </List>
       </InfoCard>
 
       <InfoCard title="Frequently Asked Questions" icon={<HelpOutlineIcon />}>

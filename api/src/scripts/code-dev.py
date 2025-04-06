@@ -197,7 +197,7 @@ def generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folde
 
     if 'error' in rag:
         return {
-            'context': '[]', 
+            'context': '[]',
             'query': instruccion_usuario
         }
 
@@ -212,7 +212,7 @@ def generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folde
         'query': rag.get('queries', instruccion_usuario),
     }
 
-def _update_tokens_usage(prompt_tokens, completion_tokens, project_name, model, userId):
+def _update_tokens_usage(prompt_tokens, completion_tokens, project_name, model, userId, duration):
     try:
         mongo_uri = "***REMOVED***/coder"
         if not mongo_uri:
@@ -243,12 +243,14 @@ def _update_tokens_usage(prompt_tokens, completion_tokens, project_name, model, 
             "output_tokens": completion_tokens,
             "input_cost": input_cost,
             "output_cost": output_cost,
+            "total_cost": total_cost,  # Agregar costo total para facilitar consulta
+            "delay": duration,          # Agregar demora
             "timestamp": datetime.now()
         }
-        
+
         db["tokensUsage"].insert_one(transaction)
         client.close()
-        
+
     except Exception as e:
         print(f"Error en actualización de tokens: {str(e)}")
 
@@ -319,9 +321,12 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
 
     while retry_count < max_retries:
         try:
+            start_time = time.time() # Start timer
             response = client.models.generate_content(
                 model="gemini-2.5-pro-exp-03-25", contents=prompt
             )
+            end_time = time.time() # End timer
+            duration = end_time - start_time # Calculate duration
 
             # Robust check for response structure before accessing content
             if response and response.text and response.usage_metadata.candidates_token_count:
@@ -331,7 +336,7 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
                     input_tokens = response.usage_metadata.prompt_token_count
                     output_tokens = response.usage_metadata.candidates_token_count
                     # Use the actual model called for usage tracking
-                    _update_tokens_usage(input_tokens, output_tokens, carpeta_proyecto, coder_model, userId)
+                    _update_tokens_usage(input_tokens, output_tokens, carpeta_proyecto, coder_model, userId, duration) # Pass duration
                 except Exception as e:
                     print(f"Error updating token usage: {e}", file=sys.stderr)
 
