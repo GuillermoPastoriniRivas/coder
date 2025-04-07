@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Box, Button, Typography, CircularProgress, IconButton, Tooltip } from '@mui/material'; // Added Box, IconButton, Tooltip
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { Box, Button, Typography, CircularProgress, IconButton, Tooltip, TextField } from '@mui/material'; // Added TextField
 import RefreshIcon from '@mui/icons-material/Refresh';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen'; // Icon for Open Folder
 import VisibilityIcon from '@mui/icons-material/Visibility'; // Icon for View Changes
@@ -10,6 +10,9 @@ import AddCommentIcon from '@mui/icons-material/AddComment'; // Icon for New Con
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'; // For collapse/expand buttons
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import InfoIcon from '@mui/icons-material/Info'; // For footer info
+import SearchIcon from '@mui/icons-material/Search'; // Icon for search input
+import InputAdornment from '@mui/material/InputAdornment'; // For search icon adornment
+
 
 import DirectoryTree from './DirectoryTree';
 import ChangedFilesBar from './ChangedFilesBar';
@@ -60,6 +63,7 @@ const OpenFolder = () => {
     const [chatWidth, setChatWidth] = useState(DEFAULT_CHAT_WIDTH);
     const [collapseUnchanged, setCollapseUnchanged] = useState(false);
     const [footerInfoVisible, setFooterInfoVisible] = useState(true); // Moved footer state here
+    const [searchTerm, setSearchTerm] = useState(''); // State for directory search
 
     // Refs
     const mainContentRef = useRef(null); // Ref for the main content area for resizing calculations
@@ -69,6 +73,36 @@ const OpenFolder = () => {
     const isResizing2 = useRef(false);
 
     // --- Callbacks & Effects ---
+
+    // Flatten directory tree for searching
+    const flattenTree = useCallback((nodes) => {
+        let flatList = [];
+        nodes.forEach(node => {
+            flatList.push(node); // Add the node itself
+            if (node.children) {
+                flatList = flatList.concat(flattenTree(node.children)); // Recursively add children
+            }
+        });
+        return flatList;
+    }, []);
+
+    // Memoize the flattened tree
+    const flattenedTree = useMemo(() => flattenTree(directoryTree), [directoryTree, flattenTree]);
+
+    // Filter the directory tree based on search term
+    const filteredTreeData = useMemo(() => {
+        if (!searchTerm.trim()) {
+            return directoryTree; // Return original hierarchical tree if no search term
+        }
+        // Filter the flat list for *files* matching the search term (case-insensitive)
+        return flattenedTree.filter(node =>
+            !node.children && // Only include files
+            node.name.toLowerCase().includes(searchTerm.trim().toLowerCase())
+        );
+    }, [searchTerm, directoryTree, flattenedTree]);
+
+    // Determine if currently searching
+    const isSearching = !!searchTerm.trim();
 
     // Find file in the tree structure
     const findFileByPath = useCallback((tree, targetPath) => {
@@ -149,6 +183,7 @@ const OpenFolder = () => {
             setSelectedFilePath(null); // Clear selected file
             setSelectedFiles([]); // Clear context files
             clearSelectedSubFolders(); // Clear context folders
+            setSearchTerm(''); // Clear search term
             const files = await getFilesFromDirectory(handle);
             setDirectoryTree(files);
             await syncAndFetchConversations(handle, files); // Sync and fetch conversations after opening
@@ -247,6 +282,7 @@ const OpenFolder = () => {
             const files = await getFilesFromDirectory(folderHandle);
             setDirectoryTree(files);
             await syncAndFetchConversations(folderHandle, files);
+            setSearchTerm(''); // Clear search on refresh
 
              // Preserve current diff if a file is selected
              if (selectedFilePath && changedFiles[selectedFilePath]) {
@@ -276,13 +312,15 @@ const OpenFolder = () => {
 
     // Expand/Collapse Directory
     const handleDirectoryClick = (path) => { // Use path as unique key
+        // Don't expand/collapse when searching
+        if (isSearching) return;
         setExpandedDirectories((prev) => ({
             ...prev,
             [path]: !prev[path]
         }));
     };
 
-    // Click on a file in the tree
+    // Click on a file in the tree or search results
     const handleFileClick = (file) => {
         // If this file is already part of the current diff, just select it
         if (changedFiles[file.path]) {
@@ -301,6 +339,7 @@ const OpenFolder = () => {
              setSelectedFilePath(file.path);
              setIsDiffView(false); // Show single editor view for unmodified file
         }
+        setSearchTerm(''); // Clear search term after selecting a file
      };
 
     // Select a conversation from the list
@@ -332,6 +371,7 @@ const OpenFolder = () => {
         setSelectedFilePath(null);
         setChangedFiles({});
         setIsDiffView(true); // Reset to diff view (will show empty state)
+        setSearchTerm(''); // Clear search term
         // Optionally refresh directory/conversations if needed
         // handleRefresh();
     };
@@ -407,7 +447,7 @@ const OpenFolder = () => {
          } finally {
              setSaving(false);
          }
-    }, [selectedFilePath, changedFiles, folderHandle, directoryTree, findFileByPath]); // Dependencies
+    }, [selectedFilePath, changedFiles, folderHandle, directoryTree, findFileByPath, setDirectoryTree]); // Added setDirectoryTree to dependencies
 
 
     // Apply changes for *all* files listed in the changedFiles state
@@ -486,7 +526,7 @@ const OpenFolder = () => {
          }
 
 
-    }, [changedFiles, folderHandle, directoryTree, findFileByPath]); // Dependencies
+    }, [changedFiles, folderHandle, directoryTree, findFileByPath, setDirectoryTree]); // Added setDirectoryTree to dependencies
 
     // --- Helper functions for file handles and tree updates ---
 
@@ -694,9 +734,29 @@ const OpenFolder = () => {
                              <Typography className="directory-tree-header" variant="subtitle2" noWrap>
                                 {folderHandle?.name || 'Directory'}
                             </Typography>
+                            {/* Search Input */}
+                             <Box sx={{ px: 2, pt: 1.5, pb: 0.5, borderBottom: isSearching ? '1px solid' : 'none', borderColor: 'divider' }}>
+                                 <TextField
+                                     fullWidth
+                                     size="small"
+                                     variant="outlined"
+                                     placeholder="Search files..."
+                                     value={searchTerm}
+                                     onChange={(e) => setSearchTerm(e.target.value)}
+                                     InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <SearchIcon color="action" fontSize="small" />
+                                            </InputAdornment>
+                                        ),
+                                        sx: { fontSize: '0.875rem', bgcolor: 'background.default' } // Slightly smaller font, distinct background
+                                    }}
+                                 />
+                             </Box>
                             <Box className="directory-tree-content">
                                 <DirectoryTree
-                                    files={directoryTree}
+                                    files={filteredTreeData} // Use filtered data
+                                    isSearching={isSearching} // Pass searching state
                                     expandedDirectories={expandedDirectories}
                                     onDirectoryClick={handleDirectoryClick}
                                     onFileClick={handleFileClick}
@@ -706,15 +766,18 @@ const OpenFolder = () => {
                                     toggleFileSelection={toggleFileSelection} // Pass file toggle function
                                 />
                             </Box>
-                            <Box className="conversations-section">
-                                <Typography className="conversations-header" variant="subtitle2">Conversations</Typography>
-                                <Box className="conversations-list-container">
-                                     <ConversationsList
-                                         onSelectConversation={handleSelectConversation}
-                                         // Removed onStartNewConversation prop if button is in header
-                                     />
+                             {/* Hide conversations when searching */}
+                             {!isSearching && (
+                                <Box className="conversations-section">
+                                    <Typography className="conversations-header" variant="subtitle2">Conversations</Typography>
+                                    <Box className="conversations-list-container">
+                                        <ConversationsList
+                                            onSelectConversation={handleSelectConversation}
+                                            // Removed onStartNewConversation prop if button is in header
+                                        />
+                                    </Box>
                                 </Box>
-                             </Box>
+                             )}
                         </Box>
 
                         {/* Resizer 1 */}
