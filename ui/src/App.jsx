@@ -13,7 +13,7 @@ import { useAuth } from './context/AuthContext';
 import React from 'react';
 import './styles/App.css'; // Keep custom styles
 import OpenFolder from './components/OpenFolder.jsx';
-import { ApiProvider } from './api';
+// import { ApiProvider } from './api';
 import { DirectoryProvider } from './context/DirectoryContext.jsx';
 import { ThemeProvider } from '@mui/material/styles';
 import darkTheme from './theme'; // Import the custom dark theme
@@ -21,7 +21,7 @@ import darkTheme from './theme'; // Import the custom dark theme
 function App() {
     return (
         // Wrap everything in ApiProvider and DirectoryProvider first
-        <ApiProvider>
+        // <ApiProvider>
             <DirectoryProvider>
                 {/* Apply the custom theme globally */}
                 <ThemeProvider theme={darkTheme}>
@@ -32,7 +32,7 @@ function App() {
                     </Router>
                 </ThemeProvider>
             </DirectoryProvider>
-        </ApiProvider>
+        // </ApiProvider>
     );
 }
 

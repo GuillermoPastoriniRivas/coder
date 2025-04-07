@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
-import API from '../api';
+import API, { setAuthToken } from '../api'; // Import setAuthToken from api.js
 
 const AuthContext = createContext();
 
@@ -16,7 +16,8 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
-            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            // Set header on initial load if token exists
+            setAuthToken(token);
             // Optionally fetch user data including saldo
             fetchUserSaldo();
         }
@@ -29,7 +30,9 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('saldo', response.data.saldo);
         } catch (error) {
             console.error('Error fetching saldo:', error);
-            setSaldo(0);
+            // Don't reset saldo to 0 here, could be a temporary issue
+            // setSaldo(0);
+            // If the error is 401, the interceptor will handle logout
         }
     };
 
@@ -40,31 +43,48 @@ export const AuthProvider = ({ children }) => {
         setEmail('');
         setUser(null);
         setSaldo(0); // Reset saldo state
-        delete axios.defaults.headers.common['Authorization'];
+        // Clear the header using the imported function
+        setAuthToken(null);
     };
 
     const signUp = async (email, password, username) => {
         const response = await API.createAccount({ email, password, username });
+        // Assuming signup doesn't automatically log in / return a token
+        // If it does, handle token/state setting like in login
         setUser(response.data.account);
-        setSaldo(response.data.account.saldo); // Set saldo from response
+        // Set initial saldo if provided by signup response
+        if (response.data.account?.saldo !== undefined) {
+             setSaldo(response.data.account.saldo);
+             localStorage.setItem('saldo', response.data.account.saldo);
+        }
         localStorage.setItem('userEmail', email);
-        localStorage.setItem('saldo', response.data.account.saldo); // Store saldo in localStorage
         setEmail(email);
         return response.data;
     };
 
     const login = async (email, password) => {
         const response = await API.login({ email, password });
-        console.log(response)
-        const { token, saldo } = response.data; // Destructure saldo from response
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        setUser(response.data.user); // Ensure user data is set
+        console.log("Login response:", response); // Log for debugging
+        const { token, saldo, user } = response.data; // Assuming user details are also returned
 
-        setSaldo(saldo); // Update saldo state
-        localStorage.setItem('userEmail', email);
-        localStorage.setItem('token', token);
-        localStorage.setItem('saldo', saldo); // Store saldo in localStorage
-        setEmail(email);
+        if (token) { // Check if token exists
+             // Explicitly set the token for immediate use BEFORE setting state
+             setAuthToken(token);
+
+             // Proceed with setting state and local storage
+             setUser(user); // Set user state
+             setSaldo(saldo); // Update saldo state
+             setEmail(email); // Update email state
+             localStorage.setItem('userEmail', email);
+             localStorage.setItem('token', token);
+             localStorage.setItem('saldo', saldo); // Store saldo in localStorage
+             console.log("Token and user state set after login.");
+        } else {
+             console.error("Login response did not contain a token.");
+             // Throw an error to be caught by the calling component (Login.jsx)
+             throw new Error("Login failed: No token received.");
+        }
+
         return response.data;
     };
 

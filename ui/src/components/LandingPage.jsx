@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Container, Button, Paper, Grid, useTheme } from '@mui/material';
+import { Box, Typography, Container, Button, Paper, Grid, useTheme, AppBar, Toolbar, Link } from '@mui/material'; // Added AppBar, Toolbar, Link
 import { Link as RouterLink } from 'react-router-dom';
 import CodeIcon from '@mui/icons-material/Code';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
@@ -7,6 +7,7 @@ import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import SecurityIcon from '@mui/icons-material/Security'; // Added icon
 import InsightsIcon from '@mui/icons-material/Insights'; // Added icon
 import SpeedIcon from '@mui/icons-material/Speed'; // Added icon
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn'; // Icon for pricing
 
 // Placeholder YouTube Video ID - Replace with the actual demo video ID
 const YOUTUBE_VIDEO_ID = 'dQw4w9WgXcQ'; // Example: 'dQw4w9WgXcQ'
@@ -16,6 +17,22 @@ export default function LandingPage() {
 
     return (
         <Box sx={{ flexGrow: 1, bgcolor: 'background.default', color: 'text.primary', overflowX: 'hidden' }}>
+            {/* Navigation Menu */}
+            <AppBar position="sticky" elevation={0} sx={{ bgcolor: 'background.paper', borderBottom: '1px solid', borderColor: 'divider' }}>
+                <Container maxWidth="lg">
+                    <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 0 } }}>
+                        <Typography variant="h6" component={RouterLink} to="/" sx={{ color: 'text.primary', fontWeight: 'bold', textDecoration: 'none' }}>
+                           Gecode
+                        </Typography>
+                        <Box>
+                            <Button color="inherit" component={RouterLink} to="/" sx={{ color: 'text.primary' }}>Home</Button>
+                            <Button color="inherit" component={RouterLink} to="/docs" sx={{ color: 'text.primary' }}>Docs</Button>
+                            <Button color="inherit" component={RouterLink} to="/login" sx={{ color: 'text.primary' }}>Login</Button>
+                        </Box>
+                    </Toolbar>
+                </Container>
+            </AppBar>
+
             {/* Hero Section */}
             <Box sx={{ background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.background.paper} 70%)`, pt: 12, pb: 10 }}>
                 <Container maxWidth="lg" sx={{ textAlign: 'center' }}>
@@ -172,8 +189,37 @@ export default function LandingPage() {
                 </Container>
             </Box>
 
-             {/* Call to Action Section */}
+             {/* Pricing Section */}
              <Box sx={{ bgcolor: 'background.default', py: { xs: 8, md: 12 } }}>
+                <Container maxWidth="md" sx={{ textAlign: 'center' }}>
+                    <MonetizationOnIcon sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
+                    <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 3, fontWeight: 'bold' }}>
+                        Simple, Pay-As-You-Go Pricing
+                    </Typography>
+                    <Typography variant="h6" color="text.secondary" paragraph sx={{ mb: 4, maxWidth: '600px', mx: 'auto' }}>
+                        Gecode operates on a credit-based system. You only pay for the AI processing you use. Top up your credits anytime.
+                    </Typography>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        size="large"
+                        component={RouterLink}
+                        to="/pricing" // Link to the detailed pricing/purchase page
+                         sx={{
+                            px: 5,
+                            py: 1.5,
+                            fontSize: '1.1rem',
+                        }}
+
+                    >
+                        View Pricing & Add Credits
+                    </Button>
+                </Container>
+             </Box>
+
+
+             {/* Call to Action Section */}
+             <Box sx={{ bgcolor: 'background.paper', py: { xs: 8, md: 12 } }}>
                 <Container maxWidth="md" sx={{ textAlign: 'center' }}>
                     <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 4, fontWeight: 'bold' }}>
                         Ready to Supercharge Your Workflow?
@@ -194,6 +240,7 @@ export default function LandingPage() {
                             transition: 'transform 0.2s ease-in-out',
                             '&:hover': { transform: 'scale(1.05)' }
                         }}
+
                     >
                         Sign Up Now - It's Free to Start!
                     </Button>
@@ -205,6 +252,7 @@ export default function LandingPage() {
                  <Container maxWidth="lg">
                      <Typography variant="body2" color="text.secondary" align="center">
                          {'© '}{new Date().getFullYear()}{' Gecode. All rights reserved.'}
+
                      </Typography>
                      {/* Add links if needed */}
                       {/* <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 1 }}>
