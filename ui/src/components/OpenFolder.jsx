@@ -877,7 +877,7 @@ const OpenFolder = () => {
                       )}
                  </Box>
                  {/* Add other footer elements if needed */}
-                 <Typography variant="caption"> Gecode v1.0 </Typography>
+                 <Typography variant="caption"> CoderM8 v1.0 </Typography>
              </Box>
         </Box>
     );

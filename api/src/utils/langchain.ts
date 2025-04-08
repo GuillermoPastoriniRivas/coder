@@ -29,65 +29,107 @@ export async function callAgent(query: string, userId: string, folder: string, s
     const config = path.resolve(process.cwd(), 'sources', safeUserId, `${safeFolder}.json`);
     console.log(`Executing Python script with project: ${project}, instruction: ${query}, config: ${config}`);
 
-    const pythonProcess = spawn('python', [
-        'src/scripts/code-dev.py',
-        '--instruction', query,
-        '--project', project,
-        '--config', config,
-        '--model', model,
-        '--subfolders', (subFolders || []).join(','),
-        '--selectedFiles', (selectedFiles || []).join(','),
-        '--userId', userId
-    ]);
+    let sanitizedResponseContent
 
-    const responsePromise = new Promise((resolve, reject) => {
-        let output = '';
-
-        pythonProcess.stdout.on('data', (data) => {
-            output += data.toString();
+    if (model === 'coder') {
+        const pythonProcess = spawn('python', [
+            'src/scripts/code-dev.py',
+            '--instruction', query,
+            '--project', project,
+            '--config', config,
+            '--model', model,
+            '--subfolders', (subFolders || []).join(','),
+            '--selectedFiles', (selectedFiles || []).join(','),
+            '--userId', userId
+        ]);
+    
+        const responsePromise = new Promise((resolve, reject) => {
+            let output = '';
+    
+            pythonProcess.stdout.on('data', (data) => {
+                output += data.toString();
+            });
+    
+            pythonProcess.stderr.on('data', (data) => {
+                console.error(`stderr: ${data}`);
+                reject(new Error(`Error in code-dev.py: ${data}`));
+            });
+    
+            pythonProcess.on('close', (code) => {
+                console.log(`code-dev.py exited with code ${code}`);
+                if (code === 0) {
+                    resolve(output.trim());
+                } else {
+                    reject(new Error(`code-dev.py exited with code ${code}`));
+                }
+            });
         });
+    
+        const rawResponseContent = await responsePromise as string;
+    
+        // Sanitize the response content
+        sanitizedResponseContent = rawResponseContent;
+        try {
+            // Paso 1: Manejar líneas que terminan con \
+            // Reemplazar \\\n (que representa una barra invertida seguida de un salto de línea)
+            sanitizedResponseContent = sanitizedResponseContent.replace(/\\\\\n/g, '\\\n');
+    
+            // Paso 2: Reemplazar newlines y comillas escapadas
+            sanitizedResponseContent = sanitizedResponseContent
+                .replace(/\\n/g, '\n')
+                .replace(/\\"/g, '"');
+    
+            // Paso 3: Decodificar secuencias Unicode
+            sanitizedResponseContent = sanitizedResponseContent.replace(/\\u([0-9a-fA-F]{4})/g, (match, grp) => {
+                return String.fromCharCode(parseInt(grp, 16));
+            });
+    
+            // Paso 4: Corregir escape en expresiones regulares (como \/ o \\)
+            // Esto revierte el escape excesivo en patrones como [\/\\] -> [\/\\]
+            sanitizedResponseContent = sanitizedResponseContent
+                .replace(/\\\//g, '/')  // Reemplazar \/ por /
+                .replace(/\\\\/g, '\\'); // Reemplazar \\ por \
+        } catch (e) {
+            console.error("Error sanitizing AI response content:", e);
+        }
+    } 
 
-        pythonProcess.stderr.on('data', (data) => {
-            console.error(`stderr: ${data}`);
-            reject(new Error(`Error in code-dev.py: ${data}`));
+    if (model === 'qa') {
+        const pythonProcess = spawn('python', [
+            'src/scripts/code-qa.py',
+            '--instruction', query,
+            '--project', project,
+            '--config', config,
+            '--model', model,
+            '--subfolders', (subFolders || []).join(','),
+            '--selectedFiles', (selectedFiles || []).join(','),
+            '--userId', userId
+        ]);
+    
+        const responsePromise = new Promise((resolve, reject) => {
+            let output = '';
+    
+            pythonProcess.stdout.on('data', (data) => {
+                output += data.toString();
+            });
+    
+            pythonProcess.stderr.on('data', (data) => {
+                console.error(`stderr: ${data}`);
+                reject(new Error(`Error in code-dev.py: ${data}`));
+            });
+    
+            pythonProcess.on('close', (code) => {
+                console.log(`code-dev.py exited with code ${code}`);
+                if (code === 0) {
+                    resolve(output.trim());
+                } else {
+                    reject(new Error(`code-dev.py exited with code ${code}`));
+                }
+            });
         });
-
-        pythonProcess.on('close', (code) => {
-            console.log(`code-dev.py exited with code ${code}`);
-            if (code === 0) {
-                resolve(output.trim());
-            } else {
-                reject(new Error(`code-dev.py exited with code ${code}`));
-            }
-        });
-    });
-
-    const rawResponseContent = await responsePromise as string;
-
-    // Sanitize the response content
-    let sanitizedResponseContent = rawResponseContent;
-    try {
-        // Paso 1: Manejar líneas que terminan con \
-        // Reemplazar \\\n (que representa una barra invertida seguida de un salto de línea)
-        sanitizedResponseContent = sanitizedResponseContent.replace(/\\\\\n/g, '\\\n');
-
-        // Paso 2: Reemplazar newlines y comillas escapadas
-        sanitizedResponseContent = sanitizedResponseContent
-            .replace(/\\n/g, '\n')
-            .replace(/\\"/g, '"');
-
-        // Paso 3: Decodificar secuencias Unicode
-        sanitizedResponseContent = sanitizedResponseContent.replace(/\\u([0-9a-fA-F]{4})/g, (match, grp) => {
-            return String.fromCharCode(parseInt(grp, 16));
-        });
-
-        // Paso 4: Corregir escape en expresiones regulares (como \/ o \\)
-        // Esto revierte el escape excesivo en patrones como [\/\\] -> [\/\\]
-        sanitizedResponseContent = sanitizedResponseContent
-            .replace(/\\\//g, '/')  // Reemplazar \/ por /
-            .replace(/\\\\/g, '\\'); // Reemplazar \\ por \
-    } catch (e) {
-        console.error("Error sanitizing AI response content:", e);
+    
+        const rawResponseContent = await responsePromise as string;
+        sanitizedResponseContent = rawResponseContent;
     }
 
 
