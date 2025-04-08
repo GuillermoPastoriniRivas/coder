@@ -22,7 +22,7 @@ export default function LandingPage() {
                 <Container maxWidth="lg">
                     <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 0 } }}>
                         <Typography variant="h6" component={RouterLink} to="/" sx={{ color: 'text.primary', fontWeight: 'bold', textDecoration: 'none' }}>
-                           Gecode
+                           CoderM8
                         </Typography>
                         <Box>
                             <Button color="inherit" component={RouterLink} to="/" sx={{ color: 'text.primary' }}>Home</Button>
@@ -37,7 +37,7 @@ export default function LandingPage() {
             <Box sx={{ background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.background.paper} 70%)`, pt: 12, pb: 10 }}>
                 <Container maxWidth="lg" sx={{ textAlign: 'center' }}>
                     <Typography variant="h1" component="h1" gutterBottom sx={{ fontWeight: 700, fontSize: { xs: '2.8rem', sm: '3.5rem', md: '4rem' }, color: 'primary.contrastText', textShadow: '1px 1px 3px rgba(0,0,0,0.4)' }}>
-                        Welcome to Gecode
+                        Welcome to CoderM8
                     </Typography>
                     <Typography variant="h5" color="rgba(255, 255, 255, 0.85)" paragraph sx={{ mb: 5, maxWidth: '700px', mx: 'auto' }}>
                         Your intelligent coding partner. Seamlessly modify code, manage projects, and accelerate development directly within your local environment using AI.
@@ -87,7 +87,7 @@ export default function LandingPage() {
             {/* Video Demo Section */}
             <Container maxWidth="md" sx={{ my: { xs: 6, md: 10 } }}>
                  <Typography variant="h4" component="h2" gutterBottom align="center" sx={{ mb: 5, fontWeight: 'bold' }}>
-                     See Gecode in Action
+                     See CoderM8 in Action
                  </Typography>
                  <Paper
                      elevation={6} // Increased elevation for more depth
@@ -103,7 +103,7 @@ export default function LandingPage() {
                  >
                      <iframe
                         src={`https://www.youtube.com/embed/${YOUTUBE_VIDEO_ID}?rel=0&showinfo=0&modestbranding=1`} // Added parameters to clean up player
-                        title="Gecode Demo Video"
+                        title="CoderM8 Demo Video"
                         frameBorder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
@@ -122,7 +122,7 @@ export default function LandingPage() {
             <Box sx={{ bgcolor: 'background.paper', py: { xs: 8, md: 12 } }}>
                 <Container maxWidth="lg">
                     <Typography variant="h4" component="h2" gutterBottom align="center" sx={{ mb: 8, fontWeight: 'bold' }}>
-                        Why Choose Gecode?
+                        Why Choose CoderM8?
                     </Typography>
                     <Grid container spacing={5} justifyContent="center">
                         {/* Feature 1 */}
@@ -181,7 +181,7 @@ export default function LandingPage() {
                                 <RocketLaunchIcon sx={{ fontSize: 50, color: 'primary.main', mb: 2 }} />
                                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 'medium' }}>Accelerate Workflow</Typography>
                                 <Typography color="text.secondary">
-                                    Reduce repetitive tasks and focus on complex problem-solving, letting Gecode handle the boilerplate and common patterns.
+                                    Reduce repetitive tasks and focus on complex problem-solving, letting CoderM8 handle the boilerplate and common patterns.
                                 </Typography>
                              </Paper>
                          </Grid>
@@ -197,7 +197,7 @@ export default function LandingPage() {
                         Simple, Pay-As-You-Go Pricing
                     </Typography>
                     <Typography variant="h6" color="text.secondary" paragraph sx={{ mb: 4, maxWidth: '600px', mx: 'auto' }}>
-                        Gecode operates on a credit-based system. You only pay for the AI processing you use. Top up your credits anytime.
+                        CoderM8 operates on a credit-based system. You only pay for the AI processing you use. Top up your credits anytime.
                     </Typography>
                     <Button
                         variant="contained"
@@ -251,7 +251,7 @@ export default function LandingPage() {
              <Box component="footer" sx={{ bgcolor: 'background.paper', py: 4, mt: 'auto', borderTop: '1px solid', borderColor: 'divider' }}>
                  <Container maxWidth="lg">
                      <Typography variant="body2" color="text.secondary" align="center">
-                         {'© '}{new Date().getFullYear()}{' Gecode. All rights reserved.'}
+                         {'© '}{new Date().getFullYear()}{' CoderM8. All rights reserved.'}
 
                      </Typography>
                      {/* Add links if needed */}
