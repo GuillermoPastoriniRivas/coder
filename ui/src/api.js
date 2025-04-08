@@ -72,7 +72,6 @@ const api = {
   deleteConversation: (conversationId) => API.delete(`/conversation/${conversationId}`),
   getConversations: (folder) => API.get(`/conversations/${folder}`),
   sendMessage: async (messageData) => {
-    await api.syncDirectory({}); // Refresh before sending message
     return API.post('/call', messageData);
   },
 

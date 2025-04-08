@@ -275,7 +275,7 @@ const OpenFolder = () => {
 
 
     // Refresh: Re-read directory, sync, fetch conversations
-    const handleRefresh = async () => {
+    const handleRefresh = useCallback(async () => {
         if (!folderHandle) return;
         setLoading(true);
         try {
@@ -308,7 +308,7 @@ const OpenFolder = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [folderHandle, selectedFilePath, changedFiles, findFileByPath, setDirectoryTree, setConversations]); // Added setConversations
 
     // Expand/Collapse Directory
     const handleDirectoryClick = (path) => { // Use path as unique key
@@ -441,13 +441,16 @@ const OpenFolder = () => {
 
             showNotification(`Changes saved to ${selectedFilePath}`);
 
+            // Trigger automatic refresh after applying changes
+            await handleRefresh();
+
          } catch (error) {
              console.error(`Error applying changes to ${selectedFilePath}:`, error);
              showNotification(`Error applying changes to ${selectedFilePath}: ${error.message}`);
          } finally {
              setSaving(false);
          }
-    }, [selectedFilePath, changedFiles, folderHandle, directoryTree, findFileByPath, setDirectoryTree]); // Added setDirectoryTree to dependencies
+    }, [selectedFilePath, changedFiles, folderHandle, directoryTree, findFileByPath, setDirectoryTree, handleRefresh]); // Added setDirectoryTree and handleRefresh to dependencies
 
 
     // Apply changes for *all* files listed in the changedFiles state
@@ -511,8 +514,6 @@ const OpenFolder = () => {
             }
         }
 
-         setSaving(false);
-
          // Provide feedback
          if (errors.length > 0) {
             showNotification(`Applied changes to ${appliedFiles.length} files.\nEncountered errors:\n- ${errors.join('\n- ')}`);
@@ -525,8 +526,12 @@ const OpenFolder = () => {
             showNotification("No changes were applied.");
          }
 
+         // Trigger automatic refresh after applying all changes (regardless of errors?)
+         await handleRefresh();
 
-    }, [changedFiles, folderHandle, directoryTree, findFileByPath, setDirectoryTree]); // Added setDirectoryTree to dependencies
+         setSaving(false); // Move saving state update here, after refresh
+
+    }, [changedFiles, folderHandle, directoryTree, findFileByPath, setDirectoryTree, handleRefresh]); // Added setDirectoryTree and handleRefresh to dependencies
 
     // --- Helper functions for file handles and tree updates ---
 
@@ -818,6 +823,7 @@ const OpenFolder = () => {
                                 selectedSubFolders={selectedSubFolders}
                                 deselectFile={deselectFile} // Pass deselect functions
                                 deselectSubFolder={deselectSubFolder}
+                                onRefreshRequest={handleRefresh} // Pass refresh handler
                                 // handleMessageClick is removed if not used
                             />
                         </Box>
