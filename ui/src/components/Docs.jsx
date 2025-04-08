@@ -24,16 +24,16 @@ export default function Docs() {
     // Use Box for padding and centering, maxWidth limits content width
     <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 900, mx: 'auto' }}>
       <Typography variant="h3" component="h1" gutterBottom align="center" sx={{ mb: 4 }}>
-        Gecode Documentation
+        CoderM8 Documentation
       </Typography>
 
-      <InfoCard title="What is Gecode?" icon={<InfoIcon />}>
+      <InfoCard title="What is CoderM8?" icon={<InfoIcon />}>
           <Typography variant="body1" paragraph>
-            Gecode is an AI-powered coding assistant designed to integrate directly with your local development environment. It helps you manage projects, request automated code modifications, apply changes safely, and interact intelligently to solve coding challenges, all without leaving your workspace setup.
+            CoderM8 is an AI-powered coding assistant designed to integrate directly with your local development environment. It helps you manage projects, request automated code modifications, apply changes safely, and interact intelligently to solve coding challenges, all without leaving your workspace setup.
           </Typography>
       </InfoCard>
 
-      <InfoCard title="How to Use Gecode" icon={<PlayCircleOutlineIcon />}>
+      <InfoCard title="How to Use CoderM8" icon={<PlayCircleOutlineIcon />}>
            <Typography variant="body1" component="div" sx={{ '& strong': { color: 'primary.main' } }}>
               1. <strong>Sign Up / Log In:</strong> Access your account. <br />
               2. <strong>Open Folder:</strong> Click "Open Folder" and select your project directory using the browser's folder picker. <br />
@@ -75,9 +75,9 @@ export default function Docs() {
       </InfoCard>
 
       <InfoCard title="Frequently Asked Questions" icon={<HelpOutlineIcon />}>
-           <Typography variant="subtitle1" gutterBottom>Q: How does Gecode access local files?</Typography>
+           <Typography variant="subtitle1" gutterBottom>Q: How does CoderM8 access local files?</Typography>
            <Typography variant="body2" paragraph>
-             Gecode uses the modern <Link href="https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API" target="_blank" rel="noopener noreferrer">File System Access API</Link> available in compatible browsers (like Chrome, Edge). You explicitly grant permission for the application to read and write to the selected folder. This access is temporary and usually scoped to your session.
+             CoderM8 uses the modern <Link href="https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API" target="_blank" rel="noopener noreferrer">File System Access API</Link> available in compatible browsers (like Chrome, Edge). You explicitly grant permission for the application to read and write to the selected folder. This access is temporary and usually scoped to your session.
            </Typography>
 
            <Typography variant="subtitle1" gutterBottom>Q: Is my code uploaded anywhere?</Typography>

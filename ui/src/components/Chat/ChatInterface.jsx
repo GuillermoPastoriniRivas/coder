@@ -37,7 +37,7 @@ export default function ChatInterface({
     const [startHeight, setStartHeight] = useState(80); // Store initial height on drag start
     const [textareaHeight, setTextareaHeight] = useState(80); // Initial height (adjust as needed)
 
-    const models = ['coder']; // Available models (update if more are added)
+    const models = ['coder', 'qa']; // Available models (update if more are added)
 
     // Debounced saldo fetch function (optional, to avoid rapid fetches)
     const fetchSaldoDebounced = useRef(debounce(async () => {
@@ -82,7 +82,10 @@ export default function ChatInterface({
     const handleSend = async () => {
         if (!message.trim() || loading || !folderHandle) return; // Basic validation
         setLoading(true); // Set loading state
-
+        const userMessage = { role: 'user', content: message.trim(), timestamp: new Date() };
+        // Update local conversation state immediately for responsiveness
+        setConversation((prev) => [...prev, userMessage]);
+        setMessage(''); // Clear input field
          // Trigger refresh before sending the message
          try {
             if (onRefreshRequest) {
@@ -95,17 +98,8 @@ export default function ChatInterface({
             // For now, proceed even if refresh fails
         }
 
-         const userMessage = { role: 'user', content: message.trim(), timestamp: new Date() };
-         // Update local conversation state immediately for responsiveness
-         setConversation((prev) => [...prev, userMessage]);
-         setMessage(''); // Clear input field
+
          
-         // Removed progress reset
-
-         // Reset textarea height after sending (optional)
-         // setTextareaHeight(80);
-
-         // Removed simulated progress interval logic
 
          try {
              const response = await api.sendMessage({

@@ -77,7 +77,7 @@ export default function Menu() {
                 {/* Logo/Brand Name */}
                  <Button color="inherit" component={RouterLink} to="/" sx={{ padding: 0 }}> {/* Link to home */}
                      <Typography variant="h6" component="div" sx={{ color: 'text.primary', fontWeight: 'bold' }}>
-                        Gecode
+                        CoderM8
                     </Typography>
                  </Button>
 
