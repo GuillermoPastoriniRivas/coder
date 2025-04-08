@@ -18,7 +18,8 @@ export default function ChatInterface({
     selectedFiles,    // Array of selected file paths
     selectedSubFolders, // Array of selected folder paths
     deselectFile,
-    deselectSubFolder
+    deselectSubFolder,
+    onRefreshRequest // Callback to trigger the main refresh logic
 }) {
     const [message, setMessage] = useState('');
     const [conversation, setConversation] = useState([]); // Stores message objects { role, content, timestamp }
@@ -80,12 +81,25 @@ export default function ChatInterface({
     // Send message handler
     const handleSend = async () => {
         if (!message.trim() || loading || !folderHandle) return; // Basic validation
+        setLoading(true); // Set loading state
+
+         // Trigger refresh before sending the message
+         try {
+            if (onRefreshRequest) {
+                console.log("Triggering refresh before send...");
+                await onRefreshRequest();
+            }
+        } catch (refreshError) {
+            console.error("Error during pre-send refresh:", refreshError);
+            // Optionally notify user or proceed anyway?
+            // For now, proceed even if refresh fails
+        }
 
          const userMessage = { role: 'user', content: message.trim(), timestamp: new Date() };
          // Update local conversation state immediately for responsiveness
          setConversation((prev) => [...prev, userMessage]);
          setMessage(''); // Clear input field
-         setLoading(true); // Set loading state
+         
          // Removed progress reset
 
          // Reset textarea height after sending (optional)
