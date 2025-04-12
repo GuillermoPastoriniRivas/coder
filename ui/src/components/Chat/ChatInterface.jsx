@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Button, Typography, Paper, CircularProgress, Chip, MenuItem, Select, LinearProgress, Tooltip, IconButton } from '@mui/material';
+import { Box, Button, Typography, Paper, CircularProgress, Chip, MenuItem, Select, LinearProgress, Tooltip, IconButton, Slider } from '@mui/material'; // Added Slider
 import SendIcon from '@mui/icons-material/Send';
+import CancelIcon from '@mui/icons-material/Cancel'; // Icon for Cancel
+import ReplayIcon from '@mui/icons-material/Replay'; // Icon for Regenerate
 import InfoIcon from '@mui/icons-material/Info'; // For info tooltip
 import FolderIcon from '@mui/icons-material/Folder'; // For folder chip icon
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile'; // For file chip icon
 import api from '../../api';
 import '../../styles/App.css'; // Keep general app styles
 import { useDirectory } from '../../context/DirectoryContext';
-import { parseAIMessageForFiles } from '../../utils/functions';
+import { parseAIMessageForFiles, showNotification } from '../../utils/functions'; // Import showNotification
 import { useAuth } from '../../context/AuthContext';
+import axios from 'axios'; // Import axios to check for cancellation error
 
 export default function ChatInterface({
     selectedConversation,
@@ -19,15 +22,18 @@ export default function ChatInterface({
     selectedSubFolders, // Array of selected folder paths
     deselectFile,
     deselectSubFolder,
-    onRefreshRequest // Callback to trigger the main refresh logic
+    onRefreshRequest, // Callback to trigger the main refresh logic
+    tokenLimit,      // Receive tokenLimit state
+    setTokenLimit    // Receive function to update tokenLimit state
 }) {
     const [message, setMessage] = useState('');
     const [conversation, setConversation] = useState([]); // Stores message objects { role, content, timestamp }
     const [loading, setLoading] = useState(false); // For send message loading state
-    // Removed progress state and interval ref
     const messagesEndRef = useRef(null); // To scroll chat to bottom
     const textareaRef = useRef(null); // To manage textarea focus and height potentially
     const resizerRef = useRef(null); // For the textarea resizer handle
+    const abortControllerRef = useRef(null); // Ref to hold the AbortController
+    const lastUserMessageRef = useRef(null); // Ref to store the last sent user message for regeneration
 
     const { folderHandle, setConversations } = useDirectory();
     const { saldo, updateSaldo } = useAuth();
@@ -60,6 +66,13 @@ export default function ChatInterface({
                  // Filter out assistant messages if they only contain file diffs (handled by FileContent)
                  // Or decide how to display them (e.g., "Assistant proposed changes...")
                  setConversation(selectedConversation.userMessages);
+                 // Store the last user message from the loaded conversation if applicable
+                 const userMessages = selectedConversation.userMessages.filter(m => m.role === 'user');
+                 if (userMessages.length > 0) {
+                     lastUserMessageRef.current = userMessages[userMessages.length - 1];
+                 } else {
+                     lastUserMessageRef.current = null; // Reset if no user messages in history
+                 }
             } else {
                 // Default initial message if no conversation history
                 setConversation([
@@ -69,6 +82,7 @@ export default function ChatInterface({
                         timestamp: new Date()
                     }
                 ]);
+                 lastUserMessageRef.current = null; // Reset on new/empty conversation
             }
              // Scroll to bottom after loading
              scrollToBottom();
@@ -77,17 +91,33 @@ export default function ChatInterface({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedConversation]); // Rerun only when the selected conversation object changes
 
+    // --- Core Message Sending Logic (Extracted) ---
+    const executeSendMessage = async (messageContent, isRegeneration = false) => {
+        if (!messageContent.trim() || loading || !folderHandle) return; // Basic validation
 
-    // Send message handler
-    const handleSend = async () => {
-        if (!message.trim() || loading || !folderHandle) return; // Basic validation
+        // Abort previous request if any
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        // Create and store new AbortController
+        abortControllerRef.current = new AbortController();
+
         setLoading(true); // Set loading state
-        const userMessage = { role: 'user', content: message.trim(), timestamp: new Date() };
-        // Update local conversation state immediately for responsiveness
-        setConversation((prev) => [...prev, userMessage]);
-        setMessage(''); // Clear input field
-         // Trigger refresh before sending the message
-         try {
+
+        const messageToSend = { role: 'user', content: messageContent.trim(), timestamp: new Date() };
+
+        // Add user message to conversation *only if it's not a regeneration of the exact same last message*
+        if (!isRegeneration || conversation[conversation.length - 1]?.content !== messageToSend.content) {
+             setConversation((prev) => [...prev, messageToSend]);
+        }
+
+        // Store this message as the last user message sent
+        lastUserMessageRef.current = messageToSend;
+
+        setMessage(''); // Clear input field if it was a new message
+
+        // Trigger refresh before sending the message (optional)
+        try {
             if (onRefreshRequest) {
                 console.log("Triggering refresh before send...");
                 await onRefreshRequest();
@@ -98,82 +128,109 @@ export default function ChatInterface({
             // For now, proceed even if refresh fails
         }
 
+        try {
+            const response = await api.sendMessage(
+                {
+                    message: messageToSend.content,
+                    folder: folderHandle.name,
+                    subFolders: selectedSubFolders,
+                    selectedFiles: selectedFiles,
+                    model: selectedModel,
+                    conversationId: selectedConversation?._id,
+                    tokenLimit: tokenLimit // Include tokenLimit in the payload
+                },
+                { signal: abortControllerRef.current.signal } // Pass the signal
+            );
 
-         
+            const aiResponseContent = response.data.response; // The raw response from AI
+            const newConversationId = response.data.conversationId; // ID of the created/updated conversation
 
-         try {
-             const response = await api.sendMessage({
-                 message: userMessage.content, // Send the trimmed message content
-                 folder: folderHandle.name,
-                 // Send selected paths relative to the root folder handle
-                 subFolders: selectedSubFolders,
-                 selectedFiles: selectedFiles,
-                 model: selectedModel,
-                 conversationId: selectedConversation?._id // Pass current conversation ID if exists
-             });
+            const parsedFiles = parseAIMessageForFiles(folderHandle.name, aiResponseContent);
 
-             // Removed stop simulated progress and setProgress(100)
+            let displayMessageContent = '';
+            if (parsedFiles.length > 0 && onFileChanges) {
+                onFileChanges(parsedFiles); // Pass changes to parent to update editor
+                displayMessageContent = `Assistant proposed changes to ${parsedFiles.length} file(s). Review the changes in the editor.`;
+            } else if (aiResponseContent.includes('--------------------') && aiResponseContent.includes('+++++')) {
+                 displayMessageContent = "Assistant provided a response, but no file changes were detected or applied automatically. Check the response format if expecting code changes.";
+                 console.warn("AI response looked like a diff but parsing yielded no files:", aiResponseContent);
+            } else {
+                displayMessageContent = aiResponseContent;
+            }
 
-             const aiResponseContent = response.data.response; // The raw response from AI
-             const newConversationId = response.data.conversationId; // ID of the created/updated conversation
+            const aiMessage = {
+                role: 'assistant',
+                content: displayMessageContent,
+                timestamp: new Date()
+            };
+            setConversation((prev) => [...prev, aiMessage]); // Add AI message to local state
 
-             // Parse the AI response for file changes
-             const parsedFiles = parseAIMessageForFiles(folderHandle.name, aiResponseContent);
+            fetchSaldoDebounced();
+            const updatedConversations = await api.getConversations(folderHandle.name);
+            setConversations(updatedConversations.data || []);
 
-             let displayMessageContent = '';
-             if (parsedFiles.length > 0 && onFileChanges) {
-                 onFileChanges(parsedFiles); // Pass changes to parent to update editor
-                 displayMessageContent = `Assistant proposed changes to ${parsedFiles.length} file(s). Review the changes in the editor.`;
-             } else if (aiResponseContent.includes('--------------------') && aiResponseContent.includes('+++++')) {
-                  // It looks like a diff but parsing failed or was empty
-                  displayMessageContent = "Assistant provided a response, but no file changes were detected or applied automatically. Check the response format if expecting code changes.";
-                  console.warn("AI response looked like a diff but parsing yielded no files:", aiResponseContent);
-             }
-              else {
-                 // If no parseable files, display the raw response (or a summary)
-                 displayMessageContent = aiResponseContent; // Or potentially summarize if too long
-             }
+            if (!selectedConversation && newConversationId) {
+                const newConv = updatedConversations.data.find(c => c._id === newConversationId);
+                if (newConv) {
+                    console.log("New conversation created, need to select it:", newConv);
+                    // TODO: Add callback or state lifting to select the new conversation in OpenFolder
+                }
+            }
 
-             const aiMessage = {
-                 role: 'assistant', // Use 'assistant' role
-                 content: displayMessageContent,
-                 timestamp: new Date()
-             };
-             setConversation((prev) => [...prev, aiMessage]); // Add AI message to local state
-
-             // Fetch updated saldo and conversations list
-              fetchSaldoDebounced();
-             const updatedConversations = await api.getConversations(folderHandle.name);
-             setConversations(updatedConversations.data || []);
-
-             // If it was a new conversation, select it
-              if (!selectedConversation && newConversationId) {
-                 const newConv = updatedConversations.data.find(c => c._id === newConversationId);
-                 if (newConv) {
-                     // Need a way to inform the parent (OpenFolder) to select this new conversation
-                     // This might require lifting state up or using a context update
-                     console.log("New conversation created, need to select it:", newConv);
+        } catch (error) {
+             // Check if the error is due to cancellation
+             if (error.message === 'Request canceled' || axios.isCancel(error)) {
+                 console.log('Request was cancelled by the user.');
+                 const cancelMessage = {
+                     role: 'system',
+                     content: 'Request cancelled.',
+                     timestamp: new Date()
+                 };
+                 setConversation((prev) => [...prev, cancelMessage]);
+             } else {
+                 console.error('Error sending message:', error);
+                 const errorMessageContent = `Error: ${error.response?.data?.message || error.message || 'Failed to get response.'}`;
+                 const errorMessage = {
+                     role: 'system',
+                     content: errorMessageContent,
+                     timestamp: new Date()
+                 };
+                 setConversation((prev) => [...prev, errorMessage]);
+                 // Show notification for backend errors
+                 if (!axios.isCancel(error) && !error.response) { // Only show general notification for non-HTTP errors
+                    showNotification(errorMessageContent, 'error');
                  }
              }
+        } finally {
+            setLoading(false); // End loading state
+            abortControllerRef.current = null; // Clear the controller ref
+            textareaRef.current?.focus();
+        }
+    };
 
+    // Send message handler (uses the core logic)
+    const handleSend = async () => {
+        executeSendMessage(message); // Send current input message
+    };
 
-         } catch (error) {
-              console.error('Error sending message:', error);
-              // Removed clearInterval and setProgress(0)
-              // Add error message to chat
-              const errorMessage = {
-                   role: 'system', // Or 'error' role
-                   content: `Error: ${error.response?.data?.message || error.message || 'Failed to get response.'}`,
-                   timestamp: new Date()
-              };
-              setConversation((prev) => [...prev, errorMessage]);
-         } finally {
-             setLoading(false); // End loading state
-             // Removed timeout to hide progress bar
-             // Ensure textarea is focused after sending
-             textareaRef.current?.focus();
-         }
-     };
+    // Regenerate message handler (uses the core logic)
+    const handleRegenerate = async () => {
+        if (!lastUserMessageRef.current?.content) {
+            showNotification('No previous message to regenerate.', 'info');
+            return;
+        }
+        executeSendMessage(lastUserMessageRef.current.content, true); // Send last user message content
+    };
+
+    // Cancel request handler
+    const handleCancel = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            console.log('Cancellation initiated.');
+            // The catch block in executeSendMessage will handle the state update
+        }
+    };
+
 
     // Scroll chat to the bottom
     const scrollToBottom = () => {
@@ -185,12 +242,9 @@ export default function ChatInterface({
     useEffect(() => {
         const handleMouseMove = (e) => {
             if (!isResizing) return;
-            // Calculate the change in Y based on the initial position and current position
             const deltaY = e.clientY - startY;
-            // Calculate new height based on initial height + change
             const newHeight = startHeight - deltaY;
-            // Clamp height between min and max values
-            const clampedHeight = Math.max(50, Math.min(newHeight, window.innerHeight * 0.6)); // Min 50px, Max 60% viewport height
+            const clampedHeight = Math.max(50, Math.min(newHeight, window.innerHeight * 0.6));
             setTextareaHeight(clampedHeight);
         };
         const handleMouseUp = () => {
@@ -200,26 +254,22 @@ export default function ChatInterface({
                  document.body.style.userSelect = 'auto';
             }
         };
-        // Add listeners to the window to capture mouse events everywhere
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('mouseup', handleMouseUp);
         return () => {
-            // Clean up listeners on component unmount or dependency change
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
         };
-    }, [isResizing, startY, startHeight]); // Re-run effect if resizing state or start values change
+    }, [isResizing, startY, startHeight]);
 
     const startResizing = (e) => {
-        e.preventDefault(); // Prevent default drag behavior (like text selection)
+        e.preventDefault();
         setIsResizing(true);
-        setStartY(e.clientY); // Record the starting Y position
-        setStartHeight(textareaHeight); // Record the starting height
-        document.body.style.cursor = 'row-resize'; // Change cursor to indicate resizing
-        document.body.style.userSelect = 'none'; // Prevent text selection during resize
+        setStartY(e.clientY);
+        setStartHeight(textareaHeight);
+        document.body.style.cursor = 'row-resize';
+        document.body.style.userSelect = 'none';
     };
-
-    // Removed cleanup effect for progress interval
 
      // Handle Enter key press in textarea (Shift+Enter for newline)
      const handleKeyDown = (e) => {
@@ -229,9 +279,14 @@ export default function ChatInterface({
         //  }
      };
 
+     // Handle Token Limit Slider Change
+     const handleTokenLimitChange = (event, newValue) => {
+         setTokenLimit(newValue);
+     };
+
 
     return (
-        <Box className="chat-container"> 
+        <Box className="chat-container">
 
             {/* Selected Files/Folders Context Display */}
              {(selectedFiles.length > 0 || selectedSubFolders.length > 0) && (
@@ -268,7 +323,7 @@ export default function ChatInterface({
                          key={index}
                          elevation={0} // Use theme's elevation/styling, remove default shadow
                          className={`chat-message ${msg.role}`} // Classes: user, assistant, system, default
-                         sx={{ bgcolor: msg.role === 'user' ? 'primary.dark' : 'background.paper' }} // Example specific styling
+                         sx={{ bgcolor: msg.role === 'user' ? 'primary.dark' : (msg.role === 'system' ? 'error.dark' : 'background.paper') }} // Example specific styling
                      >
                          {/* Render content based on role or type if needed */}
                          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}> {/* Preserve whitespace/newlines */}
@@ -319,42 +374,88 @@ export default function ChatInterface({
                         disabled={loading} // Disable input while loading
                     />
 
-                    {/* Progress Bar removed from here */}
-
-                    {/* Controls: Model Select & Send Button */}
+                    {/* Controls: Model Select, Token Slider & Buttons */}
                      <Box className="chat-input-controls">
-                         <Select
-                             value={selectedModel}
-                             onChange={(e) => setSelectedModel(e.target.value)}
-                             variant="outlined"
-                             size="small"
-                             disabled={loading}
-                             sx={{ minWidth: 120, '& .MuiSelect-select': { py: 0.8 } }} // Adjust padding
-                         >
-                             {models.map((model) => (
-                                 <MenuItem key={model} value={model}>
-                                     {model}
-                                     {/* Optional: Add cost/info badge */}
-                                     {/* <Chip size="small" label="Free" sx={{ml: 1}}/> */}
-                                 </MenuItem>
-                             ))}
-                         </Select>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexGrow: 1 }}> {/* Group Select and Slider */}
+                             <Select
+                                 value={selectedModel}
+                                 onChange={(e) => setSelectedModel(e.target.value)}
+                                 variant="outlined"
+                                 size="small"
+                                 disabled={loading}
+                                 sx={{ minWidth: 80, '& .MuiSelect-select': { py: 0.8 } }} // Adjust padding
+                             >
+                                 {models.map((model) => (
+                                     <MenuItem key={model} value={model}>
+                                         {model}
+                                     </MenuItem>
+                                 ))}
+                             </Select>
 
-                         {/* Send Button */}
-                         <Tooltip title={saldo === 0 ? "Insufficient credits to send message" : "Send message (Enter)"}>
-                            <span> {/* Span required for tooltip on disabled button */}
-                                 <Button
-                                     variant="contained"
-                                     color="primary"
-                                     onClick={handleSend}
-                                     disabled={loading || !message.trim() || saldo === 0} // Disable if loading, no message, or no credits
-                                     endIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
-                                     sx={{ ml: 1 }}
-                                 >
-                                     Send
-                                 </Button>
-                             </span>
-                         </Tooltip>
+                             {/* Token Limit Slider */}
+                             <Tooltip title={`Max Context Tokens: ${tokenLimit.toLocaleString()}`}>
+                                <Box sx={{ width: '100%', maxWidth: 250, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Slider
+                                        value={tokenLimit}
+                                        onChange={handleTokenLimitChange}
+                                        aria-labelledby="token-limit-slider"
+                                        valueLabelDisplay="auto"
+                                        step={10000}
+                                        min={10000}
+                                        max={200000}
+                                        size="small"
+                                        disabled={loading}
+                                        valueLabelFormat={(value) => `${(value / 1000).toFixed(0)}k`}
+                                    />
+                                     {/* Display current value next to slider */}
+                                    <Typography variant="caption" sx={{ minWidth: '40px', textAlign: 'right' }}>
+                                        {`${(tokenLimit / 1000).toFixed(0)}k`}
+                                    </Typography>
+                                </Box>
+                             </Tooltip>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', gap: 1 }}> {/* Group buttons */}
+                            {/* Regenerate Button */}
+                            <Tooltip title={!lastUserMessageRef.current ? "No previous message to regenerate" : "Resend last message"}>
+                                <span> {/* Span required for tooltip on disabled button */}
+                                    <IconButton
+                                        onClick={handleRegenerate}
+                                        disabled={loading || !lastUserMessageRef.current || saldo === 0}
+                                        size="small"
+                                        color="secondary"
+                                    >
+                                        <ReplayIcon />
+                                    </IconButton>
+                                </span>
+                             </Tooltip>
+
+                             {/* Cancel Button (only visible when loading) */}
+                             {loading && (
+                                 <Tooltip title="Cancel Request">
+                                     <IconButton onClick={handleCancel} size="small" color="error">
+                                         <CancelIcon />
+                                     </IconButton>
+                                 </Tooltip>
+                             )}
+
+                             {/* Send Button */}
+                             <Tooltip title={saldo === 0 ? "Insufficient credits" : (loading ? "Processing..." : "Send message (Enter)")}>
+                                <span> {/* Span required for tooltip on disabled button */}
+                                     <Button
+                                         variant="contained"
+                                         color="primary"
+                                         onClick={handleSend}
+                                         disabled={loading || !message.trim() || saldo === 0} // Disable if loading, no message, or no credits
+                                         startIcon={loading ? null : <SendIcon />} // Hide icon when loading, cancel icon is shown instead
+                                         sx={{ py: 0.8, px: loading ? 1.5 : 2 }} // Adjust padding based on loading state
+                                         size="small"
+                                     >
+                                         {loading ? <CircularProgress size={20} color="inherit" /> : 'Send'}
+                                     </Button>
+                                 </span>
+                             </Tooltip>
+                         </Box>
                      </Box>
                 </Paper>
             </Box>
@@ -374,3 +475,11 @@ function debounce(func, wait) {
     timeout = setTimeout(later, wait);
   };
 }
+
+// Helper function to format token count (optional)
+// function formatTokenValue(value) {
+//     if (value >= 1000) {
+//         return `${(value / 1000).toFixed(0)}k`;
+//     }
+//     return value.toString();
+// }

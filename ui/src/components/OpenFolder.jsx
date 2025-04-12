@@ -45,6 +45,7 @@ const languageMap = { // Keep for mapping extensions to languages if needed by o
 const MIN_PANEL_WIDTH = 150; // Minimum width for resizable panels
 const DEFAULT_DIR_WIDTH = 280;
 const DEFAULT_CHAT_WIDTH = 350;
+const DEFAULT_TOKEN_LIMIT = 20000; // Default max tokens for context
 
 const OpenFolder = () => {
     // State Variables
@@ -59,6 +60,7 @@ const OpenFolder = () => {
     const [selectedFilePath, setSelectedFilePath] = useState(null);
     const [selectedModel, setSelectedModel] = useState('coder');
     const [selectedFiles, setSelectedFiles] = useState([]); // Files selected for context
+    const [tokenLimit, setTokenLimit] = useState(DEFAULT_TOKEN_LIMIT); // State for token limit slider
     const [directoryWidth, setDirectoryWidth] = useState(DEFAULT_DIR_WIDTH);
     const [chatWidth, setChatWidth] = useState(DEFAULT_CHAT_WIDTH);
     const [collapseUnchanged, setCollapseUnchanged] = useState(false);
@@ -824,6 +826,8 @@ const OpenFolder = () => {
                                 deselectFile={deselectFile} // Pass deselect functions
                                 deselectSubFolder={deselectSubFolder}
                                 onRefreshRequest={handleRefresh} // Pass refresh handler
+                                tokenLimit={tokenLimit}       // Pass tokenLimit state
+                                setTokenLimit={setTokenLimit} // Pass setter for tokenLimit
                                 // handleMessageClick is removed if not used
                             />
                         </Box>
@@ -877,7 +881,7 @@ const OpenFolder = () => {
                       )}
                  </Box>
                  {/* Add other footer elements if needed */}
-                 <Typography variant="caption"> CoderM8 v1.0 </Typography>
+                 <Typography variant="caption"> IIBooster v1.0 </Typography>
              </Box>
         </Box>
     );

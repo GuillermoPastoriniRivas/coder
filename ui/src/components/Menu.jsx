@@ -72,12 +72,12 @@ export default function Menu() {
 
     return (
         // Use position="sticky" or "fixed" if you want the menu to stay at the top while scrolling
-        <AppBar position="static" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
+        <AppBar position="sticky" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}> {/* Added elevation */}
             <Toolbar sx={{ justifyContent: 'space-between', minHeight: { xs: 56, sm: 49 } }}>
                 {/* Logo/Brand Name */}
                  <Button color="inherit" component={RouterLink} to="/" sx={{ padding: 0 }}> {/* Link to home */}
                      <Typography variant="h6" component="div" sx={{ color: 'text.primary', fontWeight: 'bold' }}>
-                        CoderM8
+                        IIBooster
                     </Typography>
                  </Button>
 
@@ -161,14 +161,13 @@ export default function Menu() {
                         <MenuItem disabled sx={{ opacity: '1 !important' }}> {/* Display email (disabled item) */}
                             <Typography variant="body2" color="text.secondary">{email}</Typography>
                         </MenuItem>
+                        {/* Pricing/Credits link - Now always visible */}
+                         {/* <MenuItem component={RouterLink} to="/pricing">
+                            <MonetizationOnIcon fontSize="small" sx={{ mr: 1, color: saldo < 5 ? 'warning.main' : 'success.main' }} /> Add Credits (${saldo?.toFixed(2)})
+                         </MenuItem> */}
                          <MenuItem onClick={() => navigate('/')}> {/* Home/Dashboard Link */}
                              <HomeIcon fontSize="small" sx={{ mr: 1 }} /> Home
                          </MenuItem>
-                         {/* Credits link for smaller screens */}
-                         <MenuItem component={RouterLink} to="/pricing" sx={{ display: { xs: 'flex', sm: 'none' } }}>
-                            <MonetizationOnIcon fontSize="small" sx={{ mr: 1, color: saldo < 5 ? 'warning.main' : 'success.main' }} /> Add Credits (${saldo?.toFixed(2)})
-                         </MenuItem>
-                   
                          <MenuItem onClick={handleCallHistoryClick}>
                              <HistoryIcon fontSize="small" sx={{ mr: 1 }} /> History
                          </MenuItem>
