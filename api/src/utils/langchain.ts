@@ -5,7 +5,7 @@ import { spawn } from 'child_process';
 import path from 'path';
 import { User } from '../models/User';
 
-export async function callAgent(query: string, userId: string, folder: string, subFolders: string[], model: string, selectedFiles: string[]) {
+export async function callAgent(query: string, userId: string, folder: string, subFolders: string[], model: string, selectedFiles: string[], tokenLimit: number) { // Added tokenLimit
     const user = await User.findById(userId);
     if (!user) {
         throw new Error('User not found');
@@ -40,21 +40,22 @@ export async function callAgent(query: string, userId: string, folder: string, s
             '--model', model,
             '--subfolders', (subFolders || []).join(','),
             '--selectedFiles', (selectedFiles || []).join(','),
-            '--userId', userId
+            '--userId', userId,
+            '--tokenLimit', tokenLimit.toString() // Pass tokenLimit
         ]);
-    
+
         const responsePromise = new Promise((resolve, reject) => {
             let output = '';
-    
+
             pythonProcess.stdout.on('data', (data) => {
                 output += data.toString();
             });
-    
+
             pythonProcess.stderr.on('data', (data) => {
                 console.error(`stderr: ${data}`);
                 reject(new Error(`Error in code-dev.py: ${data}`));
             });
-    
+
             pythonProcess.on('close', (code) => {
                 console.log(`code-dev.py exited with code ${code}`);
                 if (code === 0) {
@@ -64,9 +65,9 @@ export async function callAgent(query: string, userId: string, folder: string, s
                 }
             });
         });
-    
+
         const rawResponseContent = await responsePromise as string;
-    
+
         // Sanitize the response content
         sanitizedResponseContent = rawResponseContent;
         try {
@@ -78,12 +79,12 @@ export async function callAgent(query: string, userId: string, folder: string, s
             sanitizedResponseContent = sanitizedResponseContent
                 .replace(/\\n/g, '\n')
                 .replace(/\\"/g, '"');
-    
+
             // Paso 3: Decodificar secuencias Unicode
             sanitizedResponseContent = sanitizedResponseContent.replace(/\\u([0-9a-fA-F]{4})/g, (match, grp) => {
                 return String.fromCharCode(parseInt(grp, 16));
             });
-    
+
             // Paso 4: Corregir escape en expresiones regulares (como \/ o \\)
             // Esto revierte el escape excesivo en patrones como [\/\\] -> [\/\\]
             sanitizedResponseContent = sanitizedResponseContent
@@ -92,7 +93,7 @@ export async function callAgent(query: string, userId: string, folder: string, s
         } catch (e) {
             console.error("Error sanitizing AI response content:", e);
         }
-    } 
+    }
 
     if (model === 'qa') {
         const pythonProcess = spawn('python', [
@@ -103,31 +104,32 @@ export async function callAgent(query: string, userId: string, folder: string, s
             '--model', model,
             '--subfolders', (subFolders || []).join(','),
             '--selectedFiles', (selectedFiles || []).join(','),
-            '--userId', userId
+            '--userId', userId,
+            '--tokenLimit', tokenLimit.toString() // Pass tokenLimit
         ]);
-    
+
         const responsePromise = new Promise((resolve, reject) => {
             let output = '';
-    
+
             pythonProcess.stdout.on('data', (data) => {
                 output += data.toString();
             });
-    
+
             pythonProcess.stderr.on('data', (data) => {
                 console.error(`stderr: ${data}`);
-                reject(new Error(`Error in code-dev.py: ${data}`));
+                reject(new Error(`Error in code-qa.py: ${data}`)); // Assuming same error source for logging
             });
-    
+
             pythonProcess.on('close', (code) => {
-                console.log(`code-dev.py exited with code ${code}`);
+                console.log(`code-qa.py exited with code ${code}`); // Changed script name
                 if (code === 0) {
                     resolve(output.trim());
                 } else {
-                    reject(new Error(`code-dev.py exited with code ${code}`));
+                    reject(new Error(`code-qa.py exited with code ${code}`)); // Changed script name
                 }
             });
         });
-    
+
         const rawResponseContent = await responsePromise as string;
         sanitizedResponseContent = rawResponseContent;
     }

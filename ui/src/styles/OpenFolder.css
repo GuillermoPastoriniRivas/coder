@@ -17,6 +17,9 @@
     gap: 10px; /* Spacing between buttons */
     align-items: center;
     flex-shrink: 0; /* Prevent shrinking */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25); /* Added subtle shadow for depth */
+    z-index: 1; /* Ensure shadow overlaps content */
+    position: relative; /* Needed for z-index */
 }
 
 /* Style action buttons */
@@ -47,12 +50,15 @@
     border-right: 1px solid var(--color-border-primary);
     flex-shrink: 0; /* Prevent shrinking */
     overflow: hidden; /* Let inner content scroll */
+    box-shadow: 2px 0px 5px rgba(0, 0, 0, 0.2); /* Add subtle shadow for depth */
+    z-index: 1; /* Keep above editor panel */
 }
 
 .directory-tree-header {
     padding: 10px 16px;
     font-weight: var(--font-weight-bold);
     border-bottom: 1px solid var(--color-border-primary);
+    background-color: var(--color-background-tertiary); /* Match actions bar header style */
     flex-shrink: 0; /* Prevent header from shrinking */
     white-space: nowrap;
     overflow: hidden;
@@ -155,18 +161,20 @@
 /* Conversation List Section */
 .conversations-section {
     border-top: 1px solid var(--color-border-primary);
-    padding-top: 8px;
+    padding-top: 0px; /* Removed padding top */
     flex-shrink: 0; /* Prevent shrinking */
     max-height: 40%; /* Limit height */
     display: flex;
     flex-direction: column;
+    background-color: var(--color-background-secondary); /* Match panel background */
 }
 .conversations-header {
-    padding: 8px 16px;
+    padding: 8px 16px; /* Reduced padding */
     font-weight: var(--font-weight-bold);
     font-size: 0.9rem;
     flex-shrink: 0;
     border-bottom: 1px solid var(--color-border-primary);
+    background-color: var(--color-background-tertiary); /* Match directory header */
 }
 .conversations-list-container {
     flex-grow: 1;
@@ -187,6 +195,8 @@
     flex-direction: column;
     overflow: hidden; /* Prevent scroll, let CodeMirror handle it */
     position: relative; /* If needed for absolute positioning inside */
+    background-color: var(--color-background-primary); /* Main editor area bg */
+    /* No shadow needed here, it sits between shadowed panels */
 }
 
 /* Changed Files Bar */
@@ -213,20 +223,34 @@
     margin: 0 4px !important; /* Spacing */
     border-radius: var(--border-radius-small) !important;
     text-transform: none !important; /* Ensure normal case */
+    border-bottom-left-radius: 0 !important; /* Flat bottom edge for tabs */
+    border-bottom-right-radius: 0 !important;
+    border-bottom: none !important; /* Remove bottom border by default */
 }
 /* Style for the selected button */
 .changed-file-button.MuiButton-containedSecondary {
-    background-color: var(--color-background-tertiary) !important; /* Use tertiary background for active tab */
+    background-color: var(--color-background-primary) !important; /* Use primary editor background for active tab */
     color: var(--color-text-primary) !important;
+    border-top: 2px solid var(--color-primary-action) !important; /* Highlight active tab */
+    margin-top: -2px !important; /* Adjust margin to keep alignment */
+    border-left-color: var(--color-border-primary) !important;
+    border-right-color: var(--color-border-primary) !important;
+    border-top-color: var(--color-primary-action) !important;
+    border-bottom: 1px solid var(--color-background-primary) !important; /* Match editor bg to blend */
+    position: relative;
+    z-index: 1;
 }
 /* Style for non-selected buttons */
 .changed-file-button.MuiButton-outlinedSecondary {
     border-color: transparent !important; /* Hide border for inactive tabs */
     color: var(--color-text-secondary) !important;
+    background-color: transparent !important;
+    border-top: 2px solid transparent !important; /* Placeholder for alignment */
 }
 .changed-file-button.MuiButton-outlinedSecondary:hover {
     background-color: rgba(255, 255, 255, 0.08) !important;
     border-color: transparent !important;
+    color: var(--color-text-primary) !important;
 }
 
 
@@ -332,8 +356,11 @@
     height: 100%;
     display: flex; /* Use flex for children */
     flex-direction: column; /* Stack chat content vertically */
-    /* Chat specific styles are in App.css under .chat-container etc. */
-    /* Border is handled by the resizer or the adjacent panel */
+    background-color: var(--color-background-secondary); /* Match dir tree panel */
+    border-left: 1px solid var(--color-border-primary);
+    box-shadow: -2px 0px 5px rgba(0, 0, 0, 0.2); /* Add subtle shadow for depth */
+    z-index: 1; /* Keep above editor panel */
+    overflow: hidden; /* Prevent children overflow */
 }
 
 

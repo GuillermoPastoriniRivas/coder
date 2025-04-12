@@ -6,6 +6,9 @@ import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline'; // Ho
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline'; // FAQ icon
 import SecurityIcon from '@mui/icons-material/Security'; // Security icon
 import ContactSupportIcon from '@mui/icons-material/ContactSupport'; // Support icon
+import PriceCheckIcon from '@mui/icons-material/PriceCheck'; // Icon for Tokens/Credits
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'; // Icon for Prompts
+import FolderOpenIcon from '@mui/icons-material/FolderOpen'; // Icon for File Selection
 
 // Reusable Card-like component using Paper
 const InfoCard = ({ title, icon, children }) => (
@@ -24,60 +27,84 @@ export default function Docs() {
     // Use Box for padding and centering, maxWidth limits content width
     <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 900, mx: 'auto' }}>
       <Typography variant="h3" component="h1" gutterBottom align="center" sx={{ mb: 4 }}>
-        CoderM8 Documentation
+        IIBooster Documentation
       </Typography>
 
-      <InfoCard title="What is CoderM8?" icon={<InfoIcon />}>
-          <Typography variant="body1" paragraph>
-            CoderM8 is an AI-powered coding assistant designed to integrate directly with your local development environment. It helps you manage projects, request automated code modifications, apply changes safely, and interact intelligently to solve coding challenges, all without leaving your workspace setup.
-          </Typography>
-      </InfoCard>
-
-      <InfoCard title="How to Use CoderM8" icon={<PlayCircleOutlineIcon />}>
+      <InfoCard title="Getting Started with IIBooster" icon={<PlayCircleOutlineIcon />}>
            <Typography variant="body1" component="div" sx={{ '& strong': { color: 'primary.main' } }}>
               1. <strong>Sign Up / Log In:</strong> Access your account. <br />
               2. <strong>Open Folder:</strong> Click "Open Folder" and select your project directory using the browser's folder picker. <br />
-              3. <strong>Select Context (Optional):</strong> Check the boxes next to specific files or sub-folders in the directory tree to provide them as context for the AI.<br />
-              4. <strong>Interact via Chat:</strong> Type your request (e.g., "Refactor the login function in auth.js", "Add error handling to userController.ts"). <br />
+              3. <strong>Select Context (Crucial):</strong> Check boxes next to specific files or sub-folders in the directory tree to provide them as context. If you don't select any, the AI might lack the necessary information to fulfill your request accurately. Providing relevant context is key! If no files or folders are selected, the AI will operate with only the instruction you provide, lacking specific code context. <br />
+              4. <strong>Write Instructions:</strong> Type your request in the chat. Frame it as a command describing the changes you want (e.g., "Refactor the `login` function in `auth.js` to use async/await"). Avoid asking questions like "How do I...?" Be specific, provide details about the desired outcome, and use the file selection (Step 3) to limit the scope whenever possible. <br />
               5. <strong>Review Changes:</strong> If the AI provides code modifications, they will appear in the Diff Viewer. Changed files are listed above the editor. Click a file name to view its diff. <br />
               6. <strong>Apply Changes:</strong> Use the "Apply" button to save changes for the currently viewed file, or "Apply All" to save all proposed changes. Changes are written directly to your local files. <br />
               7. <strong>Manage Credits:</strong> Visit the "Pricing" page (accessible from the user menu) to add more credits.
           </Typography>
       </InfoCard>
 
-      <InfoCard title="Key Features" icon={<BuildIcon />}>
-          <List dense>
-              <ListItem>
-                  <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main">•</Typography></ListItemIcon>
-                  <ListItemText primary="Open Local Folders: Directly access and work with projects on your machine." />
-              </ListItem>
-               <ListItem>
-                  <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main">•</Typography></ListItemIcon>
-                  <ListItemText primary="AI-Powered Code Modifications: Request changes via chat, specifying files or folders for context." />
-              </ListItem>
-               <ListItem>
-                  <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main">•</Typography></ListItemIcon>
-                  <ListItemText primary="Interactive Diff Viewer: Review AI-proposed changes side-by-side with your original code." />
-              </ListItem>
-               <ListItem>
-                  <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main">•</Typography></ListItemIcon>
-                  <ListItemText primary="Apply Changes Selectively: Apply modifications file-by-file or all at once directly to your local files." />
-              </ListItem>
-              <ListItem>
-                  <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main">•</Typography></ListItemIcon>
-                  <ListItemText primary="Secure Authentication & Account Management: Standard login and account settings." />
-              </ListItem>
-               <ListItem>
-                  <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main">•</Typography></ListItemIcon>
-                  <ListItemText primary="Credit-Based Usage: Manage your usage through a simple credit system." />
-              </ListItem>
-          </List>
+       <InfoCard title="Understanding Tokens & Credits" icon={<PriceCheckIcon />}>
+          <Typography variant="body1" paragraph>
+            IIBooster operates on a credit system based on 'tokens'. Think of tokens as pieces of words or code used by the AI model.
+          </Typography>
+           <List dense sx={{ pl: 2 }}>
+                <ListItem sx={{ py: 0.5 }}>
+                    <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main" sx={{ fontSize: '1.2rem' }}>•</Typography></ListItemIcon>
+                    <ListItemText primary={<><strong>Input Tokens:</strong> Consumed by the instructions you provide and the content of the files/folders you select as context.</>} />
+                </ListItem>
+                 <ListItem sx={{ py: 0.5 }}>
+                    <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main" sx={{ fontSize: '1.2rem' }}>•</Typography></ListItemIcon>
+                    <ListItemText primary={<><strong>Output Tokens:</strong> Consumed by the AI's response, whether it's code changes, explanations, or answers.</>} />
+                </ListItem>
+           </List>
+           <Typography variant="body1" paragraph sx={{ mt: 2 }}>
+             Your total credit usage for each request depends on the combined number of input and output tokens, multiplied by the cost associated with the specific AI model used. You can monitor your balance in the top menu and purchase more credits via the Pricing page.
+           </Typography>
       </InfoCard>
 
-      <InfoCard title="Frequently Asked Questions" icon={<HelpOutlineIcon />}>
-           <Typography variant="subtitle1" gutterBottom>Q: How does CoderM8 access local files?</Typography>
+      <InfoCard title="Writing Effective Prompts" icon={<ChatBubbleOutlineIcon />}>
+          <Typography variant="body1" paragraph>
+              To get the best results from the AI, focus on providing clear and direct instructions rather than asking open-ended questions.
+          </Typography>
+          <List dense sx={{ pl: 2 }}>
+                <ListItem sx={{ py: 0.5 }}>
+                    <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main" sx={{ fontSize: '1.2rem' }}>•</Typography></ListItemIcon>
+                    <ListItemText primary={<><strong>Be Specific & Imperative:</strong> Tell the AI what you want it to do. Instead of "How can I add error handling?", say "Add error handling to the `processData` function in `utils.js`."</>} />
+                </ListItem>
+                 <ListItem sx={{ py: 0.5 }}>
+                    <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main" sx={{ fontSize: '1.2rem' }}>•</Typography></ListItemIcon>
+                    <ListItemText primary={<><strong>Provide Context in Your Request:</strong> Briefly mention the goal or the reason for the change if it helps clarity. Example: "Refactor the user query to improve performance by adding an index to the `email` field."</>} />
+                </ListItem>
+                 <ListItem sx={{ py: 0.5 }}>
+                    <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main" sx={{ fontSize: '1.2rem' }}>•</Typography></ListItemIcon>
+                    <ListItemText primary={<><strong>Use File Selection:</strong> Select only the relevant files/folders needed for the task. This focuses the AI and reduces token usage. Avoid selecting the entire project unless necessary.</>} />
+                </ListItem>
+           </List>
+      </InfoCard>
+
+      <InfoCard title="File & Folder Selection" icon={<FolderOpenIcon />}>
+          <Typography variant="body1" paragraph>
+            Use the file tree on the left to provide the AI with the necessary context for your request.
+          </Typography>
+           <List dense sx={{ pl: 2 }}>
+                <ListItem sx={{ py: 0.5 }}>
+                    <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main" sx={{ fontSize: '1.2rem' }}>•</Typography></ListItemIcon>
+                    <ListItemText primary={<><strong>Selecting Files/Folders:</strong> Check the boxes next to the items you want the AI to consider. Their content will be included as context.</>} />
+                </ListItem>
+                 <ListItem sx={{ py: 0.5 }}>
+                    <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main" sx={{ fontSize: '1.2rem' }}>•</Typography></ListItemIcon>
+                    <ListItemText primary={<><strong>No Selection:</strong> If you don't select any files or folders, the AI will only process your instruction based on its general knowledge. This is suitable for general questions but not for specific code modifications within your project.</>} />
+                </ListItem>
+                 <ListItem sx={{ py: 0.5 }}>
+                    <ListItemIcon sx={{minWidth: 30}}><Typography color="primary.main" sx={{ fontSize: '1.2rem' }}>•</Typography></ListItemIcon>
+                    <ListItemText primary={<><strong>Context Window Limit:</strong> Be mindful of the 'Max Context Tokens' slider. Selecting too many large files might exceed the limit, preventing the AI from processing your request effectively.</>} />
+                </ListItem>
+           </List>
+      </InfoCard>
+
+       <InfoCard title="Frequently Asked Questions" icon={<HelpOutlineIcon />}>
+           <Typography variant="subtitle1" gutterBottom>Q: How does IIBooster access local files?</Typography>
            <Typography variant="body2" paragraph>
-             CoderM8 uses the modern <Link href="https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API" target="_blank" rel="noopener noreferrer">File System Access API</Link> available in compatible browsers (like Chrome, Edge). You explicitly grant permission for the application to read and write to the selected folder. This access is temporary and usually scoped to your session.
+             IIBooster uses the modern <Link href="https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API" target="_blank" rel="noopener noreferrer">File System Access API</Link> available in compatible browsers (like Chrome, Edge). You explicitly grant permission for the application to read and write to the selected folder. This access is temporary and usually scoped to your session.
            </Typography>
 
            <Typography variant="subtitle1" gutterBottom>Q: Is my code uploaded anywhere?</Typography>
@@ -87,14 +114,10 @@ export default function Docs() {
 
            <Typography variant="subtitle1" gutterBottom>Q: What happens when I click 'Apply'?</Typography>
            <Typography variant="body2" paragraph>
-             The application uses the File System Access API again to write the modified content shown in the editor directly back to the corresponding local file within the folder you granted access to. It's recommended to use version control (like Git) with your projects.
+             The application uses the File System Access API again to write the modified content shown in the editor directly back to the corresponding local file within the folder you granted access to. It's highly recommended to use version control (like Git) with your projects to easily track and revert changes.
            </Typography>
-
-           <Typography variant="subtitle1" gutterBottom>Q: How do credits work?</Typography>
-            <Typography variant="body2" paragraph>
-              Each request to the AI model consumes a certain number of credits based on the complexity and model used. Your remaining credit balance is displayed in the menu bar. You can purchase more credits via the Pricing page.
-            </Typography>
-      </InfoCard>
+           {/* Removed the old "How do credits work?" Q/A as it's covered in the dedicated section */}
+       </InfoCard>
 
       <InfoCard title="Security & Privacy" icon={<SecurityIcon />}>
            <Typography variant="body1" paragraph>

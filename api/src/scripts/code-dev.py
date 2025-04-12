@@ -10,7 +10,7 @@ import argparse
 from datetime import datetime
 import sys
 from pymongo import MongoClient
-import time 
+import time
 from bson import ObjectId
 from datetime import datetime
 from google import genai
@@ -19,7 +19,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 
 client = genai.Client(api_key="AIzaSyCZ5VeaVzxDBU4tPhvqjV7858NFfiMCWC0")
-top_k = 30
+# top_k = 50 # Removed top_k
 
 input_price_usd_per_M = 1.1
 output_price_usd_per_M = 4.4
@@ -40,6 +40,7 @@ def main():
     parser.add_argument("--subfolders", required=True)
     parser.add_argument("--selectedFiles", required=False, default="")
     parser.add_argument("--userId", required=True, default="")
+    parser.add_argument("--tokenLimit", type=int, required=True) # Added tokenLimit argument
     args = parser.parse_args()
 
     sub_folders = args.subfolders.split(',') if args.subfolders else []
@@ -49,6 +50,7 @@ def main():
     json_path = args.config
     coder_model = args.model
     userId = args.userId
+    token_limit = args.tokenLimit # Get token limit from args
 
     # documenter = AIDocumenter(
     #     api_key=api_key,
@@ -57,7 +59,7 @@ def main():
     # )
 
     # documenter.generate_documentation()
-    contexto = generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folders, selected_files)
+    contexto = generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folders, selected_files, token_limit) # Pass token_limit
     cambios = obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_proyecto, userId)
     print(cambios)
 
@@ -93,7 +95,13 @@ class CodeRAG:
             if include:
                 description = file_data.get("description", "")
                 dependencies = file_data.get("dependencies", [])
-                tokens = file_data.get("tokens", 0)
+                tokens = file_data.get("tokens", 0) # Ensure tokens are read from JSON
+
+                # Check if tokens is None or not a valid number, default to 0
+                if tokens is None or not isinstance(tokens, (int, float)):
+                    print(f"Warning: Invalid token count '{tokens}' for file {file_path_rel}. Defaulting to 0.")
+                    tokens = 0
+
 
                 embedding_text = (
                     f"File Path: {file_path_rel}\n"
@@ -125,75 +133,110 @@ class CodeRAG:
         except Exception as e:
             return {'error': str(e), 'tokens': 0}
 
-    def query(self, query_text, top_k=top_k):
+    def query(self, query_text, tokenLimit): # Changed top_k to tokenLimit
         if self.embeddings.size == 0:
             return {'error': 'No hay archivos para buscar'}
 
         queries = [query_text]
         selected_files = self.selected_files
+        ranked_records = []
 
+        # --- Step 1: Get Ranked Records (combining selected and RAG) ---
         if selected_files:
             selected_indices = []
             for i, record in enumerate(self.file_records):
                 if record['rel_path'] in selected_files:
                     selected_indices.append(i)
-            selected_records = [self.file_records[i] for i in selected_indices]
+            selected_records = [self.file_records[i] for i in selected_indices] # Files explicitly selected by user
 
-            remaining_k = max(top_k - len(selected_indices), 0)
-            rag_records = []
-
-            if len(self.sub_folders) > 0 and remaining_k > 0 and len(self.file_records) > len(selected_indices):
+            rag_records_to_consider = []
+            # If subfolders are defined, perform RAG within those subfolders (excluding already selected files)
+            if self.sub_folders and len(self.file_records) > len(selected_indices):
                 other_indices = [i for i in range(len(self.file_records)) if i not in selected_indices]
                 other_embeddings = self.embeddings[other_indices]
+                other_file_records = [self.file_records[i] for i in other_indices]
 
-                query_embeds = self.model.encode(queries)
-                query_embedding = np.mean(query_embeds, axis=0)
-                query_embedding = query_embedding / np.linalg.norm(query_embedding)
+                if other_embeddings.size > 0:
+                    query_embeds = self.model.encode(queries)
+                    query_embedding = np.mean(query_embeds, axis=0)
+                    query_embedding = query_embedding / np.linalg.norm(query_embedding)
 
-                similarities = np.dot(other_embeddings, query_embedding)
-                initial_rag_indices = np.argsort(similarities)[::-1][:remaining_k * 2]
+                    # Calculate similarities for RAG candidates
+                    similarities = np.dot(other_embeddings, query_embedding)
+                    # Get a larger initial set for cross-encoder re-ranking (e.g., top 100 or all if fewer)
+                    initial_rag_count = min(100, len(other_file_records))
+                    initial_rag_indices = np.argsort(similarities)[::-1][:initial_rag_count]
 
-                candidates = [self.file_records[other_indices[i]] for i in initial_rag_indices]
-                cross_input = [[query_text, cand['embedding_text']] for cand in candidates]
-                cross_scores = self.cross_encoder.predict(cross_input)
+                    # Re-rank with CrossEncoder
+                    candidates = [other_file_records[i] for i in initial_rag_indices]
+                    cross_input = [[query_text, cand['embedding_text']] for cand in candidates]
+                    cross_scores = self.cross_encoder.predict(cross_input)
+                    # Sort candidates based on cross-encoder scores
+                    ranked_candidate_indices = np.argsort(cross_scores)[::-1]
+                    # Get the final ranked RAG records (relative to `other_file_records`)
+                    rag_records_to_consider = [candidates[i] for i in ranked_candidate_indices]
 
-                ranked_rag_indices = np.argsort(cross_scores)[::-1][:remaining_k]
-                final_rag_indices = [other_indices[initial_rag_indices[i]] for i in ranked_rag_indices]
+            # Combine selected files (priority) with RAG results
+            ranked_records = selected_records + rag_records_to_consider
 
-                rag_records = [self.file_records[i] for i in final_rag_indices]
-
-            all_records = selected_records + rag_records
-            all_records = all_records[:top_k]
-        else:
+        else: # No specific files selected, perform RAG on all applicable files
             query_embeds = self.model.encode(queries)
             query_embedding = np.mean(query_embeds, axis=0)
             query_embedding = query_embedding / np.linalg.norm(query_embedding)
 
+            # Calculate similarities for all files
             similarities = np.dot(self.embeddings, query_embedding)
-            initial_indices = np.argsort(similarities)[::-1][:top_k * 2]
+            # Get a larger initial set for cross-encoder
+            initial_count = min(100, len(self.file_records))
+            initial_indices = np.argsort(similarities)[::-1][:initial_count]
 
+            # Re-rank with CrossEncoder
             candidates = [self.file_records[i] for i in initial_indices]
             cross_input = [[query_text, cand['embedding_text']] for cand in candidates]
             cross_scores = self.cross_encoder.predict(cross_input)
+            # Sort candidates based on cross-encoder scores
+            ranked_candidate_indices = np.argsort(cross_scores)[::-1]
+            # Get the final ranked records
+            ranked_records = [candidates[i] for i in ranked_candidate_indices]
 
-            ranked_indices = np.argsort(cross_scores)[::-1][:top_k]
-            final_indices = [initial_indices[i] for i in ranked_indices]
 
-            all_records = [self.file_records[i] for i in final_indices]
+        # --- Step 2: Select files based on token limit ---
+        final_results = []
+        current_token_count = 0
+        for record in ranked_records:
+            record_tokens = record.get('tokens', 0) # Default to 0 if 'tokens' key is missing
+            # Ensure adding the file does NOT exceed the limit
+            if current_token_count + record_tokens < tokenLimit:
+                final_results.append({
+                    'file_path': record['abs_path'],
+                    'tokens': record_tokens,
+                    'code': self._get_code_snippet(record['abs_path']),
+                })
+                current_token_count += record_tokens
+            else:
+                # Stop adding files if the next one would exceed the limit
+                break
 
-        results = []
-        for record in all_records:
-            results.append({
-                'file_path': record['abs_path'],
-                'tokens': record['tokens'],
-                'code': self._get_code_snippet(record['abs_path']),
-            })
+        # Ensure at least one file is returned if the first ranked file fits (even if barely)
+        # or if the ranked list is not empty but loop broke immediately
+        if not final_results and ranked_records:
+            first_record = ranked_records[0]
+            first_record_tokens = first_record.get('tokens', 0)
+            # Add the first file ONLY if it fits strictly within the limit by itself
+            if first_record_tokens < tokenLimit:
+                 final_results.append({
+                    'file_path': first_record['abs_path'],
+                    'tokens': first_record_tokens,
+                    'code': self._get_code_snippet(first_record['abs_path']),
+                })
 
-        return { 'results': results, 'queries': queries}
 
-def generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folders, selected_files):
+        return { 'results': final_results, 'queries': queries }
+
+def generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folders, selected_files, token_limit): # Added token_limit
     code_base_path = carpeta_proyecto + "/"
-    rag = CodeRAG(code_base_path, json_path, sub_folders, selected_files).query(instruccion_usuario)
+    # Pass token_limit instead of top_k
+    rag = CodeRAG(code_base_path, json_path, sub_folders, selected_files).query(instruccion_usuario, token_limit)
 
     if 'error' in rag:
         return {
@@ -218,7 +261,7 @@ def _update_tokens_usage(prompt_tokens, completion_tokens, project_name, model, 
         if not mongo_uri:
             print("MongoDB URI is not set.")
             return
-        
+
         client = MongoClient(mongo_uri)
         db = client.get_database()
 
@@ -280,9 +323,9 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
         ### Critical Rules for Modification and Output:
 
         1.  **Minimal Change Principle:**
-            *   Modify ONLY the specific lines/sections of code necessary to implement the User Request.
-            *   DO NOT add, remove, or change ANY code, comments, or formatting that is not explicitly part of the requested change.
-            *   DO NOT refactor code or add explanatory comments unless the User Request specifically asks for it.
+            *   Modify ONLY the specific lines/sections of code necessary to implement the User Request. WITHOUT adding unnecessary comments.
+            *   Keep all other code completely unchanged — including comments, formatting, naming, and structure — unless explicitly instructed otherwise
+            *   Maintain the original style of the code without performing any refactoring, improvements, or additions unless the user clearly asks for them.
 
         2.  **Preserve Original Structure & Style:**
             *   Maintain the original file's indentation, spacing, naming conventions, and overall code style precisely.

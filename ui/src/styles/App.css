@@ -140,10 +140,10 @@ button:focus:not(:focus-visible) {
   /* Let the parent height control this, remove fixed height */
   /* height: 80vh; */
   flex-grow: 1; /* Allow chat to take available space */
-  background-color: var(--color-background-secondary); /* Use secondary background */
+  background-color: transparent; /* Inherit from .chat-panel */
   font-family: var(--font-family-main);
   color: var(--color-text-primary);
-  border-left: 1px solid var(--color-border-primary); /* Separator from editor */
+  /* border-left is handled by .chat-panel in OpenFolder.css */
   overflow: hidden; /* Prevent content spill */
 }
 
@@ -179,9 +179,10 @@ button:focus:not(:focus-visible) {
   padding: 10px 14px; /* Adjust padding */
   border-radius: var(--border-radius-medium);
   word-wrap: break-word;
-  box-shadow: none; /* Remove shadow for flatter look */
+  box-shadow: var(--box-shadow-soft); /* Add subtle shadow for depth */
   line-height: 1.5;
   position: relative; /* Keep for potential future absolute elements */
+  transition: box-shadow var(--transition-speed-normal);
 }
 
 .chat-message.user {
@@ -222,7 +223,7 @@ button:focus:not(:focus-visible) {
   border: 1px solid var(--color-border-primary) !important;
   border-radius: var(--border-radius-medium) !important;
   padding: 0 !important; /* Remove default paper padding */
-  box-shadow: none !important;
+  box-shadow: var(--box-shadow-soft) !important; /* Add shadow */
   display: flex;
   flex-direction: column;
 }
@@ -399,6 +400,7 @@ button:focus:not(:focus-visible) {
     flex-shrink: 0; /* Prevent footer from shrinking */
     position: relative; /* Needed if using absolute positioning inside */
     z-index: 1100; /* Ensure it's above content */
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2); /* Add shadow */
 }
 
 .footer-info-section {
