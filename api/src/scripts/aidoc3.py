@@ -14,6 +14,7 @@ class AIDocumenter:
         self.encoder = tiktoken.get_encoding("cl100k_base")
         self.excluded_dirs = {'node_modules', 'dist', 'build', '__pycache__', '.git'}
         self.client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
             api_key="***REMOVED***",
         )
         # Cargar o inicializar documentación
@@ -65,7 +66,7 @@ class AIDocumenter:
         """
         try:
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="deepseek/deepseek-r1-distill-qwen-32b:free",
                 messages=[
                     {
                         "role": "user",

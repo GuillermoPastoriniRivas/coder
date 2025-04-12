@@ -4,8 +4,8 @@ import axios from 'axios';
 import { showNotification } from './utils/functions';
 
 const API = axios.create({
-  // baseURL: 'https://169f-200-55-69-248.ngrok-free.app',\
-  baseURL: 'http://localhost:5001',
+   baseURL: 'https://10b2-200-55-69-248.ngrok-free.app',
+  //baseURL: 'http://localhost:5001',
 });
 
 API.defaults.headers.common['ngrok-skip-browser-warning'] = "69420";
@@ -24,6 +24,11 @@ export const setAuthToken = (token) => {
 API.interceptors.response.use(
   response => response,
   error => {
+    if (axios.isCancel(error)) {
+        console.log('Request canceled:', error.message);
+        // Return a specific type of error or a specific value to indicate cancellation
+        return Promise.reject(new Error('Request canceled')); // Or return a specific object: { isCanceled: true }
+    }
     if (error.response) {
         // --- Handle 401 Unauthorized ---
         if (error.response.status === 401) {
@@ -48,7 +53,9 @@ API.interceptors.response.use(
         // --- Handle 500 Internal Server Error ---
         if (error.response.status === 500) {
           console.error('API Error: 500 Internal Server Error.', error.response.data);
-          showNotification("An internal server error occurred. Please try again later.", "error"); // Use error severity
+          // Show a more specific error if available from the backend
+          const serverMessage = error.response.data?.message || "An internal server error occurred. Please try again later.";
+          showNotification(serverMessage, "error");
         }
     } else if (error.request) {
         console.error('API Error: No response received.', error.request);
@@ -71,8 +78,11 @@ const api = {
   getConversation: (conversationId) => API.post(`/conversation/`, { conversationId }),
   deleteConversation: (conversationId) => API.delete(`/conversation/${conversationId}`),
   getConversations: (folder) => API.get(`/conversations/${folder}`),
-  sendMessage: async (messageData) => {
-    return API.post('/call', messageData);
+  // Update sendMessage to accept an AbortSignal and tokenLimit
+  sendMessage: async (messageData, options = {}) => {
+    // messageData should contain: message, folder, subFolders, selectedFiles, model, conversationId, tokenLimit
+    const { signal } = options;
+    return API.post('/call', messageData, { signal }); // Pass signal to axios config
   },
 
   // Account
