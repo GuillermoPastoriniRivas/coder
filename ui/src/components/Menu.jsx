@@ -82,7 +82,7 @@ export default function Menu() {
                  </Button>
 
                 {/* Right side items */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}> {/* Use gap for spacing */}
+                <Box sx={{ display: 'flex', alignItems: 'center' }}> {/* Use gap for spacing */}
                      {/* Credits Display */}
                     <Tooltip title={`Remaining Credits: $${saldo?.toFixed(2)}`}>
                         <Button
@@ -103,10 +103,9 @@ export default function Menu() {
                         </Button>
                     </Tooltip>
 
-                    {/* Navigation Buttons (Optional - can be in user menu) */}
-                     {/*
-                     <Button color="inherit" component={RouterLink} to="/docs" sx={{ display: { xs: 'none', md: 'inline-flex' } }}>Docs</Button>
-                     */}
+                    {/* Navigation Buttons */}
+                     <Button color="inherit" component={RouterLink} to="/" sx={{ display: { xs: 'none', md: 'inline-flex' }, color: 'text.secondary', textTransform: 'none', '&:hover': { bgcolor: 'action.hover' } }}>Home</Button> {/* Added Home button */}
+                     <Button color="inherit" component={RouterLink} to="/docs" sx={{ display: { xs: 'none', md: 'inline-flex' }, color: 'text.secondary', textTransform: 'none', '&:hover': { bgcolor: 'action.hover' } }}>Docs</Button>
 
                     {/* User Menu */}
                      <Tooltip title="Account Menu">
@@ -165,14 +164,9 @@ export default function Menu() {
                          {/* <MenuItem component={RouterLink} to="/pricing">
                             <MonetizationOnIcon fontSize="small" sx={{ mr: 1, color: saldo < 5 ? 'warning.main' : 'success.main' }} /> Add Credits (${saldo?.toFixed(2)})
                          </MenuItem> */}
-                         <MenuItem onClick={() => navigate('/')}> {/* Home/Dashboard Link */}
-                             <HomeIcon fontSize="small" sx={{ mr: 1 }} /> Home
-                         </MenuItem>
+                         {/* Home MenuItem removed */}
                          <MenuItem onClick={handleCallHistoryClick}>
                              <HistoryIcon fontSize="small" sx={{ mr: 1 }} /> History
-                         </MenuItem>
-                         <MenuItem onClick={() => navigate('/docs')}>
-                            <DescriptionIcon fontSize="small" sx={{ mr: 1 }} /> Docs
                          </MenuItem>
                         <MenuItem onClick={handleAccountClick}>
                             <SettingsIcon fontSize="small" sx={{ mr: 1 }} /> Settings

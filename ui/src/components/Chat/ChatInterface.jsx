@@ -24,7 +24,8 @@ export default function ChatInterface({
     deselectSubFolder,
     onRefreshRequest, // Callback to trigger the main refresh logic
     tokenLimit,      // Receive tokenLimit state
-    setTokenLimit    // Receive function to update tokenLimit state
+    setTokenLimit,   // Receive function to update tokenLimit state
+    setIsDiffView    // Prop to set the view mode (Diff vs Editor)
 }) {
     const [message, setMessage] = useState('');
     const [conversation, setConversation] = useState([]); // Stores message objects { role, content, timestamp }
@@ -78,7 +79,7 @@ export default function ChatInterface({
                 setConversation([
                     {
                         role: 'default', // Use 'default' or 'system'
-                        content: "Hello! I can generate code changes based on your instructions. Just tell me what changes you need.",
+                        content: "Hello! I'm ready for instructions! Please provide clear, specific commands (e.g., 'Refactor function X in file Y'). Select relevant files/folders for context. Check the Docs for tips on effective prompts.",
                         timestamp: new Date()
                     }
                 ]);
@@ -164,6 +165,17 @@ export default function ChatInterface({
                 timestamp: new Date()
             };
             setConversation((prev) => [...prev, aiMessage]); // Add AI message to local state
+
+            // Automatically switch view based on model after response
+             if (setIsDiffView) { // Check if the prop is provided
+                 if (selectedModel === 'qa') {
+                     setIsDiffView(false); // Switch to Editor View
+                 } else if (selectedModel === 'coder') {
+                     setIsDiffView(true); // Switch to Diff View
+                 }
+             } else {
+                 console.warn("ChatInterface: setIsDiffView prop not provided. Cannot switch view automatically.");
+             }
 
             fetchSaldoDebounced();
             const updatedConversations = await api.getConversations(folderHandle.name);
@@ -323,7 +335,7 @@ export default function ChatInterface({
                          key={index}
                          elevation={0} // Use theme's elevation/styling, remove default shadow
                          className={`chat-message ${msg.role}`} // Classes: user, assistant, system, default
-                         sx={{ bgcolor: msg.role === 'user' ? 'primary.dark' : (msg.role === 'system' ? 'error.dark' : 'background.paper') }} // Example specific styling
+                         sx={{ bgcolor: msg.role === 'user' ? 'primary.dark' : 'background.paper' }} // Example specific styling
                      >
                          {/* Render content based on role or type if needed */}
                          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}> {/* Preserve whitespace/newlines */}

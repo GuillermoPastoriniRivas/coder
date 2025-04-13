@@ -4,7 +4,7 @@ import axios from 'axios';
 import { showNotification } from './utils/functions';
 
 const API = axios.create({
-   baseURL: 'https://10b2-200-55-69-248.ngrok-free.app',
+   baseURL: 'https://af54-200-55-69-248.ngrok-free.app',
   //baseURL: 'http://localhost:5001',
 });
 

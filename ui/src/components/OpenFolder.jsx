@@ -12,6 +12,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import InfoIcon from '@mui/icons-material/Info'; // For footer info
 import SearchIcon from '@mui/icons-material/Search'; // Icon for search input
 import InputAdornment from '@mui/material/InputAdornment'; // For search icon adornment
+import WrapTextIcon from '@mui/icons-material/WrapText'; // Icon for Line Wrap
 
 
 import DirectoryTree from './DirectoryTree';
@@ -66,6 +67,7 @@ const OpenFolder = () => {
     const [collapseUnchanged, setCollapseUnchanged] = useState(false);
     const [footerInfoVisible, setFooterInfoVisible] = useState(true); // Moved footer state here
     const [searchTerm, setSearchTerm] = useState(''); // State for directory search
+    const [lineWrapEnabled, setLineWrapEnabled] = useState(false); // State for line wrap toggle
 
     // Refs
     const mainContentRef = useRef(null); // Ref for the main content area for resizing calculations
@@ -75,6 +77,7 @@ const OpenFolder = () => {
     const isResizing2 = useRef(false);
 
     // --- Callbacks & Effects ---
+
 
     // Flatten directory tree for searching
     const flattenTree = useCallback((nodes) => {
@@ -312,6 +315,7 @@ const OpenFolder = () => {
         }
     }, [folderHandle, selectedFilePath, changedFiles, findFileByPath, setDirectoryTree, setConversations]); // Added setConversations
 
+
     // Expand/Collapse Directory
     const handleDirectoryClick = (path) => { // Use path as unique key
         // Don't expand/collapse when searching
@@ -537,6 +541,7 @@ const OpenFolder = () => {
 
     // --- Helper functions for file handles and tree updates ---
 
+
     // Recursively gets a file handle, creating directories if needed
     const getFileHandleRecursive = async (dirHandle, pathParts, create = false) => {
          if (pathParts.length === 1) {
@@ -675,7 +680,7 @@ const OpenFolder = () => {
                              </Button>
                          </Tooltip>
 
-                         {/* Conditional Apply buttons only if there are changes */}
+                         {/* Conditional View and Apply buttons */}
                          {Object.keys(changedFiles).length > 0 && (
                              <>
                                   <Tooltip title="Toggle between Diff View and Editor View">
@@ -700,6 +705,16 @@ const OpenFolder = () => {
                                          </Button>
                                       </Tooltip>
                                  )}
+                                 <Tooltip title={lineWrapEnabled ? "Disable Line Wrapping" : "Enable Line Wrapping"}>
+                                    <Button
+                                        variant="outlined"
+                                        color="secondary"
+                                        onClick={() => setLineWrapEnabled(!lineWrapEnabled)}
+                                        startIcon={<WrapTextIcon />}
+                                    >
+                                        {lineWrapEnabled ? 'No Wrap' : 'Wrap'}
+                                    </Button>
+                                 </Tooltip>
                                  <Tooltip title="Save changes for the selected file (Ctrl+S)">
                                      <span> {/* Span needed for disabled button tooltip */}
                                          <Button
@@ -807,6 +822,7 @@ const OpenFolder = () => {
                                     handleModifiedChange={handleModifiedChange}
                                     getLanguageExtension={getLanguageExtension}
                                     collapseUnchanged={collapseUnchanged}
+                                    lineWrapEnabled={lineWrapEnabled} // Pass line wrap state
                                 />
                              </Box>
                         </Box>
