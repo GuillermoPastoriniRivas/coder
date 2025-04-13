@@ -1,3 +1,6 @@
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
+
 export const parseAIMessageForFiles = (folderName, content) => {
     const sections = content.split('--------------------').filter((s) => s.trim() !== '');
 
@@ -38,4 +41,34 @@ export const showNotification = (message) => {
     setTimeout(() => {
       document.body.removeChild(notification);
     }, 3000);
-  }
+  };
+
+// Function to download the virtual project structure as a ZIP file
+export const downloadProjectAsZip = async (treeNodes, zipFileName = 'project') => {
+    const zip = new JSZip();
+
+    const addNodesToZip = (nodes, currentZipFolder) => {
+        nodes.forEach(node => {
+            if (node.isLeaf) {
+                // Add file
+                // Use empty string if content is null/undefined
+                currentZipFolder.file(node.name, node.content || '');
+            } else {
+                // Add folder and recurse
+                const subFolder = currentZipFolder.folder(node.name);
+                if (node.children && subFolder) { // Check subFolder creation success
+                    addNodesToZip(node.children, subFolder);
+                }
+            }
+        });
+    };
+
+    // Start adding nodes from the root level of the provided tree data
+    addNodesToZip(treeNodes, zip);
+
+    // Generate the zip file asynchronously
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+    // Trigger the download
+    saveAs(zipBlob, `${zipFileName}.zip`);
+};

@@ -30,17 +30,7 @@ export default function Docs() {
         IIBooster Documentation
       </Typography>
 
-      <InfoCard title="Getting Started with IIBooster" icon={<PlayCircleOutlineIcon />}>
-           <Typography variant="body1" component="div" sx={{ '& strong': { color: 'primary.main' } }}>
-              1. <strong>Sign Up / Log In:</strong> Access your account. <br />
-              2. <strong>Open Folder:</strong> Click "Open Folder" and select your project directory using the browser's folder picker. <br />
-              3. <strong>Select Context (Crucial):</strong> Check boxes next to specific files or sub-folders in the directory tree to provide them as context. If you don't select any, the AI might lack the necessary information to fulfill your request accurately. Providing relevant context is key! If no files or folders are selected, the AI will operate with only the instruction you provide, lacking specific code context. <br />
-              4. <strong>Write Instructions:</strong> Type your request in the chat. Frame it as a command describing the changes you want (e.g., "Refactor the `login` function in `auth.js` to use async/await"). Avoid asking questions like "How do I...?" Be specific, provide details about the desired outcome, and use the file selection (Step 3) to limit the scope whenever possible. <br />
-              5. <strong>Review Changes:</strong> If the AI provides code modifications, they will appear in the Diff Viewer. Changed files are listed above the editor. Click a file name to view its diff. <br />
-              6. <strong>Apply Changes:</strong> Use the "Apply" button to save changes for the currently viewed file, or "Apply All" to save all proposed changes. Changes are written directly to your local files. <br />
-              7. <strong>Manage Credits:</strong> Visit the "Pricing" page (accessible from the user menu) to add more credits.
-          </Typography>
-      </InfoCard>
+
 
        <InfoCard title="Understanding Tokens & Credits" icon={<PriceCheckIcon />}>
           <Typography variant="body1" paragraph>
@@ -99,6 +89,18 @@ export default function Docs() {
                     <ListItemText primary={<><strong>Context Window Limit:</strong> Be mindful of the 'Max Context Tokens' slider. Selecting too many large files might exceed the limit, preventing the AI from processing your request effectively.</>} />
                 </ListItem>
            </List>
+      </InfoCard>
+
+      <InfoCard title="Workflow Steps" icon={<PlayCircleOutlineIcon />}>
+           <Typography variant="body1" component="div" sx={{ '& strong': { color: 'primary.main' } }}>
+              1. <strong>Sign Up / Log In:</strong> Access your account. <br />
+              2. <strong>Open Folder:</strong> Click "Open Folder" and select your project directory using the browser's folder picker. <br />
+              3. <strong>Select Context (Crucial):</strong> Check boxes next to specific files or sub-folders in the directory tree to provide them as context. If you don't select any, the AI might lack the necessary information to fulfill your request accurately. Providing relevant context is key! If no files or folders are selected, the AI will operate with only the instruction you provide, lacking specific code context. <br />
+              4. <strong>Write Instructions:</strong> Type your request in the chat. Frame it as a command describing the changes you want (e.g., "Refactor the `login` function in `auth.js` to use async/await"). Avoid asking questions like "How do I...?" Be specific, provide details about the desired outcome, and use the file selection (Step 3) to limit the scope whenever possible. <br />
+              5. <strong>Review Changes:</strong> If the AI provides code modifications, they will appear in the Diff Viewer. Changed files are listed above the editor. Click a file name to view its diff. <br />
+              6. <strong>Apply Changes:</strong> Use the "Apply" button to save changes for the currently viewed file, or "Apply All" to save all proposed changes. Changes are written directly to your local files. <br />
+              7. <strong>Manage Credits:</strong> Visit the "Pricing" page (accessible from the user menu) to add more credits.
+          </Typography>
       </InfoCard>
 
        <InfoCard title="Frequently Asked Questions" icon={<HelpOutlineIcon />}>

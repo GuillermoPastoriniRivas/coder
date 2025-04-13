@@ -15,14 +15,19 @@ const FileContent = ({
     isDiffView,
     handleModifiedChange, // Function to call when modified editor changes
     getLanguageExtension, // Function to get language-specific extensions array
-    collapseUnchanged
+    collapseUnchanged,
+    lineWrapEnabled // New prop to control line wrapping
 }) => {
 
     // Determine the specific language extension for the selected file
     const languageExtension = getLanguageExtension(selectedFilePath);
 
-    // Combine common extensions with language-specific ones
+    // Combine common extensions with language-specific ones and conditional line wrapping
     const editorExtensions = [...languageExtension];
+    if (lineWrapEnabled) {
+        editorExtensions.push(EditorView.lineWrapping);
+    }
+
 
     // Get the file data, return null if no file is selected or data is missing
     const currentFileData = selectedFilePath ? changedFiles[selectedFilePath] : null;
@@ -52,7 +57,7 @@ const FileContent = ({
                     value={currentFileData.original || ''} // Ensure value is always string
                     extensions={[
                         EditorView.editable.of(false), // Original pane is not editable
-                        ...editorExtensions // Apply common + language extensions
+                        ...editorExtensions // Apply common + language extensions + wrap
                     ]}
                 />
                 <Modified
@@ -60,7 +65,7 @@ const FileContent = ({
                     onChange={handleModifiedChange} // Update state on change
                     extensions={[
                         EditorView.editable.of(true), // Modified pane is editable
-                        ...editorExtensions // Apply common + language extensions
+                        ...editorExtensions // Apply common + language extensions + wrap
                     ]}
                 />
             </CodeMirrorMerge>
@@ -69,7 +74,7 @@ const FileContent = ({
                 value={currentFileData.modified || ''} // Show the (potentially modified) content
                 onChange={handleModifiedChange} // Allow editing
                 theme={vscodeDark}
-                extensions={editorExtensions} // Apply common + language extensions
+                extensions={editorExtensions} // Apply common + language extensions + wrap
                 className="cm-theme" // Use class from OpenFolder.css for height/styling
                 height="100%" // Ensure it fills container
                 style={{ height: '100%' }} // Ensure it fills container
