@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Box, CssBaseline } from '@mui/material'; // Import CssBaseline
+import { Box, CssBaseline, CircularProgress } from '@mui/material'; // Import CssBaseline, CircularProgress
 import Login from './components/Auth/Login';
 import SignUp from './components/Auth/SignUp';
 // import ChatInterface from './components/Chat/ChatInterface'; // Likely removed if OpenFolder is the main view
@@ -37,7 +37,16 @@ function App() {
 }
 
 function MainApp() {
-    const { email } = useAuth(); // Get authentication status
+    const { email, loading } = useAuth(); // Get authentication status and loading state
+
+    // Show loading indicator while checking auth status on initial load
+    if (loading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
 
     return (
         // Use a Box as the main container, allowing theme styles to apply easily
@@ -54,7 +63,11 @@ function MainApp() {
                             <Route path="/" element={<LandingPage />} />
                             <Route path="/login" element={<Login />} />
                             <Route path="/signup" element={<SignUp />} />
-                            {/* Fallback for any other route when logged out, redirect to Landing Page */}
+                             {/* Public Docs route */}
+                             <Route path="/docs" element={<Docs />} />
+                             {/* Add pricing here if public */}
+                             {/* <Route path="/pricing" element={<Pricing />} /> */}
+                             {/* Fallback for any other route when logged out, redirect to Landing Page */}
                             <Route path="*" element={<LandingPage />} />
                         </>
                     ) : (
