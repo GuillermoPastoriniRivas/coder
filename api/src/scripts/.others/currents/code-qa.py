@@ -19,8 +19,6 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 # ***REMOVED***
 # ***REMOVED***
-# ***REMOVED***
-# ***REMOVED***
 client = genai.Client(api_key="***REMOVED***")
 # top_k = 50 # Removed top_k
 
@@ -104,7 +102,6 @@ class CodeRAG:
                 if tokens is None or not isinstance(tokens, (int, float)):
                     print(f"Warning: Invalid token count '{tokens}' for file {file_path_rel}. Defaulting to 0.")
                     tokens = 0
-
 
                 embedding_text = (
                     f"File Path: {file_path_rel}\n"
@@ -220,8 +217,7 @@ class CodeRAG:
                 # Stop adding files if the next one would exceed the limit
                 break
 
-        # Ensure at least one file is returned if the first ranked file fits (even if barely)
-        # or if the ranked list is not empty but loop broke immediately
+        # Ensure at least one file is returned if the first ranked file fits
         if not final_results and ranked_records:
             first_record = ranked_records[0]
             first_record_tokens = first_record.get('tokens', 0)
@@ -233,8 +229,8 @@ class CodeRAG:
                     'code': self._get_code_snippet(first_record['abs_path']),
                 })
 
-
         return { 'results': final_results, 'queries': queries }
+
 
 def generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folders, selected_files, token_limit): # Added token_limit
     code_base_path = carpeta_proyecto + "/"
@@ -300,132 +296,28 @@ def _update_tokens_usage(prompt_tokens, completion_tokens, project_name, model, 
     except Exception as e:
         print(f"Error en actualización de tokens: {str(e)}")
 
-def _get_project_structure(root_dir, exclude_dirs={'node_modules', '.git', '__pycache__', 'dist', 'build'}):
-    """Generates a string representation of the project's directory structure."""
-    structure = []
-    try:
-        for root, dirs, files in os.walk(root_dir, topdown=True):
-            # Exclude specified directories
-            dirs[:] = [d for d in dirs if d not in exclude_dirs]
-
-            rel_path = os.path.relpath(root, root_dir).replace("\\", "/") # Use forward slashes
-            # Skip the root directory itself if needed, or format it differently
-            if rel_path == '.':
-                indent = ""
-                structure.append(f"{os.path.basename(root_dir)}/") # Start with root folder name
-            else:
-                level = rel_path.count('/')
-                indent = "  " * (level + 1)
-                structure.append(f"{indent}{os.path.basename(root)}/")
-
-            file_indent = "  " * (rel_path.count('/') + 2 if rel_path != '.' else 1)
-
-            # Sort files and directories for consistent output
-            files.sort()
-            dirs.sort()
-
-            for f in files:
-                # Optional: Add filtering for specific file types if needed
-                # if f.endswith(('.py', '.js', '.ts', '.json', '.md')):
-                 structure.append(f"{file_indent}{f}")
-
-    except Exception as e:
-        return f"Error generating project structure: {e}"
-    return "\n".join(structure)
-    
-
 def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_proyecto, userId):
     """Envía la consulta a OpenAI y obtiene los cambios necesarios en formato JSON."""
-
-    # --- Read package.json ---
-    package_json_path = os.path.join(carpeta_proyecto, 'package.json')
-    package_json_content = ""
-    try:
-        with open(package_json_path, 'r', encoding='utf-8') as f:
-            package_json_content = f.read()
-    except FileNotFoundError:
-        package_json_content = "package.json not found."
-    except Exception as e:
-        package_json_content = f"Error reading package.json: {e}"
-
-    # --- Generate Project Structure ---
-    project_structure = _get_project_structure(carpeta_proyecto)
-
     prompt = f"""
         ### Role:
-        You are a Code Editor Assistant AI. Your purpose is to apply specific code changes requested by the user and output the *entire modified file(s)* with *absolute precision*, making NO other alterations.
+        You are a Senior Software Engineer and AI assistant. You will help the user understand, analyze, and modify code using the information provided.
 
-        ### Core Directive:
-        Analyze the User Request and the Project Context. Identify the exact file(s) needing modification. Apply ONLY the changes specified in the User Request. Output the complete content of each modified file using the specified format.
+        ### Project Context:
+        {contexto.get('context', '')}
 
         ### User Request:
         {contexto.get('query', instruccion_usuario)}
 
-        ### Project Context:
-        This contains the original code for relevant files selected by the RAG process:
-        {contexto.get('context', '[]')}
+        ### Core Instructions:
+        - Always follow the user's intent: this could be to explain, debug, modify, summarize, or refactor code.
+        - Use the provided code context to give accurate answers.
+        - If a code modification is requested, describe what needs to change, in which file and line(s), and show the before/after code.
+        - If the request is a question like "What does this code do?", provide a concise and clear explanation.
+        - If the question cannot be answered due to missing context, explain what is missing.
 
-        ---
-        Additional Project Information:
+        Think step by step and explain your reasoning briefly when helpful.
+        """
 
-        Project Root: {carpeta_proyecto}
-
-        Project Structure Overview:
-        ```
-        {project_structure}
-        ```
-
-        package.json:
-        ```json
-        {package_json_content}
-        ```
-        ---
-
-        ### Strict Output Format:
-        For EACH file you modify, use this exact structure:
-        --------------------
-        [full/file/path/from/root]
-        +++++
-        [ENTIRE MODIFIED FILE CONTENT]
-        --------------------
-
-        ### Critical Rules for Modification and Output:
-
-        1.  **Minimal Change Principle:**
-            *   Modify ONLY the specific lines/sections of code necessary to implement the User Request. WITHOUT adding unnecessary comments.
-            *   Keep all other code completely unchanged — including comments, formatting, naming, and structure — unless explicitly instructed otherwise
-            *   Maintain the original style of the code without performing any refactoring, improvements, or additions unless the user clearly asks for them.
-
-        2.  **Preserve Original Structure & Style:**
-            *   Use the original file's indentation, spacing, naming conventions, and overall code style precisely.
-            *   The output file content must be identical to the input context, *except* for the targeted modifications.
-
-        3.  **Completeness:**
-            *   Return the *entire* content of the modified file(s), including all original lines that were not changed.
-            *   Ensure all necessary imports/dependencies are present if the changes require them.
-
-        4.  **Format Enforcement:**
-            *   Use exactly 20 dashes (`--------------------`) before and after each file block.
-            *   Use exactly 5 plus signs (`+++++`) to separate the file path and content.
-            *   Output ONLY the file blocks in the specified format. NO introductory text, NO explanations, NO summaries, NO markdown code fences (```).
-
-        5.  **Accuracy:**
-            *   Only output files that were actually modified. If no files need changes based on the request, output nothing.
-
-        ### Example Output Structure:
-        --------------------
-        api/src/utils/logger.ts
-        +++++
-        <ENTIRE NEW FILE CONTENT>
-        --------------------
-        --------------------
-        ui/src/components/SearchBar.jsx
-        +++++
-        <ENTIRE NEW FILE CONTENT>
-        --------------------
-
-        ### FINAL CHECK: Ensure your output strictly follows the format and contains only the necessary, minimal code changes requested by the user, preserving everything else.
-    """
 
     max_retries = 3
     retry_count = 0

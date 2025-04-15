@@ -24,9 +24,14 @@
   --color-border-focus: var(--color-primary-action); /* Border color on focus */
 
   --color-error: #f44336;
+  --color-error-dark: #d32f2f;           /* Darker error for backgrounds */
   --color-success: #4caf50;
+  --color-success-dark: #388e3c;         /* Darker success */
   --color-warning: #ff9800;
+  --color-warning-dark: #f57c00;         /* Darker warning */
   --color-info: #2196f3;
+  --color-info-dark: #1976d2;            /* Darker info */
+
 
   --color-selection-background: #264f78; /* Text selection background */
 
@@ -95,8 +100,9 @@ a:hover, a:focus {
 }
 
 button:focus, input:focus, textarea:focus, select:focus {
-  outline: 1px solid var(--color-border-focus); /* Subtle focus outline */
-  outline-offset: 1px;
+  /* Use MUI's focus ring styles defined in theme.js */
+  /* outline: 1px solid var(--color-border-focus); */
+  /* outline-offset: 1px; */
 }
 
 /* Remove default focus styles if custom ones are applied via JS/MUI */
@@ -137,13 +143,10 @@ button:focus:not(:focus-visible) {
 .chat-container {
   display: flex;
   flex-direction: column;
-  /* Let the parent height control this, remove fixed height */
-  /* height: 80vh; */
   flex-grow: 1; /* Allow chat to take available space */
   background-color: transparent; /* Inherit from .chat-panel */
   font-family: var(--font-family-main);
   color: var(--color-text-primary);
-  /* border-left is handled by .chat-panel in OpenFolder.css */
   overflow: hidden; /* Prevent content spill */
 }
 
@@ -181,12 +184,12 @@ button:focus:not(:focus-visible) {
   word-wrap: break-word;
   box-shadow: var(--box-shadow-soft); /* Add subtle shadow for depth */
   line-height: 1.5;
-  position: relative; /* Keep for potential future absolute elements */
+  position: relative;
   transition: box-shadow var(--transition-speed-normal);
 }
 
 .chat-message.user {
-  background-color: var(--color-primary-action);
+  background-color: var(--color-primary-action); /* Use primary action color */
   color: var(--color-text-button);
   align-self: flex-end;
   border-bottom-right-radius: var(--border-radius-small); /* Asymmetric radius */
@@ -199,31 +202,43 @@ button:focus:not(:focus-visible) {
   border-bottom-left-radius: var(--border-radius-small); /* Asymmetric radius */
 }
 
-.chat-message hr {
-  margin: 8px 0 4px 0;
-  opacity: 0.3;
+/* Style for system/error messages */
+.chat-message.system {
+  background-color: var(--color-error-dark); /* Use darker error color */
+  color: var(--color-text-primary);
+  align-self: center; /* Center system messages */
+  max-width: 90%; /* Allow wider for errors */
+  text-align: center;
+  font-style: italic;
+  border-radius: var(--border-radius-small); /* Normal radius */
 }
+
 
 .chat-message .MuiTypography-caption { /* Target timestamp specifically */
    font-size: 0.75rem;
-   color: var(--color-text-secondary);
-   display: block; /* Ensure it takes its own line */
+   color: rgba(255, 255, 255, 0.6); /* Slightly lighter secondary text for timestamp */
+   display: block;
    margin-top: 4px;
+}
+/* Adjust timestamp color in user messages */
+.chat-message.user .MuiTypography-caption {
+    color: rgba(255, 255, 255, 0.7);
 }
 
 
 .chat-input-container { /* Renamed for clarity */
   background-color: var(--color-background-secondary); /* Match chat messages background */
   border-top: 1px solid var(--color-border-primary);
+  position: relative; /* Needed for absolute positioning of progress bar */
 }
 
 /* Style the paper element containing the input and controls */
 .chat-input-paper {
   background-color: var(--color-background-primary) !important; /* Slightly darker for contrast */
-  border: 1px solid var(--color-border-primary) !important;
-  border-radius: var(--border-radius-medium) !important;
+  border: none !important; /* Remove border, rely on container border */
+  border-radius: 0 !important; /* No radius needed inside the container */
   padding: 0 !important; /* Remove default paper padding */
-  box-shadow: var(--box-shadow-soft) !important; /* Add shadow */
+  box-shadow: none !important; /* No shadow needed */
   display: flex;
   flex-direction: column;
 }
@@ -232,7 +247,6 @@ button:focus:not(:focus-visible) {
 .chat-input-textarea { /* Style the textarea directly */
   width: 100%;
   padding: 12px 16px; /* Comfortable padding */
-  border-radius: var(--border-radius-medium) var(--border-radius-medium) 0 0; /* Round top corners */
   border: none;
   font-size: 0.95rem; /* Slightly smaller font size */
   font-family: var(--font-family-main);
@@ -274,29 +288,31 @@ button:focus:not(:focus-visible) {
 /*=================== Scrollbar (General) ====================*/
 /* Styles for Webkit browsers (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
-  width: 8px; /* Thinner scrollbar */
+  width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-background-primary); /* Track matches background */
+  background: transparent; /* Make track transparent */
+  /* background: var(--color-background-primary); */
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: var(--color-border-primary); /* Thumb color */
+  background-color: var(--color-border-primary);
   border-radius: 4px;
-  border: 2px solid var(--color-background-primary); /* Creates padding around thumb */
+  border: 2px solid transparent; /* Creates padding effect if track is transparent */
+  background-clip: padding-box; /* Important for border effect */
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-text-secondary); /* Darker on hover */
+  background-color: var(--color-text-secondary);
 }
 
 /* Styles for Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-border-primary) var(--color-background-primary);
+  scrollbar-color: var(--color-border-primary) transparent; /* Thumb / Track */
 }
 
 /*=================== Inputs and Textareas (General overrides if needed) ====================*/
@@ -308,8 +324,7 @@ button:focus:not(:focus-visible) {
   flex-direction: column;
   min-height: 100vh;
   background-color: var(--color-background-primary);
-  overflow: hidden; /* Prevent body scrollbars when layout manages scroll */
-  min-width: none; /* Remove min-width if causing issues */
+  overflow: hidden; /* Prevent body scrollbars */
   max-width: 100vw;
 }
 
@@ -352,12 +367,8 @@ button:focus:not(:focus-visible) {
 }
 
 /* Remove potentially conflicting old styles */
-.box-shadow { /* Remove old definition if conflicting */
-  /* box-shadow: none; */
-}
-.primary_btn { /* Deprecate if using MUI buttons */
- /* display: none; */
-}
+/* .box-shadow, .primary_btn { ... remove ... } */
+
 
 /* Selected files/folders chips in chat input */
 .selected-items-container {
@@ -398,9 +409,9 @@ button:focus:not(:focus-visible) {
     justify-content: space-between;
     align-items: center;
     flex-shrink: 0; /* Prevent footer from shrinking */
-    position: relative; /* Needed if using absolute positioning inside */
+    position: relative;
     z-index: 1100; /* Ensure it's above content */
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2); /* Add shadow */
+    /* box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2); Removed shadow for flatter look */
 }
 
 .footer-info-section {
@@ -417,4 +428,21 @@ button:focus:not(:focus-visible) {
 
 .footer-status .MuiSvgIcon-root {
     font-size: 1rem;
+}
+
+/* Notification styles (used by enhanced showNotification) */
+.notification-base {
+    /* Base styles applied via JS */
+}
+.notification-success {
+    /* Custom styles if needed, background set in JS */
+}
+.notification-error {
+    /* Custom styles if needed, background set in JS */
+}
+.notification-warning {
+    /* Custom styles if needed, background set in JS */
+}
+.notification-info {
+    /* Custom styles if needed, background set in JS */
 }

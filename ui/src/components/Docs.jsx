@@ -9,6 +9,7 @@ import ContactSupportIcon from '@mui/icons-material/ContactSupport'; // Support 
 import PriceCheckIcon from '@mui/icons-material/PriceCheck'; // Icon for Tokens/Credits
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline'; // Icon for Prompts
 import FolderOpenIcon from '@mui/icons-material/FolderOpen'; // Icon for File Selection
+import VisibilityIcon from '@mui/icons-material/Visibility'; // Icon for Visual Guide
 
 // Reusable Card-like component using Paper
 const InfoCard = ({ title, icon, children }) => (
@@ -89,6 +90,35 @@ export default function Docs() {
                     <ListItemText primary={<><strong>Context Window Limit:</strong> Be mindful of the 'Max Context Tokens' slider. Selecting too many large files might exceed the limit, preventing the AI from processing your request effectively.</>} />
                 </ListItem>
            </List>
+      </InfoCard>
+
+      <InfoCard title="Prompting Guide (Visual)" icon={<VisibilityIcon />}>
+          <Typography variant="body1" paragraph>
+              When giving instructions, remember where the AI's output (code changes or text) will appear. This helps frame your requests effectively.
+          </Typography>
+          <Typography variant="body1" paragraph>
+              <strong>1. Code Changes (`coder` model):</strong> The AI attempts to generate file modifications. These appear in the main editor area, usually as a side-by-side diff. You review and apply them here.
+          </Typography>
+          {/* Placeholder for illustration 1 */}
+          <Box sx={{ my: 2, p: 2, border: '1px dashed', borderColor: 'divider', textAlign: 'center', borderRadius: 1, bgcolor: 'action.hover' }}>
+              <Typography variant="caption" color="text.secondary">[Illustration: Screenshot showing the Diff View (Editor Panel) with original code on left, modified code on right, and changes highlighted. ChangedFilesBar visible above.]</Typography>
+          </Box>
+           <Typography variant="body1" paragraph>
+              <strong>Example Prompt for Editor Output:</strong> "Refactor the `getUser` function in `api/users.js` to use Promises instead of callbacks." (Make sure `api/users.js` is selected in the file tree first!)
+          </Typography>
+           <Typography variant="body1" paragraph>
+              <strong>2. Text Responses (`qa` model):</strong> Answers, explanations, or general information appear directly in the chat history panel on the right. The main editor area (Diff View) might remain unchanged or show a relevant file if you previously clicked one.
+          </Typography>
+           {/* Placeholder for illustration 2 */}
+           <Box sx={{ my: 2, p: 2, border: '1px dashed', borderColor: 'divider', textAlign: 'center', borderRadius: 1, bgcolor: 'action.hover' }}>
+               <Typography variant="caption" color="text.secondary">[Illustration: Screenshot showing the Chat Interface panel on the right, displaying an assistant's text response. The Editor Panel in the center might be empty or showing a file.]</Typography>
+           </Box>
+            <Typography variant="body1" paragraph>
+               <strong>Example Prompt for Chat Output:</strong> "Explain the difference between `let`, `const`, and `var` in JavaScript." (No file selection needed, `qa` model selected).
+           </Typography>
+            <Typography variant="body1" paragraph sx={{ mt: 2 }}>
+              Providing clear, imperative instructions combined with the correct file/folder context (using the checkboxes in the left panel) leads to the most accurate results in the editor panel when using the `coder` model.
+           </Typography>
       </InfoCard>
 
       <InfoCard title="Workflow Steps" icon={<PlayCircleOutlineIcon />}>
