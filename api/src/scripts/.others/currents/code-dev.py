@@ -20,7 +20,6 @@ sys.stdout.reconfigure(encoding='utf-8')
 # ***REMOVED***
 # ***REMOVED***
 # ***REMOVED***
-# ***REMOVED***
 client = genai.Client(api_key="***REMOVED***")
 # top_k = 50 # Removed top_k
 
@@ -300,60 +299,11 @@ def _update_tokens_usage(prompt_tokens, completion_tokens, project_name, model, 
     except Exception as e:
         print(f"Error en actualización de tokens: {str(e)}")
 
-def _get_project_structure(root_dir, exclude_dirs={'node_modules', '.git', '__pycache__', 'dist', 'build'}):
-    """Generates a string representation of the project's directory structure."""
-    structure = []
-    try:
-        for root, dirs, files in os.walk(root_dir, topdown=True):
-            # Exclude specified directories
-            dirs[:] = [d for d in dirs if d not in exclude_dirs]
-
-            rel_path = os.path.relpath(root, root_dir).replace("\\", "/") # Use forward slashes
-            # Skip the root directory itself if needed, or format it differently
-            if rel_path == '.':
-                indent = ""
-                structure.append(f"{os.path.basename(root_dir)}/") # Start with root folder name
-            else:
-                level = rel_path.count('/')
-                indent = "  " * (level + 1)
-                structure.append(f"{indent}{os.path.basename(root)}/")
-
-            file_indent = "  " * (rel_path.count('/') + 2 if rel_path != '.' else 1)
-
-            # Sort files and directories for consistent output
-            files.sort()
-            dirs.sort()
-
-            for f in files:
-                # Optional: Add filtering for specific file types if needed
-                # if f.endswith(('.py', '.js', '.ts', '.json', '.md')):
-                 structure.append(f"{file_indent}{f}")
-
-    except Exception as e:
-        return f"Error generating project structure: {e}"
-    return "\n".join(structure)
-    
-
 def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_proyecto, userId):
     """Envía la consulta a OpenAI y obtiene los cambios necesarios en formato JSON."""
-
-    # --- Read package.json ---
-    package_json_path = os.path.join(carpeta_proyecto, 'package.json')
-    package_json_content = ""
-    try:
-        with open(package_json_path, 'r', encoding='utf-8') as f:
-            package_json_content = f.read()
-    except FileNotFoundError:
-        package_json_content = "package.json not found."
-    except Exception as e:
-        package_json_content = f"Error reading package.json: {e}"
-
-    # --- Generate Project Structure ---
-    project_structure = _get_project_structure(carpeta_proyecto)
-
     prompt = f"""
         ### Role:
-        You are a Code Editor Assistant AI. Your purpose is to apply specific code changes requested by the user and output the *entire modified file(s)* with *absolute precision*, making NO other alterations.
+        You are a Surgical Code Editor AI. Your sole purpose is to apply specific code changes requested by the user and output the *entire modified file(s)* with *absolute precision*, making NO other alterations.
 
         ### Core Directive:
         Analyze the User Request and the Project Context. Identify the exact file(s) needing modification. Apply ONLY the changes specified in the User Request. Output the complete content of each modified file using the specified format.
@@ -362,24 +312,7 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
         {contexto.get('query', instruccion_usuario)}
 
         ### Project Context:
-        This contains the original code for relevant files selected by the RAG process:
-        {contexto.get('context', '[]')}
-
-        ---
-        Additional Project Information:
-
-        Project Root: {carpeta_proyecto}
-
-        Project Structure Overview:
-        ```
-        {project_structure}
-        ```
-
-        package.json:
-        ```json
-        {package_json_content}
-        ```
-        ---
+        {contexto.get('context', '')} # This contains the original code for relevant files.
 
         ### Strict Output Format:
         For EACH file you modify, use this exact structure:
@@ -397,7 +330,7 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
             *   Maintain the original style of the code without performing any refactoring, improvements, or additions unless the user clearly asks for them.
 
         2.  **Preserve Original Structure & Style:**
-            *   Use the original file's indentation, spacing, naming conventions, and overall code style precisely.
+            *   Maintain the original file's indentation, spacing, naming conventions, and overall code style precisely.
             *   The output file content must be identical to the input context, *except* for the targeted modifications.
 
         3.  **Completeness:**

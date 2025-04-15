@@ -17,7 +17,7 @@ export async function callAgent(query: string, userId: string, folder: string, s
     const conversation = {
         userId,
         folder,
-        model,
+        aiModel: model,
         messages: [{ role: 'user', content: query, timestamp: new Date() }]
     };
 
@@ -104,8 +104,7 @@ export async function callAgent(query: string, userId: string, folder: string, s
             '--model', model,
             '--subfolders', (subFolders || []).join(','),
             '--selectedFiles', (selectedFiles || []).join(','),
-            '--userId', userId,
-            '--tokenLimit', tokenLimit.toString() // Pass tokenLimit
+            '--userId', userId
         ]);
 
         const responsePromise = new Promise((resolve, reject) => {
@@ -138,7 +137,7 @@ export async function callAgent(query: string, userId: string, folder: string, s
     const response = {
         userId,
         folder,
-        model,
+        aiModel: model,
         messages: [{ role: 'assistant', content: sanitizedResponseContent, timestamp: new Date() }]
     };
     await conversationRepository.upsertConversation(response, false, conversationId);

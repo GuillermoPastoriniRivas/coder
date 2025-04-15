@@ -56,6 +56,10 @@ export default function ChatInterface({
             console.error('Error fetching saldo:', error);
              // Handle error appropriately, maybe logout or show message
              // updateSaldo(0); // Reset saldo on error?
+             // Use enhanced notification only if not automatically handled by 401 interceptor
+             if (error.response?.status !== 401) {
+                 showNotification('Error fetching saldo in chat.', 'error');
+             }
         }
     }, 500)).current; // 500ms debounce
 
@@ -66,9 +70,11 @@ export default function ChatInterface({
             if (selectedConversation && selectedConversation.messages && selectedConversation.messages.length > 0) {
                  // Filter out assistant messages if they only contain file diffs (handled by FileContent)
                  // Or decide how to display them (e.g., "Assistant proposed changes...")
-                 setConversation(selectedConversation.userMessages);
+                 // Use userMessages directly if available, otherwise fallback to messages
+                 const messagesToDisplay = selectedConversation.userMessages || selectedConversation.messages;
+                 setConversation(messagesToDisplay);
                  // Store the last user message from the loaded conversation if applicable
-                 const userMessages = selectedConversation.userMessages.filter(m => m.role === 'user');
+                 const userMessages = messagesToDisplay.filter(m => m.role === 'user');
                  if (userMessages.length > 0) {
                      lastUserMessageRef.current = userMessages[userMessages.length - 1];
                  } else {
@@ -79,7 +85,7 @@ export default function ChatInterface({
                 setConversation([
                     {
                         role: 'default', // Use 'default' or 'system'
-                        content: "Hello! I'm ready for instructions! Please provide clear, specific commands (e.g., 'Refactor function X in file Y'). Select relevant files/folders for context. Check the Docs for tips on effective prompts.",
+                        content: "Hello! I'm ready for instructions! Provide specific commands (e.g., 'Refactor function X in file Y'). Select relevant files/folders for context. Check Docs for tips.",
                         timestamp: new Date()
                     }
                 ]);
@@ -108,14 +114,22 @@ export default function ChatInterface({
         const messageToSend = { role: 'user', content: messageContent.trim(), timestamp: new Date() };
 
         // Add user message to conversation *only if it's not a regeneration of the exact same last message*
-        if (!isRegeneration || conversation[conversation.length - 1]?.content !== messageToSend.content) {
-             setConversation((prev) => [...prev, messageToSend]);
+        // Or if it's the first message after the default greeting
+        if (!isRegeneration || conversation.length === 0 || (conversation.length > 0 && conversation[conversation.length - 1]?.content !== messageToSend.content)) {
+             setConversation((prev) => {
+                 // Filter out the initial 'default' message if present before adding user message
+                 const filteredPrev = prev.filter(msg => msg.role !== 'default');
+                 return [...filteredPrev, messageToSend];
+             });
         }
 
         // Store this message as the last user message sent
         lastUserMessageRef.current = messageToSend;
 
-        setMessage(''); // Clear input field if it was a new message
+        if (!isRegeneration) {
+           setMessage(''); // Clear input field only if it was a new message
+        }
+        textareaRef.current?.focus(); // Refocus textarea
 
         // Trigger refresh before sending the message (optional)
         try {
@@ -125,6 +139,7 @@ export default function ChatInterface({
             }
         } catch (refreshError) {
             console.error("Error during pre-send refresh:", refreshError);
+            showNotification(`Warning: Could not refresh context before sending: ${refreshError.message}`, 'warning');
             // Optionally notify user or proceed anyway?
             // For now, proceed even if refresh fails
         }
@@ -153,7 +168,9 @@ export default function ChatInterface({
                 onFileChanges(parsedFiles); // Pass changes to parent to update editor
                 displayMessageContent = `Assistant proposed changes to ${parsedFiles.length} file(s). Review the changes in the editor.`;
             } else if (aiResponseContent.includes('--------------------') && aiResponseContent.includes('+++++')) {
-                 displayMessageContent = "Assistant provided a response, but no file changes were detected or applied automatically. Check the response format if expecting code changes.";
+                 displayMessageContent = "Assistant provided a response, but no standard file changes were detected or parsed. Review the raw response below."; // Clarify the message
+                 // Append raw response for user inspection
+                 displayMessageContent += `--- Raw Response --- ${aiResponseContent}`;
                  console.warn("AI response looked like a diff but parsing yielded no files:", aiResponseContent);
             } else {
                 displayMessageContent = aiResponseContent;
@@ -171,7 +188,12 @@ export default function ChatInterface({
                  if (selectedModel === 'qa') {
                      setIsDiffView(false); // Switch to Editor View
                  } else if (selectedModel === 'coder') {
-                     setIsDiffView(true); // Switch to Diff View
+                     // Only switch to diff view if there were actually parsed files
+                     if (parsedFiles.length > 0) {
+                         setIsDiffView(true); // Switch to Diff View
+                     } else {
+                         setIsDiffView(false); // Stay in editor view if no files were parsed
+                     }
                  }
              } else {
                  console.warn("ChatInterface: setIsDiffView prop not provided. Cannot switch view automatically.");
@@ -199,6 +221,7 @@ export default function ChatInterface({
                      timestamp: new Date()
                  };
                  setConversation((prev) => [...prev, cancelMessage]);
+                 showNotification('Request cancelled.', 'info'); // Provide user feedback
              } else {
                  console.error('Error sending message:', error);
                  const errorMessageContent = `Error: ${error.response?.data?.message || error.message || 'Failed to get response.'}`;
@@ -208,21 +231,21 @@ export default function ChatInterface({
                      timestamp: new Date()
                  };
                  setConversation((prev) => [...prev, errorMessage]);
-                 // Show notification for backend errors
-                 if (!axios.isCancel(error) && !error.response) { // Only show general notification for non-HTTP errors
+                 // Show notification for backend errors (already handled by interceptor for 500, 401)
+                 if (!axios.isCancel(error) && error.response?.status !== 401 && error.response?.status !== 500) {
                     showNotification(errorMessageContent, 'error');
                  }
              }
         } finally {
             setLoading(false); // End loading state
             abortControllerRef.current = null; // Clear the controller ref
-            textareaRef.current?.focus();
+            textareaRef.current?.focus(); // Ensure focus returns after operation
         }
     };
 
     // Send message handler (uses the core logic)
     const handleSend = async () => {
-        executeSendMessage(message); // Send current input message
+        executeSendMessage(message.replace(/`/g, "'")); // Send current input message
     };
 
     // Regenerate message handler (uses the core logic)
@@ -239,7 +262,7 @@ export default function ChatInterface({
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
             console.log('Cancellation initiated.');
-            // The catch block in executeSendMessage will handle the state update
+            // The catch block in executeSendMessage will handle the state update and notification
         }
     };
 
@@ -307,10 +330,10 @@ export default function ChatInterface({
                         <Tooltip title={`Folder context: ${folderPath}`} key={`folder-${folderPath}`}>
                             <Chip
                                 icon={<FolderIcon fontSize="small" />}
-                                label={folderPath.split('/').pop()} // Show last part of path
+                                label={folderPath.split('/').pop() || folderPath} // Show last part or full path
                                 size="small"
                                 onDelete={() => deselectSubFolder(folderPath)}
-                                color="secondary" // Use theme's secondary color chip
+                                color="secondary"
                             />
                         </Tooltip>
                      ))}
@@ -318,10 +341,10 @@ export default function ChatInterface({
                           <Tooltip title={`File context: ${filePath}`} key={`file-${filePath}`}>
                              <Chip
                                 icon={<InsertDriveFileIcon fontSize="small" />}
-                                label={filePath.split('/').pop()} // Show filename
+                                label={filePath.split('/').pop() || filePath} // Show filename or full path
                                 size="small"
                                 onDelete={() => deselectFile(filePath)}
-                                color="primary" // Use theme's primary color chip
+                                color="primary"
                             />
                          </Tooltip>
                      ))}
@@ -333,18 +356,18 @@ export default function ChatInterface({
                  {conversation.map((msg, index) => (
                      <Paper
                          key={index}
-                         elevation={0} // Use theme's elevation/styling, remove default shadow
+                         elevation={0} // Use theme's elevation/styling
                          className={`chat-message ${msg.role}`} // Classes: user, assistant, system, default
-                         sx={{ bgcolor: msg.role === 'user' ? 'primary.dark' : 'background.paper' }} // Example specific styling
+                         sx={{ bgcolor: msg.role === 'user' ? 'primary.main' : (msg.role === 'system' ? 'error.dark' : 'background.paper') }} // Conditional background
                      >
                          {/* Render content based on role or type if needed */}
                          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}> {/* Preserve whitespace/newlines */}
                              {msg.content}
                          </Typography>
-                         {msg.timestamp && (
+                         {msg.timestamp && msg.role !== 'system' && ( // Hide timestamp for system messages
                             <>
-                              <hr /> {/* Use styled hr or border */}
-                              <Typography variant="caption" display="block" align="right">
+                              {/* <hr /> Removed hr, use spacing */}
+                              <Typography variant="caption" display="block" align="right" sx={{ mt: 0.5 }}>
                                   {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </Typography>
                              </>
@@ -356,11 +379,11 @@ export default function ChatInterface({
 
             {/* Message Input Area */}
             <Box className="chat-input-container">
-                {/* Progress Bar - Moved here, above input paper */}
+                {/* Progress Bar - Positioned within the input container */}
                  {loading && (
                     <LinearProgress
-                        variant="indeterminate" // Changed to indeterminate
-                        sx={{ height: '4px', width: '100%' }} // Adjusted style for new position
+                        variant="indeterminate"
+                        sx={{ height: '3px', width: '100%' }} // Thin bar at the top
                     />
                  )}
 
@@ -418,9 +441,10 @@ export default function ChatInterface({
                                         size="small"
                                         disabled={loading}
                                         valueLabelFormat={(value) => `${(value / 1000).toFixed(0)}k`}
+                                        sx={{ flexGrow: 1 }}
                                     />
                                      {/* Display current value next to slider */}
-                                    <Typography variant="caption" sx={{ minWidth: '40px', textAlign: 'right' }}>
+                                    <Typography variant="caption" sx={{ minWidth: '35px', textAlign: 'right' }}>
                                         {`${(tokenLimit / 1000).toFixed(0)}k`}
                                     </Typography>
                                 </Box>
@@ -433,11 +457,11 @@ export default function ChatInterface({
                                 <span> {/* Span required for tooltip on disabled button */}
                                     <IconButton
                                         onClick={handleRegenerate}
-                                        disabled={loading || !lastUserMessageRef.current || saldo === 0}
+                                        disabled={loading || !lastUserMessageRef.current || saldo <= 0} // Also check saldo
                                         size="small"
                                         color="secondary"
                                     >
-                                        <ReplayIcon />
+                                        <ReplayIcon fontSize="small" />
                                     </IconButton>
                                 </span>
                              </Tooltip>
@@ -446,24 +470,24 @@ export default function ChatInterface({
                              {loading && (
                                  <Tooltip title="Cancel Request">
                                      <IconButton onClick={handleCancel} size="small" color="error">
-                                         <CancelIcon />
+                                         <CancelIcon fontSize="small" />
                                      </IconButton>
                                  </Tooltip>
                              )}
 
                              {/* Send Button */}
-                             <Tooltip title={saldo === 0 ? "Insufficient credits" : (loading ? "Processing..." : "Send message (Enter)")}>
+                             <Tooltip title={saldo <= 0 ? "Insufficient credits" : (loading ? "Processing..." : "Send message (Enter)")}>
                                 <span> {/* Span required for tooltip on disabled button */}
                                      <Button
                                          variant="contained"
                                          color="primary"
                                          onClick={handleSend}
-                                         disabled={loading || !message.trim() || saldo === 0} // Disable if loading, no message, or no credits
+                                         disabled={loading || !message.trim() || saldo <= 0} // Disable if loading, no message, or no credits
                                          startIcon={loading ? null : <SendIcon />} // Hide icon when loading, cancel icon is shown instead
-                                         sx={{ py: 0.8, px: loading ? 1.5 : 2 }} // Adjust padding based on loading state
+                                         sx={{ py: 0.8, px: loading ? 1.5 : 2, minWidth: loading ? 'auto' : '80px' }} // Adjust padding/width
                                          size="small"
                                      >
-                                         {loading ? <CircularProgress size={20} color="inherit" /> : 'Send'}
+                                         {loading ? <CircularProgress size={18} color="inherit" /> : 'Send'}
                                      </Button>
                                  </span>
                              </Tooltip>
