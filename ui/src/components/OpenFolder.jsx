@@ -194,7 +194,9 @@ const OpenFolder = () => {
             await syncAndFetchConversations(handle, files); // Sync and fetch conversations after opening
         } catch (error) {
             console.error("Error opening folder:", error);
-            // Handle error (e.g., user cancellation) gracefully
+            if (error.name !== 'AbortError') { // Don't show notification if user cancelled
+                showNotification(`Error opening folder: ${error.message}`, 'error');
+            }
         } finally {
             setLoading(false);
         }
@@ -262,6 +264,7 @@ const OpenFolder = () => {
          } catch (error) {
              console.error("Error syncing/fetching conversations:", error);
              setConversations([]); // Reset on error
+             showNotification(`Error syncing/fetching conversations: ${error.message}`, 'error'); // Use enhanced notification
          } finally {
              setLoading(false);
          }
@@ -301,6 +304,7 @@ const OpenFolder = () => {
                               original: updatedFileEntry.content,
                           }
                       }));
+                      showNotification(`Content for ${selectedFilePath} refreshed.`, 'info');
                  }
              } else {
                  // If no file selected or no changes, clear selection/diff
@@ -310,6 +314,7 @@ const OpenFolder = () => {
 
         } catch (error) {
             console.error("Error refreshing:", error);
+            showNotification(`Error refreshing: ${error.message}`, 'error'); // Use enhanced notification
         } finally {
             setLoading(false);
         }
@@ -350,6 +355,7 @@ const OpenFolder = () => {
 
     // Select a conversation from the list
     const handleSelectConversation = (conversation) => {
+        console.log(conversation)
          setSelectedConversation(conversation);
          if (conversation.messages && conversation.messages.length > 0) {
              // Check the last assistant message for file changes
@@ -359,6 +365,7 @@ const OpenFolder = () => {
                  if (parsedFiles.length > 0) {
                       handleFileChanges(parsedFiles); // Load changes into diff view
                       setIsDiffView(true);
+                      setLineWrapEnabled(false); // Activate wrap for QA/AI changes view
                       return; // Stop here if changes loaded
                  }
              }
@@ -366,7 +373,14 @@ const OpenFolder = () => {
          // If no changes found in last message, clear diff view
          setChangedFiles({});
          setSelectedFilePath(null);
-         setIsDiffView(true); // Stay in diff view mode but show empty state
+         
+         if (conversation.aiModel === 'qa') {
+            setIsDiffView(false);
+            setLineWrapEnabled(true);
+         } else {
+            setIsDiffView(true); // Stay in diff view mode but show empty state
+            setLineWrapEnabled(false); // Activate wrap when selecting any conversation
+         }
      };
 
     // Start a new chat session
@@ -404,7 +418,7 @@ const OpenFolder = () => {
 
         const fileData = changedFiles[selectedFilePath];
         if (fileData.original === fileData.modified) {
-            console.log("No changes to apply for:", selectedFilePath);
+            showNotification("No changes to apply for this file.", "info");
             return; // Skip if no changes
         }
 
@@ -421,7 +435,7 @@ const OpenFolder = () => {
                     targetHandle = await getFileHandleRecursive(folderHandle, selectedFilePath.split('/'), true);
                  } catch (handleError) {
                       console.error(`Error getting/creating file handle for ${selectedFilePath}:`, handleError);
-                      showNotification(`Failed to get or create file handle for: ${selectedFilePath}. Error: ${handleError.message}`);
+                      showNotification(`Failed to get or create file handle for: ${selectedFilePath}. Error: ${handleError.message}`, 'error');
                       setSaving(false);
                       return;
                  }
@@ -445,14 +459,14 @@ const OpenFolder = () => {
             // Optionally: Refresh the specific file's content in the directoryTree state without full refresh
             setDirectoryTree(prevTree => updateFileContentInTree(prevTree, selectedFilePath, fileData.modified));
 
-            showNotification(`Changes saved to ${selectedFilePath}`);
+            showNotification(`Changes saved to ${selectedFilePath}`, 'success'); // Use enhanced notification
 
             // Trigger automatic refresh after applying changes
             await handleRefresh();
 
          } catch (error) {
              console.error(`Error applying changes to ${selectedFilePath}:`, error);
-             showNotification(`Error applying changes to ${selectedFilePath}: ${error.message}`);
+             showNotification(`Error applying changes to ${selectedFilePath}: ${error.message}`, 'error'); // Use enhanced notification
          } finally {
              setSaving(false);
          }
@@ -522,14 +536,14 @@ const OpenFolder = () => {
 
          // Provide feedback
          if (errors.length > 0) {
-            showNotification(`Applied changes to ${appliedFiles.length} files.\nEncountered errors:\n- ${errors.join('\n- ')}`);
+            showNotification(`Applied changes to ${appliedFiles.length} files.Encountered errors:- ${errors.join(' - ')}`, 'warning'); // Use enhanced notification
          } else if (appliedFiles.length > 0) {
-            showNotification(`Successfully applied changes to ${appliedFiles.length} files.`);
+            showNotification(`Successfully applied changes to ${appliedFiles.length} files.`, 'success'); // Use enhanced notification
              // All applied successfully, potentially clear the changedFiles state or refresh fully
              // setChangedFiles({}); // Option: Clear changes after successful Apply All
              // handleRefresh(); // Option: Full refresh
          } else {
-            showNotification("No changes were applied.");
+            showNotification("No changes were applied.", "info"); // Use enhanced notification
          }
 
          // Trigger automatic refresh after applying all changes (regardless of errors?)
@@ -655,42 +669,43 @@ const OpenFolder = () => {
             <Box className="actions-bar">
                 {!folderHandle ? (
                     <>
-                        <Button variant="contained" color="primary" onClick={handleOpenFolder} startIcon={<FolderOpenIcon />}>
+                        <Button variant="contained" color="primary" onClick={handleOpenFolder} startIcon={<FolderOpenIcon />} size="medium">
                             Open Folder
                         </Button>
-                        <Typography variant="body2" className="alert-typography">
+                        <Typography variant="body2" className="alert-typography" sx={{ ml: 1 }}>
                             Select a project folder to begin
                         </Typography>
                     </>
                 ) : (
                     <>
                          <Tooltip title="Open a different folder">
-                             <Button variant="outlined" color="secondary" onClick={handleOpenFolder} startIcon={<FolderOpenIcon />}>
-                                Open Folder
+                             <Button variant="outlined" color="secondary" onClick={handleOpenFolder} startIcon={<FolderOpenIcon />} size="small">
+                                {folderHandle.name}
                              </Button>
                          </Tooltip>
                          <Tooltip title="Refresh directory tree and conversations (Ctrl+R)">
                              <IconButton onClick={handleRefresh} disabled={loading} size="small" color="secondary">
-                                 {loading ? <CircularProgress size={20} /> : <RefreshIcon />}
+                                 {loading ? <CircularProgress size={20} color="inherit" /> : <RefreshIcon />}
                              </IconButton>
                          </Tooltip>
                          <Tooltip title="Start a new chat conversation">
-                             <Button variant="contained" color="secondary" onClick={handleStartNewConversation} startIcon={<AddCommentIcon />} disabled={loading}>
+                             <Button variant="contained" color="secondary" onClick={handleStartNewConversation} startIcon={<AddCommentIcon />} disabled={loading || saving} size="small">
                                 New Chat
                              </Button>
                          </Tooltip>
 
-                         {/* Conditional View and Apply buttons */}
+                         {/* Conditional View and Apply buttons - Visible when changes exist */}
                          {Object.keys(changedFiles).length > 0 && (
-                             <>
+                             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', marginLeft: '20px' }}> {/* Push to right */}
                                   <Tooltip title="Toggle between Diff View and Editor View">
                                      <Button
                                          variant="outlined"
                                          color="secondary"
                                          onClick={() => setIsDiffView(!isDiffView)}
                                          startIcon={isDiffView ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                                         size="small"
                                      >
-                                         {isDiffView ? 'Editor View' : 'Diff View'}
+                                         {isDiffView ? 'Editor' : 'Diff'}
                                      </Button>
                                  </Tooltip>
                                  {isDiffView && (
@@ -700,6 +715,7 @@ const OpenFolder = () => {
                                              color="secondary"
                                              onClick={() => setCollapseUnchanged(!collapseUnchanged)}
                                              startIcon={collapseUnchanged ? <ExpandMoreIcon/> : <ExpandLessIcon/>}
+                                             size="small"
                                          >
                                              {collapseUnchanged ? 'Expand' : 'Collapse'}
                                          </Button>
@@ -711,6 +727,7 @@ const OpenFolder = () => {
                                         color="secondary"
                                         onClick={() => setLineWrapEnabled(!lineWrapEnabled)}
                                         startIcon={<WrapTextIcon />}
+                                        size="small"
                                     >
                                         {lineWrapEnabled ? 'No Wrap' : 'Wrap'}
                                     </Button>
@@ -722,7 +739,8 @@ const OpenFolder = () => {
                                              color="primary"
                                              onClick={applyChanges}
                                              disabled={saving || !selectedFilePath || changedFiles[selectedFilePath]?.original === changedFiles[selectedFilePath]?.modified}
-                                             startIcon={saving ? <CircularProgress size={20} color="inherit"/> :<SaveIcon />}
+                                             startIcon={saving ? <CircularProgress size={16} color="inherit"/> :<SaveIcon fontSize='small'/>}
+                                             size="small"
                                          >
                                              Apply
                                          </Button>
@@ -735,13 +753,14 @@ const OpenFolder = () => {
                                              color="primary"
                                              onClick={applyAllChanges}
                                              disabled={saving || Object.values(changedFiles).every(f => f.original === f.modified)}
-                                             startIcon={saving ? <CircularProgress size={20} color="inherit"/> :<SaveAltIcon />}
+                                             startIcon={saving ? <CircularProgress size={16} color="inherit"/> :<SaveAltIcon fontSize='small'/>}
+                                             size="small"
                                          >
                                              Apply All
                                          </Button>
                                      </span>
                                  </Tooltip>
-                             </>
+                             </Box>
                          )}
                     </>
                 )}
@@ -753,11 +772,11 @@ const OpenFolder = () => {
                     <>
                         {/* Directory Tree Panel */}
                         <Box className="directory-tree-panel" style={{ width: directoryWidth }}>
-                             <Typography className="directory-tree-header" variant="subtitle2" noWrap>
+                             {/* <Typography className="directory-tree-header" variant="subtitle2" noWrap>
                                 {folderHandle?.name || 'Directory'}
-                            </Typography>
+                            </Typography> */}
                             {/* Search Input */}
-                             <Box sx={{ px: 2, pt: 1.5, pb: 0.5, borderBottom: isSearching ? '1px solid' : 'none', borderColor: 'divider' }}>
+                             <Box sx={{ px: 1.5, pt: 1, pb: 0.5, borderBottom: '1px solid', borderColor: 'divider' }}>
                                  <TextField
                                      fullWidth
                                      size="small"
@@ -844,7 +863,7 @@ const OpenFolder = () => {
                                 onRefreshRequest={handleRefresh} // Pass refresh handler
                                 tokenLimit={tokenLimit}       // Pass tokenLimit state
                                 setTokenLimit={setTokenLimit} // Pass setter for tokenLimit
-                                // handleMessageClick is removed if not used
+                                setIsDiffView={setIsDiffView} // Pass setter for DiffView
                             />
                         </Box>
                     </>
@@ -868,7 +887,7 @@ const OpenFolder = () => {
                  <Box className="footer-info-section">
                     <Tooltip title={footerInfoVisible ? "Hide Status Bar Info" : "Show Status Bar Info"}>
                         <IconButton size="small" onClick={toggleFooterInfo} sx={{color: 'text.secondary'}}>
-                           <InfoIcon fontSize='inherit'/>
+                           {footerInfoVisible ? <VisibilityOffIcon fontSize='inherit'/> : <VisibilityIcon fontSize='inherit' />}
                         </IconButton>
                     </Tooltip>
                      {footerInfoVisible && folderHandle && (
@@ -886,7 +905,7 @@ const OpenFolder = () => {
                                  </Tooltip>
                             )}
                              <Tooltip title={`Remaining Credits: ${saldo?.toFixed(2)}`}>
-                                <Typography variant="caption" className="footer-status">
+                                <Typography variant="caption" className="footer-status" sx={{ color: saldo < 5 ? 'warning.main' : 'text.secondary' }}>
                                     ${saldo?.toFixed(2)} Credits
                                 </Typography>
                              </Tooltip>

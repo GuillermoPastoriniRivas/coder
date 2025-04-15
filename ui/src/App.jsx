@@ -9,6 +9,7 @@ import Pricing from './components/Pricing.jsx';
 import Docs from './components/Docs.jsx';
 import CallHistory from './components/CallHistory.jsx'; // Import the new component
 import LandingPage from './components/LandingPage.jsx'; // Import the new LandingPage component
+import Legal from './components/Legal.jsx'; // Import the new Legal component
 import { useAuth } from './context/AuthContext';
 import React from 'react';
 import './styles/App.css'; // Keep custom styles
@@ -65,7 +66,9 @@ function MainApp() {
                             <Route path="/signup" element={<SignUp />} />
                              {/* Public Docs route */}
                              <Route path="/docs" element={<Docs />} />
-                             {/* Add pricing here if public */}
+                             {/* Public Legal route */}
+                             <Route path="/legal" element={<Legal />} />
+                             {/* Add pricing here if public */}\
                              {/* <Route path="/pricing" element={<Pricing />} /> */}
                              {/* Fallback for any other route when logged out, redirect to Landing Page */}
                             <Route path="*" element={<LandingPage />} />
@@ -78,12 +81,13 @@ function MainApp() {
                             <Route path="/pricing" element={<Pricing />} />
                             <Route path="/docs" element={<Docs />} />
                             <Route path="/call-history" element={<CallHistory />} /> {/* Added route for Call History */}
+                            <Route path="/legal" element={<Legal />} /> {/* Added Legal route */}
                             {/* Root path shows the main OpenFolder component */}
                             <Route path="/" element={<OpenFolder />} />
                             {/* Fallback for any other route when logged in */}
                             <Route path="*" element={<OpenFolder />} />
                         </>
-                    )}
+                    )}\
                 </Routes>
             </Box>
         </Box>

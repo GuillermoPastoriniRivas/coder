@@ -27,6 +27,7 @@ export default function LandingPage() {
                         <Box>
                             <Button color="inherit" component={RouterLink} to="/" sx={{ color: 'text.primary' }}>Home</Button>
                             <Button color="inherit" component={RouterLink} to="/docs" sx={{ color: 'text.primary' }}>Docs</Button>
+                            {/* Link to Legal added in the footer */}
                             <Button color="inherit" component={RouterLink} to="/login" sx={{ color: 'text.primary' }}>Login</Button>
                         </Box>
                     </Toolbar>
@@ -255,9 +256,9 @@ export default function LandingPage() {
 
                      </Typography>
                      {/* Add links if needed */}
-                      {/* <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 1 }}>
-                        <Link component={RouterLink} to="/privacy" color="inherit">Privacy Policy</Link> | <Link component={RouterLink} to="/terms" color="inherit">Terms of Service</Link>
-                      </Typography> */}
+                      <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 1 }}>
+                        <Link component={RouterLink} to="/legal" color="inherit">Privacy Policy & Terms of Service</Link>
+                      </Typography>
                  </Container>
              </Box>
         </Box>
