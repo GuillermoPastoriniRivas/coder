@@ -63,6 +63,11 @@ export default function Menu() {
         navigate('/call-history');
     };
 
+    const handlePricingClick = () => {
+        handleMenuClose();
+        navigate('/pricing');
+    };
+
 
     // Get initials for Avatar fallback
     const getInitials = (userEmail) => {
@@ -77,14 +82,14 @@ export default function Menu() {
                 {/* Logo/Brand Name */}
                  <Button color="inherit" component={RouterLink} to="/" sx={{ padding: 0 }}> {/* Link to home */}
                      <Typography variant="h6" component="div" sx={{ color: 'text.primary', fontWeight: 'bold' }}>
-                        IIBooster
+                     🌊 Boostware
                     </Typography>
                  </Button>
 
                 {/* Right side items */}
                 <Box sx={{ display: 'flex', alignItems: 'center' }}> {/* Use gap for spacing */}
                      {/* Credits Display */}
-                    <Tooltip title={`Remaining Credits: $${saldo?.toFixed(2)}`}>
+                    {/* <Tooltip title={`Remaining Credits: $${saldo?.toFixed(2)}`}>
                         <Button
                             color="inherit"
                             component={RouterLink}
@@ -101,7 +106,7 @@ export default function Menu() {
                         >
                              {saldo?.toFixed(2)} Credits
                         </Button>
-                    </Tooltip>
+                    </Tooltip> */}
 
                     {/* Navigation Buttons */}
                      <Button color="inherit" component={RouterLink} to="/" sx={{ display: { xs: 'none', md: 'inline-flex' }, color: 'text.secondary', textTransform: 'none', '&:hover': { bgcolor: 'action.hover' } }}>Home</Button> {/* Added Home button */}
@@ -161,9 +166,9 @@ export default function Menu() {
                             <Typography variant="body2" color="text.secondary">{email}</Typography>
                         </MenuItem>
                         {/* Pricing/Credits link - Now always visible */}
-                         {/* <MenuItem component={RouterLink} to="/pricing">
-                            <MonetizationOnIcon fontSize="small" sx={{ mr: 1, color: saldo < 5 ? 'warning.main' : 'success.main' }} /> Add Credits (${saldo?.toFixed(2)})
-                         </MenuItem> */}
+                         <MenuItem onClick={handlePricingClick}>
+                            <MonetizationOnIcon fontSize="small" sx={{ mr: 1, color: saldo < 5 ? 'warning.main' : 'success.main' }} /> Add Credits {saldo?.toFixed(2)} 
+                         </MenuItem> 
                          {/* Home MenuItem removed */}
                          <MenuItem onClick={handleCallHistoryClick}>
                              <HistoryIcon fontSize="small" sx={{ mr: 1 }} /> History
