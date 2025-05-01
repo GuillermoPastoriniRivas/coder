@@ -413,7 +413,7 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
         - Analyze the user's request and the provided code snippets.
         - Provide a concise and clear explanation answering the user's question (e.g., "Where are filters added?", "What does this function do?").
         - Base your explanation *strictly* on the code shown in the `fragmento_codigo` fields within the JSON context.
-        - **Crucially, reference the specific file (`archivo`) and line numbers (`linea_inicio` to `linea_fin`)** for the code snippets that support your explanation. For example: "Filters are added in `src/components/Filter.js` (lines 15-28)..."
+        - Reference the specific file and line numbers (`linea_inicio` to `linea_fin`)** for the code snippets that support your explanation. For example: "Filters are added in `src/components/Filter.js` (lines 15-28)..."
         - If the provided snippets do not contain the answer, explicitly state that the necessary information is not present in the retrieved context. Do not guess or infer information beyond the snippets.
         - Do *not* suggest code modifications unless the user explicitly asked for them in their original request (`User Request` above). This model's primary function is code explanation and search based on the provided context.
         - Respond in the same language as the `User Request`.

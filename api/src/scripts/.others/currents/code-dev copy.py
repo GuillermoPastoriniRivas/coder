@@ -21,7 +21,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 # AIzaSyCZ5VeaVzxDBU4tPhvqjV7858NFfiMCWC0
 # AIzaSyDftYyy8HKgn7hJqA2awBGG6Ub1m6067co
 # AIzaSyA2wLWYXRspdK3Q9Yix5QKsCSSbfgdTiG4
-client = genai.Client(api_key="AIzaSyCUDyQ7MwxmXSvK1yWYUNtMZlGtk4S9g74")
+client = genai.Client(api_key="AIzaSyDftYyy8HKgn7hJqA2awBGG6Ub1m6067co")
 # top_k = 50 # Removed top_k
 
 input_price_usd_per_M = 1.1
@@ -389,13 +389,6 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
         [ENTIRE MODIFIED FILE CONTENT]
         --------------------
 
-        ### Coding Best Practices
-            AVOID add comments to the code you write, unless the user asks you to.
-            When making changes to files, first understand the file's code conventions. Mimic code style, use existing libraries and utilities, and follow existing patterns.
-            NEVER assume that a given library is available, even if it is well known. Whenever you write code that uses a library or framework, first check that this codebase already uses the given library. For example, you might look at neighboring files, or check the package.json (or cargo.toml, and so on depending on the language).
-            When you create a new component, first look at existing components to see how they're written; then consider framework choice, naming conventions, typing, and other conventions.
-            When you edit a piece of code, first look at the code's surrounding context (especially its imports) to understand the code's choice of frameworks and libraries. Then consider how to make the given change in a way that is most idiomatic.
-
         ### Critical Rules for Modification and Output:
 
         1.  **Minimal Change Principle:**
@@ -431,7 +424,7 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
         <ENTIRE NEW FILE CONTENT>
         --------------------
 
-        ### FINAL CHECK: Ensure your output strictly follows the format and contains only the necessary, minimal code changes requested by the user withput comments, preserving everything else.
+        ### FINAL CHECK: Ensure your output strictly follows the format and contains only the necessary, minimal code changes requested by the user, preserving everything else.
     """
 
     max_retries = 3
