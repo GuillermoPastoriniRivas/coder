@@ -17,31 +17,31 @@ export default function Legal() {
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
                     <Typography variant="body1" paragraph>
-                        Welcome to IIBooster! These terms and conditions outline the rules and regulations for the use of IIBooster's Website, located at [Your Website URL].
+                        Welcome to Faster! These terms and conditions outline the rules and regulations for the use of Faster's Website, located at [Your Website URL].
                     </Typography>
                     <Typography variant="body1" paragraph>
-                        By accessing this website we assume you accept these terms and conditions. Do not continue to use IIBooster if you do not agree to take all of the terms and conditions stated on this page.
+                        By accessing this website we assume you accept these terms and conditions. Do not continue to use Faster if you do not agree to take all of the terms and conditions stated on this page.
                     </Typography>
                     <Typography variant="subtitle1" gutterBottom>
                         1. License
                     </Typography>
                     <Typography variant="body2" paragraph>
-                        Unless otherwise stated, IIBooster and/or its licensors own the intellectual property rights for all material on IIBooster. All intellectual property rights are reserved. You may access this from IIBooster for your own personal use subjected to restrictions set in these terms and conditions.
+                        Unless otherwise stated, Faster and/or its licensors own the intellectual property rights for all material on Faster. All intellectual property rights are reserved. You may access this from Faster for your own personal use subjected to restrictions set in these terms and conditions.
                     </Typography>
                     <Typography variant="body2" paragraph>
                         You must not:
                         <ul>
-                            <li>Republish material from IIBooster</li>
-                            <li>Sell, rent or sub-license material from IIBooster</li>
-                            <li>Reproduce, duplicate or copy material from IIBooster</li>
-                            <li>Redistribute content from IIBooster</li>
+                            <li>Republish material from Faster</li>
+                            <li>Sell, rent or sub-license material from Faster</li>
+                            <li>Reproduce, duplicate or copy material from Faster</li>
+                            <li>Redistribute content from Faster</li>
                         </ul>
                     </Typography>
                      <Typography variant="subtitle1" gutterBottom>
                         2. User Comments
                     </Typography>
                      <Typography variant="body2" paragraph>
-                        Parts of this website offer an opportunity for users to post and exchange opinions and information. IIBooster does not filter, edit, publish or review Comments prior to their presence on the website. Comments do not reflect the views and opinions of IIBooster, its agents and/or affiliates. Comments reflect the views and opinions of the person who posts their views and opinions.
+                        Parts of this website offer an opportunity for users to post and exchange opinions and information. Faster does not filter, edit, publish or review Comments prior to their presence on the website. Comments do not reflect the views and opinions of Faster, its agents and/or affiliates. Comments reflect the views and opinions of the person who posts their views and opinions.
                      </Typography>
                      <Typography variant="subtitle1" gutterBottom>
                         3. Disclaimer
@@ -61,7 +61,7 @@ export default function Legal() {
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
                     <Typography variant="body1" paragraph>
-                        Your privacy is important to us. It is IIBooster's policy to respect your privacy regarding any information we may collect from you across our website, [Your Website URL], and other sites we own and operate.
+                        Your privacy is important to us. It is Faster's policy to respect your privacy regarding any information we may collect from you across our website, [Your Website URL], and other sites we own and operate.
                     </Typography>
                     <Typography variant="subtitle1" gutterBottom>
                         1. Information We Collect
