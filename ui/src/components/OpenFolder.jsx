@@ -1004,7 +1004,7 @@ const OpenFolder = () => {
                       )}
                  </Box>
                  {/* Add other footer elements if needed */}
-                 <Typography variant="caption"> Faster v1.0 </Typography>
+                 <Typography variant="caption"> Boostware v1.0 </Typography>
              </Box>
         </Box>
     );

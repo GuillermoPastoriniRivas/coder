@@ -19,13 +19,10 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 # ***REMOVED***
 # ***REMOVED***
-# ***REMOVED*** previus
+# ***REMOVED***
 # ***REMOVED***
 client = genai.Client(api_key="***REMOVED***")
 # top_k = 50 # Removed top_k
-
-api_key_openai = "***REMOVED***"
-client_openai = OpenAI(api_key=api_key_openai)
 
 input_price_usd_per_M = 1.1
 output_price_usd_per_M = 4.4
@@ -392,17 +389,10 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
         [ENTIRE MODIFIED FILE CONTENT]
         --------------------
 
-        ### Coding Best Practices
-            AVOID add comments to the code you write, unless the user asks you to.
-            When making changes to files, first understand the file's code conventions. Mimic code style, use existing libraries and utilities, and follow existing patterns.
-            NEVER assume that a given library is available, even if it is well known. Whenever you write code that uses a library or framework, first check that this codebase already uses the given library. For example, you might look at neighboring files, or check the package.json (or cargo.toml, and so on depending on the language).
-            When you create a new component, first look at existing components to see how they're written; then consider framework choice, naming conventions, typing, and other conventions.
-            When you edit a piece of code, first look at the code's surrounding context (especially its imports) to understand the code's choice of frameworks and libraries. Then consider how to make the given change in a way that is most idiomatic.
-
         ### Critical Rules for Modification and Output:
 
         1.  **Minimal Change Principle:**
-            *   Modify ONLY the specific lines/sections of code necessary to implement the User Request. WITHOUT adding any comments.
+            *   Modify ONLY the specific lines/sections of code necessary to implement the User Request. WITHOUT adding unnecessary comments.
             *   Keep all other code completely unchanged — including comments, formatting, naming, and structure — unless explicitly instructed otherwise
             *   Maintain the original style of the code without performing any refactoring, improvements, or additions unless the user clearly asks for them.
 
@@ -422,9 +412,6 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
         5.  **Accuracy:**
             *   Only output files that were actually modified. If no files need changes based on the request, output nothing.
 
-        6. IMPORTANT! **Avoid Explanation and Comments:** 
-            *   The output should be purely the modified code. It's not necesary to explain the changes or provide comments within the code.
-
         ### Example Output Structure:
         --------------------
         api/src/utils/logger.ts
@@ -437,7 +424,7 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
         <ENTIRE NEW FILE CONTENT>
         --------------------
 
-        ### FINAL CHECK: Ensure your output strictly follows the format and contains only the necessary, minimal code changes requested by the user withput comments, preserving everything else.
+        ### FINAL CHECK: Ensure your output strictly follows the format and contains only the necessary, minimal code changes requested by the user, preserving everything else.
     """
 
     max_retries = 3
@@ -447,15 +434,12 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
     while retry_count < max_retries:
         try:
             start_time = time.time() # Start timer
-            
+            response = client.models.generate_content(
+                model="gemini-2.5-pro-exp-03-25", contents=prompt
+            )
             end_time = time.time() # End timer
             duration = end_time - start_time # Calculate duration
 
-
-            response = client.models.generate_content(
-                model="gemini-2.5-flash-preview-05-20", contents=prompt
-                # model="gemini-2.0-pro-exp-02-05", contents=prompt
-            )
             # Robust check for response structure before accessing content
             if response and response.text and response.usage_metadata.candidates_token_count:
                 content = response.text
@@ -472,25 +456,6 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
             else:
                  # Handle cases where the response structure is not as expected
                  raise AttributeError("Unexpected response structure from API.")
-
-            # response = client_openai.responses.create(
-            #     model="o4-mini",
-            #     input=[
-            #         {
-            #             "role": "user",
-            #             "content": prompt,
-            #         }
-            #     ]
-            # )
-            
-            # try:
-            #     usage = response.usage
-            #     if usage:
-            #         input_tokens = usage.input_tokens
-            #         output_tokens = usage.output_tokens
-            #         _update_tokens_usage(input_tokens, output_tokens, carpeta_proyecto, "o3-mini", userId, duration)
-            # except Exception as e:
-            #     print(f"Error updating token usage: {e}")
 
 
         except (TypeError, AttributeError, IndexError) as e: # Catch potential errors accessing potentially None objects or incorrect structure
