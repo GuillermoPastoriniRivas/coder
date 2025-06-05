@@ -28,14 +28,14 @@ export default function Docs() {
     // Use Box for padding and centering, maxWidth limits content width
     <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 900, mx: 'auto' }}>
       <Typography variant="h3" component="h1" gutterBottom align="center" sx={{ mb: 4 }}>
-        Faster Documentation
+        Boostware Documentation
       </Typography>
 
 
 
        <InfoCard title="Understanding Tokens & Credits" icon={<PriceCheckIcon />}>
           <Typography variant="body1" paragraph>
-            Faster operates on a credit system based on 'tokens'. Think of tokens as pieces of words or code used by the AI model.
+            Boostware operates on a credit system based on 'tokens'. Think of tokens as pieces of words or code used by the AI model.
           </Typography>
            <List dense sx={{ pl: 2 }}>
                 <ListItem sx={{ py: 0.5 }}>
@@ -134,9 +134,9 @@ export default function Docs() {
       </InfoCard>
 
        <InfoCard title="Frequently Asked Questions" icon={<HelpOutlineIcon />}>
-           <Typography variant="subtitle1" gutterBottom>Q: How does Faster access local files?</Typography>
+           <Typography variant="subtitle1" gutterBottom>Q: How does Boostware access local files?</Typography>
            <Typography variant="body2" paragraph>
-             Faster uses the modern <Link href="https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API" target="_blank" rel="noopener noreferrer">File System Access API</Link> available in compatible browsers (like Chrome, Edge). You explicitly grant permission for the application to read and write to the selected folder. This access is temporary and usually scoped to your session.
+             Boostware uses the modern <Link href="https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API" target="_blank" rel="noopener noreferrer">File System Access API</Link> available in compatible browsers (like Chrome, Edge). You explicitly grant permission for the application to read and write to the selected folder. This access is temporary and usually scoped to your session.
            </Typography>
 
            <Typography variant="subtitle1" gutterBottom>Q: Is my code uploaded anywhere?</Typography>
