@@ -19,13 +19,10 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 # ***REMOVED***
 # ***REMOVED***
-# ***REMOVED*** previus
+# ***REMOVED***
 # ***REMOVED***
 client = genai.Client(api_key="***REMOVED***")
 # top_k = 50 # Removed top_k
-
-api_key_openai = "***REMOVED***"
-client_openai = OpenAI(api_key=api_key_openai)
 
 input_price_usd_per_M = 1.1
 output_price_usd_per_M = 4.4
@@ -395,7 +392,7 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
         ### Critical Rules for Modification and Output:
 
         1.  **Minimal Change Principle:**
-            *   Modify ONLY the specific lines/sections of code necessary to implement the User Request. WITHOUT adding any comments.
+            *   Modify ONLY the specific lines/sections of code necessary to implement the User Request. WITHOUT adding unnecessary comments.
             *   Keep all other code completely unchanged — including comments, formatting, naming, and structure — unless explicitly instructed otherwise
             *   Maintain the original style of the code without performing any refactoring, improvements, or additions unless the user clearly asks for them.
 
@@ -414,9 +411,6 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
 
         5.  **Accuracy:**
             *   Only output files that were actually modified. If no files need changes based on the request, output nothing.
-
-        6. IMPORTANT! **Avoid Explanation and Comments:** 
-            *   The output should be purely the modified code. It's not necesary to explain the changes or provide comments within the code.
 
         ### Example Output Structure:
         --------------------
@@ -440,15 +434,12 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
     while retry_count < max_retries:
         try:
             start_time = time.time() # Start timer
-            
+            response = client.models.generate_content(
+                model="gemini-2.5-pro-exp-03-25", contents=prompt
+            )
             end_time = time.time() # End timer
             duration = end_time - start_time # Calculate duration
 
-
-            response = client.models.generate_content(
-                model="gemini-2.5-flash-preview-05-20", contents=prompt
-                # model="gemini-2.0-pro-exp-02-05", contents=prompt
-            )
             # Robust check for response structure before accessing content
             if response and response.text and response.usage_metadata.candidates_token_count:
                 content = response.text
@@ -465,25 +456,6 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
             else:
                  # Handle cases where the response structure is not as expected
                  raise AttributeError("Unexpected response structure from API.")
-
-            # response = client_openai.responses.create(
-            #     model="o4-mini",
-            #     input=[
-            #         {
-            #             "role": "user",
-            #             "content": prompt,
-            #         }
-            #     ]
-            # )
-            
-            # try:
-            #     usage = response.usage
-            #     if usage:
-            #         input_tokens = usage.input_tokens
-            #         output_tokens = usage.output_tokens
-            #         _update_tokens_usage(input_tokens, output_tokens, carpeta_proyecto, "o3-mini", userId, duration)
-            # except Exception as e:
-            #     print(f"Error updating token usage: {e}")
 
 
         except (TypeError, AttributeError, IndexError) as e: # Catch potential errors accessing potentially None objects or incorrect structure

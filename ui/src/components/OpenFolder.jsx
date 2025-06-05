@@ -46,7 +46,7 @@ const languageMap = { // Keep for mapping extensions to languages if needed by o
 const MIN_PANEL_WIDTH = 150; // Minimum width for resizable panels
 const DEFAULT_DIR_WIDTH = 280;
 const DEFAULT_CHAT_WIDTH = 350;
-const DEFAULT_TOKEN_LIMIT = 20000; // Default max tokens for context
+const DEFAULT_TOKEN_LIMIT = 200000; // Default max tokens for context
 
 const OpenFolder = () => {
     // State Variables
@@ -68,6 +68,7 @@ const OpenFolder = () => {
     const [footerInfoVisible, setFooterInfoVisible] = useState(true); // Moved footer state here
     const [searchTerm, setSearchTerm] = useState(''); // State for directory search
     const [lineWrapEnabled, setLineWrapEnabled] = useState(false); // State for line wrap toggle
+    const [isDraggingOver, setIsDraggingOver] = useState(false); // State for drag-and-drop visual feedback
 
     // Refs
     const mainContentRef = useRef(null); // Ref for the main content area for resizing calculations
@@ -177,37 +178,12 @@ const OpenFolder = () => {
         }
     };
 
-    // Open Folder Dialog
-    const handleOpenFolder = async () => {
-        try {
-            const handle = await window.showDirectoryPicker();
-            setFolderHandle(handle);
-            setLoading(true); // Show loading while reading files
-            setSelectedConversation(null); // Reset conversation
-            setChangedFiles({}); // Clear changes
-            setSelectedFilePath(null); // Clear selected file
-            setSelectedFiles([]); // Clear context files
-            clearSelectedSubFolders(); // Clear context folders
-            setSearchTerm(''); // Clear search term
-            const files = await getFilesFromDirectory(handle);
-            setDirectoryTree(files);
-            await syncAndFetchConversations(handle, files); // Sync and fetch conversations after opening
-        } catch (error) {
-            console.error("Error opening folder:", error);
-            if (error.name !== 'AbortError') { // Don't show notification if user cancelled
-                showNotification(`Error opening folder: ${error.message}`, 'error');
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
-
      // Recursive function to read directory contents
-    const getFilesFromDirectory = async (currentHandle, basePath = '') => {
+    const getFilesFromDirectory = useCallback(async (currentHandle, basePath = '') => {
         const entries = [];
         // Standard web API exclusion lists + common generated/lock files
-        const excludedNames = new Set(['.git', '.vscode', '.idea', 'node_modules', 'sources', 'build', 'dist', 'target', 'out', 'coverage', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']);
-        const allowedExtensions = new Set(['md', 'js', 'ts', 'tsx', 'jsx', 'json', 'css', 'scss', 'html', 'py', 'java', 'go', 'rb', 'php', 'swift', 'kt', 'yaml', 'yml', 'xml', 'sh', 'config', 'env']); // Add more as needed
+        const excludedNames = new Set(['.git', '.vscode', '.idea', 'node_modules', 'sources', 'build', 'dist', 'target', 'out', 'venv', 'coverage', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']);
+        const allowedExtensions = new Set(['md', 'js', 'ts', 'tsx', 'jsx', 'json', 'css', 'scss', 'html', 'py', 'java', 'go', 'rb', 'php', 'swift', 'kt', 'yaml', 'yml', 'xml', 'sh', 'config', 'env', 'txt']); // Add more as needed
 
         for await (const entry of currentHandle.values()) {
              // Skip excluded names and hidden files/folders (starting with '.')
@@ -246,10 +222,11 @@ const OpenFolder = () => {
              return a.name.localeCompare(b.name);       // Both are same type, sort by name
         });
         return entries;
-    };
+    }, []); // Empty dependency, relies only on arguments and constants
+
 
     // Sync directory structure with backend and fetch conversations
-    const syncAndFetchConversations = async (handle, currentTree) => {
+    const syncAndFetchConversations = useCallback(async (handle, currentTree) => {
         console.log("Handle", handle);
          if (!handle) return;
         setLoading(true);
@@ -268,7 +245,108 @@ const OpenFolder = () => {
          } finally {
              setLoading(false);
          }
-     };
+     }, [setConversations]); // Dependencies: setConversations
+
+
+    // Refactored function to handle the core logic of opening a folder
+    const openAndProcessFolder = useCallback(async (handle) => {
+        if (!handle) return;
+        try {
+            setLoading(true); // Show loading while reading files
+            // Reset states before processing new folder
+            setSelectedConversation(null);
+            setChangedFiles({});
+            setSelectedFilePath(null);
+            setSelectedFiles([]);
+            clearSelectedSubFolders();
+            setSearchTerm('');
+            setExpandedDirectories({}); // Collapse all directories
+
+            setFolderHandle(handle); // Set the handle in context/state *after* resetting
+
+            const files = await getFilesFromDirectory(handle);
+            setDirectoryTree(files);
+            await syncAndFetchConversations(handle, files); // Sync and fetch conversations
+
+        } catch (error) {
+            console.error("Error processing folder:", error);
+             // AbortError check is handled within handleOpenFolder, but keep generic error here
+            showNotification(`Error processing folder ${handle.name}: ${error.message}`, 'error');
+            // Reset handle if processing failed significantly?
+            // setFolderHandle(null);
+            // setDirectoryTree([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [setFolderHandle, getFilesFromDirectory, setDirectoryTree, syncAndFetchConversations, clearSelectedSubFolders]); // Add dependencies
+
+
+    // Open Folder Dialog (using button click)
+    const handleOpenFolder = useCallback(async () => {
+        try {
+            const handle = await window.showDirectoryPicker();
+            await openAndProcessFolder(handle); // Call the common processing logic
+        } catch (error) {
+            console.error("Error opening folder picker:", error);
+            if (error.name !== 'AbortError') { // Don't show notification if user cancelled
+                showNotification(`Error opening folder: ${error.message}`, 'error');
+            }
+            // No need to setLoading(false) here as it's handled in openAndProcessFolder
+        }
+    }, [openAndProcessFolder]); // Dependency on the refactored function
+
+
+    // --- Drag and Drop Handlers ---
+    const handleDrop = useCallback(async (event) => {
+        event.preventDefault();
+        setIsDraggingOver(false);
+
+        if (event.dataTransfer.items) {
+            for (const item of event.dataTransfer.items) {
+                // Use getAsFileSystemHandle for modern browsers
+                if (typeof item.getAsFileSystemHandle === 'function') {
+                    try {
+                        const handle = await item.getAsFileSystemHandle();
+                        if (handle.kind === 'directory') {
+                            console.log('Directory dropped:', handle.name);
+                            await openAndProcessFolder(handle); // Call the processing function
+                            break; // Process only the first directory found
+                        } else {
+                            showNotification('Please drop a folder, not a file.', 'warning');
+                        }
+                    } catch (err) {
+                        console.error('Error getting file system handle:', err);
+                        showNotification(`Error accessing dropped item: ${err.message}`, 'error');
+                    }
+                } else {
+                     // Fallback or notification for older browsers/methods if needed
+                     showNotification('Drag and drop is not fully supported in this browser version for folders.', 'warning');
+                     break;
+                }
+            }
+        } else {
+            // Handle case where items are not present (less common)
+            console.warn('No items found in dataTransfer.');
+        }
+    }, [openAndProcessFolder]); // Add dependency
+
+    const handleDragOver = useCallback((event) => {
+        event.preventDefault();
+        // Check if files are being dragged
+        if (event.dataTransfer.types.includes('Files')) {
+            setIsDraggingOver(true);
+        }
+    }, []);
+
+    const handleDragLeave = useCallback((event) => {
+        event.preventDefault();
+        // Check if the leave target is outside the main container to prevent flickering
+        // A simple approach is to just set it to false, might need refinement if nested elements cause issues.
+         // More robust check: if relatedTarget is null or outside the container
+         if (!event.currentTarget.contains(event.relatedTarget)) {
+            setIsDraggingOver(false);
+         }
+    }, []);
 
      // Helper to simplify tree if backend doesn't need full content
      const simplifyTree = (nodes) => {
@@ -318,7 +396,7 @@ const OpenFolder = () => {
         } finally {
             setLoading(false);
         }
-    }, [folderHandle, selectedFilePath, changedFiles, findFileByPath, setDirectoryTree, setConversations]); // Added setConversations
+    }, [folderHandle, selectedFilePath, changedFiles, findFileByPath, getFilesFromDirectory, setDirectoryTree, syncAndFetchConversations]); // Added getFilesFromDirectory and syncAndFetchConversations
 
 
     // Expand/Collapse Directory
@@ -412,6 +490,20 @@ const OpenFolder = () => {
           toggleSubFolder(folderPath); // Use the existing toggle from context
      };
 
+    // Recursively gets a file handle, creating directories if needed
+    const getFileHandleRecursive = useCallback(async (dirHandle, pathParts, create = false) => {
+         if (pathParts.length === 1) {
+             // Last part is the filename
+             return dirHandle.getFileHandle(pathParts[0], { create });
+         }
+         // Get subdirectory handle
+         const dirName = pathParts[0];
+         const subDirHandle = await dirHandle.getDirectoryHandle(dirName, { create });
+         // Recurse into subdirectory
+         return getFileHandleRecursive(subDirHandle, pathParts.slice(1), create);
+     }, []);
+
+
     // Apply changes for the *currently selected* file
     const applyChanges = useCallback(async () => {
         if (!selectedFilePath || !changedFiles[selectedFilePath] || !folderHandle) return;
@@ -470,7 +562,7 @@ const OpenFolder = () => {
          } finally {
              setSaving(false);
          }
-    }, [selectedFilePath, changedFiles, folderHandle, directoryTree, findFileByPath, setDirectoryTree, handleRefresh]); // Added setDirectoryTree and handleRefresh to dependencies
+    }, [selectedFilePath, changedFiles, folderHandle, directoryTree, findFileByPath, setDirectoryTree, handleRefresh, getFileHandleRecursive]); // Added dependencies
 
 
     // Apply changes for *all* files listed in the changedFiles state
@@ -551,23 +643,9 @@ const OpenFolder = () => {
 
          setSaving(false); // Move saving state update here, after refresh
 
-    }, [changedFiles, folderHandle, directoryTree, findFileByPath, setDirectoryTree, handleRefresh]); // Added setDirectoryTree and handleRefresh to dependencies
+    }, [changedFiles, folderHandle, directoryTree, findFileByPath, setDirectoryTree, handleRefresh, getFileHandleRecursive]); // Added dependencies
 
     // --- Helper functions for file handles and tree updates ---
-
-
-    // Recursively gets a file handle, creating directories if needed
-    const getFileHandleRecursive = async (dirHandle, pathParts, create = false) => {
-         if (pathParts.length === 1) {
-             // Last part is the filename
-             return dirHandle.getFileHandle(pathParts[0], { create });
-         }
-         // Get subdirectory handle
-         const dirName = pathParts[0];
-         const subDirHandle = await dirHandle.getDirectoryHandle(dirName, { create });
-         // Recurse into subdirectory
-         return getFileHandleRecursive(subDirHandle, pathParts.slice(1), create);
-     };
 
      // Updates the content of a specific file within the nested directoryTree state
      const updateFileContentInTree = (tree, targetPath, newContent) => {
@@ -664,7 +742,17 @@ const OpenFolder = () => {
 
     // --- Render ---
     return (
-        <Box className="open-folder-container">
+        <Box
+            className="open-folder-container"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            sx={{
+                border: isDraggingOver ? '3px dashed var(--color-primary-action)' : 'none', // Visual feedback
+                transition: 'border 0.2s ease-in-out', // Smooth transition for border
+                boxSizing: 'border-box',
+            }}
+        >
             {/* Actions Bar */}
             <Box className="actions-bar">
                 {!folderHandle ? (
@@ -673,7 +761,7 @@ const OpenFolder = () => {
                             Open Folder
                         </Button>
                         <Typography variant="body2" className="alert-typography" sx={{ ml: 1 }}>
-                            Select a project folder to begin
+                            Select a project folder to begin or drag & drop it here
                         </Typography>
                     </>
                 ) : (
@@ -870,8 +958,8 @@ const OpenFolder = () => {
                 )}
                 {/* Show message if no folder is open */}
                 {!folderHandle && !loading && (
-                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexGrow: 1, color: 'text.secondary' }}>
-                         <Typography>Open a folder to start working.</Typography>
+                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexGrow: 1, color: 'text.secondary', textAlign: 'center', p: 2 }}>
+                         <Typography>{isDraggingOver ? 'Drop folder to open' : 'Open a folder to start working or drag & drop it here.'}</Typography>
                      </Box>
                 )}
                  {/* Loading indicator when initially opening folder */}
@@ -916,7 +1004,7 @@ const OpenFolder = () => {
                       )}
                  </Box>
                  {/* Add other footer elements if needed */}
-                 <Typography variant="caption"> IIBooster v1.0 </Typography>
+                 <Typography variant="caption"> Faster v1.0 </Typography>
              </Box>
         </Box>
     );

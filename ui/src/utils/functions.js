@@ -18,7 +18,7 @@ export const parseAIMessageForFiles = (folderName, content) => {
             }
 
             return {
-                path: path.replace(/\\/g, "/")?.split(folderName).pop()?.slice(1)?.trim() || '',
+                path: path.replace(/\\/g, "/")?.split(`67c48e76f8288aad11d6bdf9/${folderName}`).pop()?.slice(1)?.trim() || '',
                 newContent: rest.join('+++++').trim()
             };
         })
