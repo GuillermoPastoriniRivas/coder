@@ -13,6 +13,7 @@ import InfoIcon from '@mui/icons-material/Info'; // For footer info
 import SearchIcon from '@mui/icons-material/Search'; // Icon for search input
 import InputAdornment from '@mui/material/InputAdornment'; // For search icon adornment
 import WrapTextIcon from '@mui/icons-material/WrapText'; // Icon for Line Wrap
+import DataUsageIcon from '@mui/icons-material/DataUsage'; // New icon for total tokens
 
 
 import DirectoryTree from './DirectoryTree';
@@ -51,7 +52,7 @@ const DEFAULT_TOKEN_LIMIT = 200000; // Default max tokens for context
 const OpenFolder = () => {
     // State Variables
     const { folderHandle, setFolderHandle, directoryTree, setDirectoryTree, setConversations, selectedSubFolders, toggleSubFolder, clearSelectedSubFolders } = useDirectory();
-    const { saldo } = useAuth(); // Get saldo
+    const { saldo, totalProjectTokens, setTotalProjectTokens } = useAuth(); // Get saldo and totalProjectTokens
     const [expandedDirectories, setExpandedDirectories] = useState({});
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [loading, setLoading] = useState(false); // For general loading like refresh
@@ -233,7 +234,8 @@ const OpenFolder = () => {
          try {
              // Sync first (pass simplified tree structure if needed by backend)
             //  const simpleTree = simplifyTree(currentTree); // Create a simplified version if full content isn't needed
-             await api.syncDirectory({ folder: handle.name, directoryTree: currentTree });
+             const syncResponse = await api.syncDirectory({ folder: handle.name, directoryTree: currentTree });
+             setTotalProjectTokens(syncResponse.data.totalProjectTokens || 0); // Update total project tokens
 
              // Then fetch conversations
              const response = await api.getConversations(handle.name);
@@ -245,7 +247,7 @@ const OpenFolder = () => {
          } finally {
              setLoading(false);
          }
-     }, [setConversations]); // Dependencies: setConversations
+     }, [setConversations, setTotalProjectTokens]); // Dependencies: setConversations, setTotalProjectTokens
 
 
     // Refactored function to handle the core logic of opening a folder
@@ -261,6 +263,7 @@ const OpenFolder = () => {
             clearSelectedSubFolders();
             setSearchTerm('');
             setExpandedDirectories({}); // Collapse all directories
+            setTotalProjectTokens(0); // Reset project tokens when opening a new folder
 
             setFolderHandle(handle); // Set the handle in context/state *after* resetting
 
@@ -278,7 +281,7 @@ const OpenFolder = () => {
         } finally {
             setLoading(false);
         }
-    }, [setFolderHandle, getFilesFromDirectory, setDirectoryTree, syncAndFetchConversations, clearSelectedSubFolders]); // Add dependencies
+    }, [setFolderHandle, getFilesFromDirectory, setDirectoryTree, syncAndFetchConversations, clearSelectedSubFolders, setTotalProjectTokens]); // Add dependencies
 
 
     // Open Folder Dialog (using button click)
@@ -437,7 +440,10 @@ const OpenFolder = () => {
          setSelectedConversation(conversation);
          if (conversation.messages && conversation.messages.length > 0) {
              // Check the last assistant message for file changes
-             const lastMessage = conversation.messages[conversation.messages.length - 1];
+             // Or decide how to display them (e.g., "Assistant proposed changes...")
+             // Use userMessages directly if available, otherwise fallback to messages
+             const messagesToDisplay = conversation.userMessages || conversation.messages;
+             const lastMessage = messagesToDisplay[messagesToDisplay.length - 1];
              if (lastMessage.role === 'assistant' || lastMessage.role === 'default' ) { // Assuming 'default' can contain file changes too
                  const parsedFiles = parseAIMessageForFiles(folderHandle?.name || '', lastMessage.content);
                  if (parsedFiles.length > 0) {
@@ -740,6 +746,20 @@ const OpenFolder = () => {
         setFooterInfoVisible(prev => !prev);
     };
 
+    // Function to format token count for display (e.g., 123456 -> 123.4k)
+    const formatTokenCount = (count) => {
+        if (count === null || count === undefined || isNaN(count)) {
+            return 'N/A';
+        }
+        if (count >= 1000000) {
+            return `${(count / 1000000).toFixed(1)}M`;
+        }
+        if (count >= 1000) {
+            return `${(count / 1000).toFixed(1)}k`;
+        }
+        return count.toString();
+    };
+
     // --- Render ---
     return (
         <Box
@@ -992,6 +1012,11 @@ const OpenFolder = () => {
                                      </Typography>
                                  </Tooltip>
                             )}
+                             <Tooltip title={`Total Project Tokens: ${totalProjectTokens?.toLocaleString()}`}>
+                                <Typography variant="caption" className="footer-status">
+                                     <DataUsageIcon fontSize="inherit" sx={{ mr: 0.5 }}/> {formatTokenCount(totalProjectTokens)} Tokens
+                                </Typography>
+                             </Tooltip>
                              <Tooltip title={`Remaining Credits: ${saldo?.toFixed(2)}`}>
                                 <Typography variant="caption" className="footer-status" sx={{ color: saldo < 5 ? 'warning.main' : 'text.secondary' }}>
                                     ${saldo?.toFixed(2)} Credits

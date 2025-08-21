@@ -12,6 +12,7 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [email, setEmail] = useState(localStorage.getItem('userEmail') || '');
     const [saldo, setSaldo] = useState(localStorage.getItem('saldo') ? parseFloat(localStorage.getItem('saldo')) : 0); // Use parseFloat
+    const [totalProjectTokens, setTotalProjectTokens] = useState(0); // Added state for total project tokens
     const [loading, setLoading] = useState(true); // Add loading state, default true
 
     useEffect(() => {
@@ -69,6 +70,7 @@ export const AuthProvider = ({ children }) => {
         setEmail('');
         setUser(null);
         setSaldo(0);
+        setTotalProjectTokens(0); // Reset total project tokens on logout
         setAuthToken(null);
         setLoading(false); // Ensure loading is false on logout
     };
@@ -136,6 +138,8 @@ export const AuthProvider = ({ children }) => {
         user,
         email,
         saldo,
+        totalProjectTokens, // Expose totalProjectTokens
+        setTotalProjectTokens, // Expose setter
         loading, // Provide loading state
         signUp,
         login,

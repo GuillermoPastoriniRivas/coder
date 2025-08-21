@@ -2,20 +2,17 @@ import os
 import json
 import hashlib
 import tiktoken
-from openai import OpenAI
+from google import genai
 from pathlib import Path
 import re
 
 class AIDocumenter:
     def __init__(self, api_key, code_path, output_file):
-        self.api_key = api_key
         self.code_path = Path(code_path)
         self.output_file = output_file
         self.encoder = tiktoken.get_encoding("cl100k_base")
         self.excluded_dirs = {'node_modules', 'dist', 'build', '__pycache__', '.git'}
-        self.client = OpenAI(
-            api_key="sk-proj-iZUIWIoul2uPT3Si0x1DT3BlbkFJ0fSNIi1EVUCjp5ReYkJu",
-        )
+        self.client = genai.Client(api_key="AIzaSyDftYyy8HKgn7hJqA2awBGG6Ub1m6067co")
         # Cargar o inicializar documentación
         if Path(output_file).exists():
             with open(output_file, 'r') as f:
@@ -64,17 +61,12 @@ class AIDocumenter:
         {code[:10000]}
         """
         try:
-            response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": prompt,
-                    }
-                ]
+            response = self.client.models.generate_content(
+                model="gemini-1.5-pro-latest",
+                contents=prompt
             )
 
-            content = response.choices[0].message.content
+            content = response.text
             
             # Extraer JSON del bloque Markdown
             json_match = re.search(r'```json\s*({.*?})\s*```', content, re.DOTALL)
@@ -161,12 +153,11 @@ class AIDocumenter:
             json.dump(self.docs, f, indent=2)
 
 
-API_KEY = "sk-proj-iZUIWIoul2uPT3Si0x1DT3BlbkFJ0fSNIi1EVUCjp5ReYkJu"
 PROJECT_PATH = "C:/Users/Usuario/Desktop/guille/coder2/api/sources/67c48e76f8288aad11d6bdf9/coder2"
 JSON_PATH = "C:/Users/Usuario/Desktop/guille/coder2/api/sources/67c48e76f8288aad11d6bdf9/coder2.json"
 
 documenter = AIDocumenter(
-    api_key=API_KEY,
+    api_key=None, # This API key is now unused as genai.Client has a hardcoded key.
     code_path=PROJECT_PATH,
     output_file=JSON_PATH
 )
