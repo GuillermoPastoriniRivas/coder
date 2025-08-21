@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
+import { User } from '../models/User'; // Import User model
 
 export const syncController = {
     async sync(req: Request, res: Response) {
@@ -79,8 +80,28 @@ export const syncController = {
                 });
             });
 
+            // --- New logic for total token count after documentation generation ---
+            let totalProjectTokens = 0;
+            try {
+                const configContent = await fs.readFile(config, 'utf-8');
+                const projectData = JSON.parse(configContent);
+                if (projectData && projectData.project && projectData.project.files) {
+                    for (const fileRelPath in projectData.project.files) {
+                        const fileData = projectData.project.files[fileRelPath];
+                        if (typeof fileData.tokens === 'number') {
+                            totalProjectTokens += fileData.tokens;
+                        }
+                    }
+                }
+                // Update user's totalProjectTokens in the database
+                await User.findByIdAndUpdate(userId, { totalProjectTokens }, { new: true });
+            } catch (readError) {
+                console.error(`Error reading or parsing config file ${config}:`, readError);
+                // Continue without updating totalProjectTokens if there's an error
+            }
+            // --- End new logic ---
 
-            res.json({ message: 'Estructura sincronizada y vectores actualizados exitosamente' });
+            res.json({ message: 'Estructura sincronizada y vectores actualizados exitosamente', totalProjectTokens });
         } catch (error) {
             console.error('Error en syncController:', error);
             res.status(500).json({ error: 'Error al sincronizar estructura' });
