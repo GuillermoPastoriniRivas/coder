@@ -46,7 +46,8 @@ def main():
     parser.add_argument("--subfolders", required=True)
     parser.add_argument("--selectedFiles", required=False, default="")
     parser.add_argument("--userId", required=True, default="")
-    parser.add_argument("--tokenLimit", type=int, required=True) # Added tokenLimit argument
+    parser.add_argument("--tokenLimit", type=int, required=True)
+    parser.add_argument("--previous-response", required=False, default=None) # Add new argument for previous response
     args = parser.parse_args()
 
     sub_folders = args.subfolders.split(',') if args.subfolders else []
@@ -56,17 +57,11 @@ def main():
     json_path = args.config
     coder_model = args.model
     userId = args.userId
-    token_limit = args.tokenLimit # Get token limit from args
+    token_limit = args.tokenLimit
+    previous_response = args.previous_response # Get previous response
 
-    # documenter = AIDocumenter(
-    #     api_key=api_key,
-    #     code_path=carpeta_proyecto,
-    #     output_file=json_path
-    # )
-
-    # documenter.generate_documentation()
-    contexto = generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folders, selected_files, token_limit) # Pass token_limit
-    cambios = obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_proyecto, userId)
+    contexto = generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folders, selected_files, token_limit)
+    cambios = obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_proyecto, userId, previous_response) # Pass previous_response
     print(cambios)
 
 
@@ -101,9 +96,8 @@ class CodeRAG:
             if include:
                 description = file_data.get("description", "")
                 dependencies = file_data.get("dependencies", [])
-                tokens = file_data.get("tokens", 0) # Ensure tokens are read from JSON
+                tokens = file_data.get("tokens", 0)
 
-                # Check if tokens is None or not a valid number, default to 0
                 if tokens is None or not isinstance(tokens, (int, float)):
                     print(f"Warning: Invalid token count '{tokens}' for file {file_path_rel}. Defaulting to 0.")
                     tokens = 0
@@ -139,7 +133,7 @@ class CodeRAG:
         except Exception as e:
             return {'error': str(e), 'tokens': 0}
 
-    def query(self, query_text, tokenLimit): # Changed top_k to tokenLimit
+    def query(self, query_text, tokenLimit):
         if self.embeddings.size == 0:
             return {'error': 'No hay archivos para buscar'}
 
@@ -147,16 +141,14 @@ class CodeRAG:
         selected_files = self.selected_files
         ranked_records = []
 
-        # --- Step 1: Get Ranked Records (combining selected and RAG) ---
         if selected_files:
             selected_indices = []
             for i, record in enumerate(self.file_records):
                 if record['rel_path'] in selected_files:
                     selected_indices.append(i)
-            selected_records = [self.file_records[i] for i in selected_indices] # Files explicitly selected by user
+            selected_records = [self.file_records[i] for i in selected_indices]
 
             rag_records_to_consider = []
-            # If subfolders are defined, perform RAG within those subfolders (excluding already selected files)
             if self.sub_folders and len(self.file_records) > len(selected_indices):
                 other_indices = [i for i in range(len(self.file_records)) if i not in selected_indices]
                 other_embeddings = self.embeddings[other_indices]
@@ -167,51 +159,38 @@ class CodeRAG:
                     query_embedding = np.mean(query_embeds, axis=0)
                     query_embedding = query_embedding / np.linalg.norm(query_embedding)
 
-                    # Calculate similarities for RAG candidates
                     similarities = np.dot(other_embeddings, query_embedding)
-                    # Get a larger initial set for cross-encoder re-ranking (e.g., top 100 or all if fewer)
                     initial_rag_count = min(100, len(other_file_records))
                     initial_rag_indices = np.argsort(similarities)[::-1][:initial_rag_count]
 
-                    # Re-rank with CrossEncoder
                     candidates = [other_file_records[i] for i in initial_rag_indices]
                     cross_input = [[query_text, cand['embedding_text']] for cand in candidates]
                     cross_scores = self.cross_encoder.predict(cross_input)
-                    # Sort candidates based on cross-encoder scores
                     ranked_candidate_indices = np.argsort(cross_scores)[::-1]
-                    # Get the final ranked RAG records (relative to `other_file_records`)
                     rag_records_to_consider = [candidates[i] for i in ranked_candidate_indices]
 
-            # Combine selected files (priority) with RAG results
             ranked_records = selected_records + rag_records_to_consider
 
-        else: # No specific files selected, perform RAG on all applicable files
+        else:
             query_embeds = self.model.encode(queries)
             query_embedding = np.mean(query_embeds, axis=0)
             query_embedding = query_embedding / np.linalg.norm(query_embedding)
 
-            # Calculate similarities for all files
             similarities = np.dot(self.embeddings, query_embedding)
-            # Get a larger initial set for cross-encoder
             initial_count = min(100, len(self.file_records))
             initial_indices = np.argsort(similarities)[::-1][:initial_count]
 
-            # Re-rank with CrossEncoder
             candidates = [self.file_records[i] for i in initial_indices]
             cross_input = [[query_text, cand['embedding_text']] for cand in candidates]
             cross_scores = self.cross_encoder.predict(cross_input)
-            # Sort candidates based on cross-encoder scores
             ranked_candidate_indices = np.argsort(cross_scores)[::-1]
-            # Get the final ranked records
             ranked_records = [candidates[i] for i in ranked_candidate_indices]
 
 
-        # --- Step 2: Select files based on token limit ---
         final_results = []
         current_token_count = 0
         for record in ranked_records:
-            record_tokens = record.get('tokens', 0) # Default to 0 if 'tokens' key is missing
-            # Ensure adding the file does NOT exceed the limit
+            record_tokens = record.get('tokens', 0)
             if current_token_count + record_tokens < tokenLimit:
                 final_results.append({
                     'file_path': record['abs_path'],
@@ -220,15 +199,11 @@ class CodeRAG:
                 })
                 current_token_count += record_tokens
             else:
-                # Stop adding files if the next one would exceed the limit
                 break
 
-        # Ensure at least one file is returned if the first ranked file fits (even if barely)
-        # or if the ranked list is not empty but loop broke immediately
         if not final_results and ranked_records:
             first_record = ranked_records[0]
             first_record_tokens = first_record.get('tokens', 0)
-            # Add the first file ONLY if it fits strictly within the limit by itself
             if first_record_tokens < tokenLimit:
                  final_results.append({
                     'file_path': first_record['abs_path'],
@@ -239,9 +214,8 @@ class CodeRAG:
 
         return { 'results': final_results, 'queries': queries }
 
-def generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folders, selected_files, token_limit): # Added token_limit
+def generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folders, selected_files, token_limit):
     code_base_path = carpeta_proyecto + "/"
-    # Pass token_limit instead of top_k
     rag = CodeRAG(code_base_path, json_path, sub_folders, selected_files).query(instruccion_usuario, token_limit)
 
     if 'error' in rag:
@@ -271,19 +245,16 @@ def _update_tokens_usage(prompt_tokens, completion_tokens, project_name, model, 
         client = MongoClient(mongo_uri)
         db = client.get_database()
 
-        # Calcular costos
         input_cost = (prompt_tokens * input_price_usd_per_M) / 1_000_000
         output_cost = (completion_tokens * output_price_usd_per_M) / 1_000_000
         total_cost = input_cost + output_cost
 
-        # Actualizar saldo del usuario
         users_collection = db["users"]
         users_collection.update_one(
             {"_id": ObjectId(userId)},
             {"$inc": {"saldo": -total_cost}}
         )
 
-        # Registrar transacción
         transaction = {
             "userId": ObjectId(userId),
             "project_name": project_name,
@@ -292,8 +263,8 @@ def _update_tokens_usage(prompt_tokens, completion_tokens, project_name, model, 
             "output_tokens": completion_tokens,
             "input_cost": input_cost,
             "output_cost": output_cost,
-            "total_cost": total_cost,  # Agregar costo total para facilitar consulta
-            "delay": duration,          # Agregar demora
+            "total_cost": total_cost,
+            "delay": duration,
             "timestamp": datetime.now()
         }
 
@@ -304,18 +275,16 @@ def _update_tokens_usage(prompt_tokens, completion_tokens, project_name, model, 
         print(f"Error en actualización de tokens: {str(e)}")
 
 def _get_project_structure(root_dir, exclude_dirs={'node_modules', '.git', '__pycache__', 'dist', 'build'}):
-    """Generates a string representation of the project's directory structure."""
     structure = []
     try:
         for root, dirs, files in os.walk(root_dir, topdown=True):
-            # Exclude specified directories
             dirs[:] = [d for d in dirs if d not in exclude_dirs]
 
             rel_path = os.path.relpath(root, root_dir).replace("\\", "/") # Use forward slashes
             # Skip the root directory itself if needed, or format it differently
             if rel_path == '.':
                 indent = ""
-                structure.append(f"{os.path.basename(root_dir)}/") # Start with root folder name
+                structure.append(f"{os.path.basename(root_dir)}/")
             else:
                 level = rel_path.count('/')
                 indent = "  " * (level + 1)
@@ -323,24 +292,17 @@ def _get_project_structure(root_dir, exclude_dirs={'node_modules', '.git', '__py
 
             file_indent = "  " * (rel_path.count('/') + 2 if rel_path != '.' else 1)
 
-            # Sort files and directories for consistent output
             files.sort()
             dirs.sort()
 
             for f in files:
-                # Optional: Add filtering for specific file types if needed
-                # if f.endswith(('.py', '.js', '.ts', '.json', '.md')):
                  structure.append(f"{file_indent}{f}")
 
     except Exception as e:
         return f"Error generating project structure: {e}"
     return "\n".join(structure)
     
-
-def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_proyecto, userId):
-    """Envía la consulta a OpenAI y obtiene los cambios necesarios en formato JSON."""
-
-    # --- Read package.json ---
+def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_proyecto, userId, previous_response):
     package_json_path = os.path.join(carpeta_proyecto, 'package.json')
     package_json_content = ""
     try:
@@ -351,8 +313,18 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
     except Exception as e:
         package_json_content = f"Error reading package.json: {e}"
 
-    # --- Generate Project Structure ---
     project_structure = _get_project_structure(carpeta_proyecto)
+
+    previous_response_section = ""
+    if previous_response:
+        previous_response_section = f"""
+        ### PREVIOUS RESPONSE:
+        This is the assistant's previous response in the ongoing conversation.
+        ```
+        {previous_response}
+        ```
+        ---
+        """
 
     prompt = f"""
         ### Role:
@@ -363,6 +335,8 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
 
         ### User Request:
         {contexto.get('query', instruccion_usuario)}
+
+        {previous_response_section}
 
         ### Project Context:
         This contains the original code for relevant files selected by the RAG process:
@@ -446,31 +420,26 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
 
     while retry_count < max_retries:
         try:
-            start_time = time.time() # Start timer
+            start_time = time.time()
             
-            end_time = time.time() # End timer
-            duration = end_time - start_time # Calculate duration
+            end_time = time.time()
+            duration = end_time - start_time
 
 
             response = client.models.generate_content(
                 model="gemini-2.5-flash-preview-05-20", contents=prompt
-                # model="gemini-2.0-pro-exp-02-05", contents=prompt
             )
-            # Robust check for response structure before accessing content
             if response and response.text and response.usage_metadata.candidates_token_count:
                 content = response.text
-                # If successful, update usage and return content
                 try:
                     input_tokens = response.usage_metadata.prompt_token_count
                     output_tokens = response.usage_metadata.candidates_token_count
-                    # Use the actual model called for usage tracking
-                    _update_tokens_usage(input_tokens, output_tokens, carpeta_proyecto, coder_model, userId, duration) # Pass duration
+                    _update_tokens_usage(input_tokens, output_tokens, carpeta_proyecto, coder_model, userId, duration)
                 except Exception as e:
                     print(f"Error updating token usage: {e}", file=sys.stderr)
 
-                return content # Success, return content
+                return content
             else:
-                 # Handle cases where the response structure is not as expected
                  raise AttributeError("Unexpected response structure from API.")
 
             # response = client_openai.responses.create(
@@ -496,26 +465,24 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
         except (TypeError, AttributeError, IndexError) as e: # Catch potential errors accessing potentially None objects or incorrect structure
             last_exception = e
             retry_count += 1
-            print(f"Attempt {retry_count}/{max_retries} failed: Error processing response - {e}. Response: {response}", file=sys.stderr) # Log the response for debugging
+            print(f"Attempt {retry_count}/{max_retries} failed: Error processing response - {e}. Response: {response}", file=sys.stderr)
             if retry_count < max_retries:
                 print("Retrying in 1 second...", file=sys.stderr)
-                time.sleep(1) # Wait before retrying
+                time.sleep(1)
             else:
                 print(f"Max retries reached. Error processing OpenAI response: {e}", file=sys.stderr)
-                return "" # Return empty string after max retries
-
-        except Exception as e: # Catch other potential API errors (network, auth, etc.)
+                return ""
+        except Exception as e:
             last_exception = e
             retry_count += 1
             print(f"Attempt {retry_count}/{max_retries} failed: OpenAI API Error - {e}", file=sys.stderr)
             if retry_count < max_retries:
                  print("Retrying in 1 second...", file=sys.stderr)
-                 time.sleep(1) # Wait before retrying
+                 time.sleep(1)
             else:
                 print(f"Max retries reached. Error al obtener cambios de OpenAI: {e}", file=sys.stderr)
-                return "" # Return empty string after max retries
+                return ""
 
-    # Fallback if loop somehow exits without returning
     print(f"Failed after {max_retries} attempts. Last error: {last_exception}", file=sys.stderr)
     return ""
 

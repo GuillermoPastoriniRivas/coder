@@ -5,7 +5,17 @@ import { spawn } from 'child_process';
 import path from 'path';
 import { User } from '../models/User';
 
-export async function callAgent(query: string, userId: string, folder: string, subFolders: string[], model: string, selectedFiles: string[], tokenLimit: number) { // Added tokenLimit
+export async function callAgent(
+    query: string,
+    userId: string,
+    folder: string,
+    subFolders: string[],
+    model: string,
+    selectedFiles: string[],
+    tokenLimit: number,
+    existingConversationId?: string,
+    previousAssistantResponse?: string | null
+): Promise<{ response: string; conversationId?: string }> {
     const user = await User.findById(userId);
     if (!user) {
         throw new Error('User not found');
@@ -14,14 +24,29 @@ export async function callAgent(query: string, userId: string, folder: string, s
     const safeUserId = userId.replace(/[\/\\]/g, '_');
     const safeFolder = folder.replace(/[\/\\]/g, '_');
 
-    const conversation = {
-        userId,
-        folder,
-        aiModel: model,
-        messages: [{ role: 'user', content: query, timestamp: new Date() }]
-    };
+    const userMessageForConversation = { role: 'user', content: query, timestamp: new Date() };
 
-    const conversationId = await conversationRepository.upsertConversation(conversation, true);
+    let currentConversationId: string | undefined = existingConversationId;
+
+    if (!currentConversationId) {
+        const newConversation = {
+            userId,
+            folder,
+            aiModel: model,
+            messages: [userMessageForConversation],
+            userMessages: [userMessageForConversation],
+        };
+        currentConversationId = await conversationRepository.upsertConversation(newConversation, true);
+        if (!currentConversationId) {
+            throw new Error('Failed to create new conversation');
+        }
+    } else {
+        await conversationRepository.upsertConversation(
+            { userId, folder, messages: [userMessageForConversation] },
+            false,
+            currentConversationId
+        );
+    }
 
     const baseDir = path.resolve(process.cwd(), 'sources', safeUserId, safeFolder);
 
@@ -29,20 +54,26 @@ export async function callAgent(query: string, userId: string, folder: string, s
     const config = path.resolve(process.cwd(), 'sources', safeUserId, `${safeFolder}.json`);
     console.log(`Executing Python script with project: ${project}, instruction: ${query}, config: ${config}`);
 
-    let sanitizedResponseContent
+    let sanitizedResponseContent: string;
+
+    const pythonArgs: string[] = [
+        'src/scripts/code-dev.py',
+        '--instruction', query,
+        '--project', project,
+        '--config', config,
+        '--model', model,
+        '--subfolders', (subFolders || []).join(','),
+        '--selectedFiles', (selectedFiles || []).join(','),
+        '--userId', userId,
+        '--tokenLimit', tokenLimit.toString()
+    ];
+
+    if (previousAssistantResponse) {
+        pythonArgs.push('--previous-response', previousAssistantResponse);
+    }
 
     if (model === 'coder') {
-        const pythonProcess = spawn('python', [
-            'src/scripts/code-dev.py',
-            '--instruction', query,
-            '--project', project,
-            '--config', config,
-            '--model', model,
-            '--subfolders', (subFolders || []).join(','),
-            '--selectedFiles', (selectedFiles || []).join(','),
-            '--userId', userId,
-            '--tokenLimit', tokenLimit.toString() // Pass tokenLimit
-        ]);
+        const pythonProcess = spawn('python', pythonArgs);
 
         const responsePromise = new Promise((resolve, reject) => {
             let output = '';
@@ -68,44 +99,25 @@ export async function callAgent(query: string, userId: string, folder: string, s
 
         const rawResponseContent = await responsePromise as string;
 
-        // Sanitize the response content
         sanitizedResponseContent = rawResponseContent;
         try {
-            // // Paso 1: Manejar líneas que terminan con \
-            // // Reemplazar \\\n (que representa una barra invertida seguida de un salto de línea)
-            // sanitizedResponseContent = sanitizedResponseContent.replace(/\\\\\n/g, '\\\n');
-    
-            // Paso 2: Reemplazar newlines y comillas escapadas
             sanitizedResponseContent = sanitizedResponseContent
                 .replace(/\\n/g, '\n')
                 .replace(/\\"/g, '"');
 
-            // Paso 3: Decodificar secuencias Unicode
             sanitizedResponseContent = sanitizedResponseContent.replace(/\\u([0-9a-fA-F]{4})/g, (match, grp) => {
                 return String.fromCharCode(parseInt(grp, 16));
             });
 
-            // Paso 4: Corregir escape en expresiones regulares (como \/ o \\)
-            // Esto revierte el escape excesivo en patrones como [\/\\] -> [\/\\]
             sanitizedResponseContent = sanitizedResponseContent
-                .replace(/\\\//g, '/')  // Reemplazar \/ por /
-                .replace(/\\\\/g, '\\'); // Reemplazar \\ por \
+                .replace(/\\\//g, '/')
+                .replace(/\\\\/g, '\\');
         } catch (e) {
             console.error("Error sanitizing AI response content:", e);
         }
-    }
-
-    if (model === 'qa') {
-        const pythonProcess = spawn('python', [
-            'src/scripts/code-qa.py',
-            '--instruction', query,
-            '--project', project,
-            '--config', config,
-            '--model', model,
-            '--subfolders', (subFolders || []).join(','),
-            '--selectedFiles', (selectedFiles || []).join(','),
-            '--userId', userId
-        ]);
+    } else if (model === 'qa') {
+        const qaPythonArgs = pythonArgs.filter(arg => arg !== '--tokenLimit');
+        const pythonProcess = spawn('python', qaPythonArgs);
 
         const responsePromise = new Promise((resolve, reject) => {
             let output = '';
@@ -116,31 +128,33 @@ export async function callAgent(query: string, userId: string, folder: string, s
 
             pythonProcess.stderr.on('data', (data) => {
                 console.error(`stderr: ${data}`);
-                reject(new Error(`Error in code-qa.py: ${data}`)); // Assuming same error source for logging
+                reject(new Error(`Error in code-qa.py: ${data}`));
             });
 
             pythonProcess.on('close', (code) => {
-                console.log(`code-qa.py exited with code ${code}`); // Changed script name
+                console.log(`code-qa.py exited with code ${code}`);
                 if (code === 0) {
                     resolve(output.trim());
                 } else {
-                    reject(new Error(`code-qa.py exited with code ${code}`)); // Changed script name
+                    reject(new Error(`code-qa.py exited with code ${code}`));
                 }
             });
         });
 
         const rawResponseContent = await responsePromise as string;
         sanitizedResponseContent = rawResponseContent;
+    } else {
+        throw new Error(`Unsupported AI model: ${model}`);
     }
 
 
-    const response = {
-        userId,
-        folder,
-        aiModel: model,
-        messages: [{ role: 'assistant', content: sanitizedResponseContent, timestamp: new Date() }]
-    };
-    await conversationRepository.upsertConversation(response, false, conversationId);
+    const assistantMessageForConversation = { role: 'assistant', content: sanitizedResponseContent, timestamp: new Date() };
 
-    return sanitizedResponseContent;
+    await conversationRepository.upsertConversation(
+        { userId, folder, messages: [assistantMessageForConversation] },
+        false,
+        currentConversationId
+    );
+
+    return { response: sanitizedResponseContent, conversationId: currentConversationId };
 }

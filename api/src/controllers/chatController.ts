@@ -3,12 +3,36 @@ import { chatService } from '../services/chatService';
 import { conversationRepository } from '../repositories/conversationRepository';
 
 export const postCall = async (req: Request, res: Response) => {
-    const { message, folder, subFolders, model, selectedFiles, tokenLimit } = req.body;
+    const { message, folder, subFolders, model, selectedFiles, tokenLimit, conversationId } = req.body;
     try {
         //@ts-ignore
         const userId = req.user.id;
-        const response = await chatService.callAgent(message, userId, folder, subFolders, model, selectedFiles, tokenLimit);
-        res.json({ response });
+
+        let previousAssistantResponse: string | null = null;
+        if (conversationId) {
+            const conversation = await conversationRepository.getConversation(conversationId);
+            if (conversation) {
+                const lastAssistantMessage = conversation.messages
+                                                 .filter(msg => msg.role === 'assistant')
+                                                 .pop();
+                if (lastAssistantMessage) {
+                    previousAssistantResponse = lastAssistantMessage.content;
+                }
+            }
+        }
+
+        const { response: aiResponse, conversationId: updatedConversationId } = await chatService.callAgent(
+            message,
+            userId,
+            folder,
+            subFolders,
+            model,
+            selectedFiles,
+            tokenLimit,
+            conversationId,
+            previousAssistantResponse
+        );
+        res.json({ response: aiResponse, conversationId: updatedConversationId });
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ error: 'Internal server error' });
