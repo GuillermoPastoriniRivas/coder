@@ -1,9 +1,11 @@
 import React from 'react';
 import CodeMirrorMerge from 'react-codemirror-merge';
 import { EditorView } from '@codemirror/view';
-import { vscodeDark } from '@uiw/codemirror-theme-vscode'; // Keep VS Code dark theme
+import { vscodeDark } from '@uiw/codemirror-theme-vscode';
 import CodeMirror from '@uiw/react-codemirror';
-import { Box, Typography } from '@mui/material'; // For empty state
+import { Box, Typography } from '@mui/material';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const Original = CodeMirrorMerge.Original;
 const Modified = CodeMirrorMerge.Modified;
@@ -13,31 +15,41 @@ const FileContent = ({
     selectedFilePath,
     changedFiles,
     isDiffView,
-    handleModifiedChange, // Function to call when modified editor changes
-    getLanguageExtension, // Function to get language-specific extensions array
+    handleModifiedChange,
+    getLanguageExtension,
     collapseUnchanged,
-    lineWrapEnabled // New prop to control line wrapping
+    lineWrapEnabled,
+    isMarkdownView
 }) => {
 
-    // Determine the specific language extension for the selected file
     const languageExtension = getLanguageExtension(selectedFilePath);
 
-    // Combine common extensions with language-specific ones and conditional line wrapping
     const editorExtensions = [...languageExtension];
     if (lineWrapEnabled) {
         editorExtensions.push(EditorView.lineWrapping);
     }
 
 
-    // Get the file data, return null if no file is selected or data is missing
     const currentFileData = selectedFilePath ? changedFiles[selectedFilePath] : null;
 
     if (!selectedFilePath || !currentFileData) {
         return (
-            <Box className="empty-state-message"> {/* Use class from OpenFolder.css */}
+            <Box className="empty-state-message">
                 <Typography variant="body2" color="text.secondary">
                     {Object.keys(changedFiles).length > 0 ? "Select a file from the 'Changed Files' bar above" : "Select a file from the directory tree"}
                 </Typography>
+            </Box>
+        );
+    }
+
+    const isMarkdownFile = selectedFilePath.toLowerCase().endsWith('.md');
+
+    if (isMarkdownFile && isMarkdownView) {
+        return (
+            <Box sx={{ p: 2, overflow: 'auto', height: '100%', bgcolor: 'background.default', color: 'text.primary' }} className="markdown-preview">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {currentFileData.modified || ''}
+                </ReactMarkdown>
             </Box>
         );
     }
@@ -46,38 +58,38 @@ const FileContent = ({
         isDiffView ? (
             <CodeMirrorMerge
                 theme={vscodeDark}
-                orientation="a-b" // Side-by-side diff
-                gutter={true}      // Show gutter between panes
+                orientation="a-b"
+                gutter={true}
                 highlightChanges={true}
-                className="cm-merge" // Use class from OpenFolder.css for height/styling
-                collapseUnchanged={collapseUnchanged ? { margin: 2 } : undefined} // Enable collapse feature
-                style={{ height: '100%' }} // Ensure it fills container
+                className="cm-merge"
+                collapseUnchanged={collapseUnchanged ? { margin: 2 } : undefined}
+                style={{ height: '100%' }}
             >
                 <Original
-                    value={currentFileData.original || ''} // Ensure value is always string
+                    value={currentFileData.original || ''}
                     extensions={[
-                        EditorView.editable.of(false), // Original pane is not editable
-                        ...editorExtensions // Apply common + language extensions + wrap
+                        EditorView.editable.of(false),
+                        ...editorExtensions
                     ]}
                 />
                 <Modified
-                    value={currentFileData.modified || ''} // Ensure value is always string
-                    onChange={handleModifiedChange} // Update state on change
+                    value={currentFileData.modified || ''}
+                    onChange={handleModifiedChange}
                     extensions={[
-                        EditorView.editable.of(true), // Modified pane is editable
-                        ...editorExtensions // Apply common + language extensions + wrap
+                        EditorView.editable.of(true),
+                        ...editorExtensions
                     ]}
                 />
             </CodeMirrorMerge>
         ) : (
             <CodeMirror
-                value={currentFileData.modified || ''} // Show the (potentially modified) content
-                onChange={handleModifiedChange} // Allow editing
+                value={currentFileData.modified || ''}
+                onChange={handleModifiedChange}
                 theme={vscodeDark}
-                extensions={editorExtensions} // Apply common + language extensions + wrap
-                className="cm-theme" // Use class from OpenFolder.css for height/styling
-                height="100%" // Ensure it fills container
-                style={{ height: '100%' }} // Ensure it fills container
+                extensions={editorExtensions}
+                className="cm-theme"
+                height="100%"
+                style={{ height: '100%' }}
             />
         )
     );
