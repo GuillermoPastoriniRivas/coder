@@ -316,15 +316,15 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
     project_structure = _get_project_structure(carpeta_proyecto)
 
     previous_response_section = ""
-    if previous_response:
-        previous_response_section = f"""
-        ### PREVIOUS RESPONSE:
-        This is the assistant's previous response in the ongoing conversation.
-        ```
-        {previous_response}
-        ```
-        ---
-        """
+    # if previous_response:
+    #     previous_response_section = f"""
+    #     ### PREVIOUS RESPONSE:
+    #     This is the assistant's previous response in the ongoing conversation.
+    #     ```
+    #     {previous_response}
+    #     ```
+    #     ---
+    #     """
 
     prompt = f"""
         ### Role:
