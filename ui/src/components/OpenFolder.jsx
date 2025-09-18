@@ -378,34 +378,46 @@ const OpenFolder = () => {
      };
 
     const handleSelectConversation = (conversation) => {
-        console.log(conversation)
-         setSelectedConversation(conversation);
-         if (conversation.messages && conversation.messages.length > 0) {
-             const messagesToDisplay = conversation.userMessages || conversation.messages;
-             const lastMessage = messagesToDisplay[messagesToDisplay.length - 1];
-             if (lastMessage.role === 'assistant' || lastMessage.role === 'default' ) {
-                 const parsedFiles = parseAIMessageForFiles(folderHandle?.name || '', lastMessage.content);
-                 if (parsedFiles.length > 0) {
-                      handleFileChanges(parsedFiles);
-                      setIsDiffView(true);
-                      setLineWrapEnabled(false);
-                      setIsMarkdownView(false);
-                      return;
-                 }
-             }
-         }
-         setChangedFiles({});
-         setSelectedFilePath(null);
-         setIsMarkdownView(false);
-         
-         if (conversation.aiModel === 'qa') {
+        console.log(conversation);
+        setSelectedConversation(conversation);
+        setChangedFiles({});         // Clear existing files
+        setSelectedFilePath(null);   // Clear selected file
+        setIsMarkdownView(false);    // Default to not markdown view
+
+        let lastAssistantMessage = null;
+        if (conversation.messages && conversation.messages.length > 0) {
+            for (let i = conversation.messages.length - 1; i >= 0; i--) {
+                if (conversation.messages[i].role === 'assistant') {
+                    lastAssistantMessage = conversation.messages[i];
+                    break;
+                }
+            }
+        }
+
+        if (lastAssistantMessage) {
+            const parsedFiles = parseAIMessageForFiles(folderHandle?.name || '', lastAssistantMessage.content);
+            if (parsedFiles.length > 0) {
+                handleFileChanges(parsedFiles); // This internally sets changedFiles, selectedFilePath, and setIsDiffView(true)
+                setLineWrapEnabled(false); // Typically no line wrap for diff view
+            } else {
+                // If no file changes are parsed, default to editor view with line wrapping
+                // This covers QA responses or coder responses that are just text.
+                setIsDiffView(false);
+                setLineWrapEnabled(true);
+            }
+        } else {
+            // If no assistant message or no messages, set default editor view
             setIsDiffView(false);
             setLineWrapEnabled(true);
-         } else {
-            setIsDiffView(true);
-            setLineWrapEnabled(false);
-         }
-     };
+        }
+        
+        // Always update the selected model to match the conversation's model if available
+        if (conversation.aiModel) {
+            setSelectedModel(conversation.aiModel);
+        } else {
+            setSelectedModel('coder'); // Default to 'coder' if model is not explicitly stored
+        }
+    };
 
     const handleStartNewConversation = () => {
         setSelectedConversation(null);
