@@ -43,7 +43,7 @@ class AIDocumenter:
     def _is_valid_file(self, file_path):
         if any(part in self.excluded_dirs for part in file_path.parts):
             return False
-        return file_path.suffix in {'.ts', '.js', '.tsx', '.jsx', '.css', '.py', '.scss', '.html', '.txt'} or file_path.name in ["package.json"]
+        return file_path.suffix in {'.ts', '.js', '.tsx', '.jsx', '.css', '.py', '.scss', '.html', '.txt', '.md'} or file_path.name in ["package.json"]
 
     def _get_file_analysis(self, code, file_path):
         prompt = f"""
