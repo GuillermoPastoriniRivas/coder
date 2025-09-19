@@ -14,6 +14,9 @@ import time
 from bson import ObjectId
 from datetime import datetime
 from google import genai
+from google.genai import types
+import io
+from PIL import Image
 
 sys.stdout.reconfigure(encoding='utf-8')
 
@@ -47,7 +50,8 @@ def main():
     parser.add_argument("--selectedFiles", required=False, default="")
     parser.add_argument("--userId", required=True, default="")
     parser.add_argument("--tokenLimit", type=int, required=True)
-    parser.add_argument("--previous-response", required=False, default=None) # Add new argument for previous response
+    parser.add_argument("--previous-response", required=False, default=None)
+    parser.add_argument("--imagePath", required=False, default=None) # Add new argument for image path
     args = parser.parse_args()
 
     sub_folders = args.subfolders.split(',') if args.subfolders else []
@@ -58,10 +62,11 @@ def main():
     coder_model = args.model
     userId = args.userId
     token_limit = args.tokenLimit
-    previous_response = args.previous_response # Get previous response
+    previous_response = args.previous_response
+    image_path = args.imagePath # Get image path
 
     contexto = generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folders, selected_files, token_limit)
-    cambios = obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_proyecto, userId, previous_response) # Pass previous_response
+    cambios = obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_proyecto, userId, previous_response, image_path) # Pass image_path
     print(cambios)
 
 
@@ -302,7 +307,7 @@ def _get_project_structure(root_dir, exclude_dirs={'node_modules', '.git', '__py
         return f"Error generating project structure: {e}"
     return "\n".join(structure)
     
-def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_proyecto, userId, previous_response):
+def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_proyecto, userId, previous_response, image_path):
     package_json_path = os.path.join(carpeta_proyecto, 'package.json')
     package_json_content = ""
     try:
@@ -326,7 +331,7 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
     #     ---
     #     """
 
-    prompt = f"""
+    prompt_text = f"""
         ### Role:
         You are a Code Editor Assistant AI. Your purpose is to apply specific code changes requested by the user and output the *entire modified file(s)* with *absolute precision*, making NO other alterations.
 
@@ -396,7 +401,7 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
         5.  **Accuracy:**
             *   Only output files that were actually modified. If no files need changes based on the request, output nothing.
 
-        6. IMPORTANT! **Avoid Explanation and Comments:** 
+        6. IMPORTANT! **Avoid Explanation and Comments: 
             *   The output should be purely the modified code. It's not necesary to explain the changes or provide comments within the code.
 
         ### Example Output Structure:
@@ -424,10 +429,39 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
             
             end_time = time.time()
             duration = end_time - start_time
+            gemini_contents = [prompt_text]
+
+            if image_path and os.path.exists(image_path):
+                try:
+                    # Read the image bytes
+                    with open(image_path, 'rb') as img_file:
+                        img_bytes = img_file.read()
+
+                    # Determine mime type
+                    mime_type = None
+                    if image_path.lower().endswith(('.png')):
+                        mime_type = 'image/png'
+                    elif image_path.lower().endswith(('.jpg', '.jpeg')):
+                        mime_type = 'image/jpeg'
+                    elif image_path.lower().endswith(('.gif')):
+                        mime_type = 'image/gif'
+                    elif image_path.lower().endswith(('.webp')):
+                        mime_type = 'image/webp'
+
+                    if mime_type:
+                        image_part = types.Part.from_bytes(
+                            data=img_bytes,
+                            mime_type=mime_type
+                        )
+                        gemini_contents.append(image_part)
+                    else:
+                        print(f"Warning: Unsupported image file type for Gemini: {image_path}", file=sys.stderr)
+                except Exception as e:
+                    print(f"Error processing image file {image_path} for Gemini: {e}", file=sys.stderr)
 
 
             response = client.models.generate_content(
-                model="gemini-2.5-flash-preview-05-20", contents=prompt
+                model="gemini-2.5-flash-preview-05-20", contents=gemini_contents # Use combined contents
             )
             if response and response.text and response.usage_metadata.candidates_token_count:
                 content = response.text

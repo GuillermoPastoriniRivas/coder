@@ -1,6 +1,4 @@
 import axios from 'axios';
-// Removed useAuth import as it's not a component
-// Removed useEffect import
 import { showNotification } from './utils/functions';
 
 const API = axios.create({
@@ -26,34 +24,23 @@ API.interceptors.response.use(
   error => {
     if (axios.isCancel(error)) {
         console.log('Request canceled:', error.message);
-        // Return a specific type of error or a specific value to indicate cancellation
-        return Promise.reject(new Error('Request canceled')); // Or return a specific object: { isCanceled: true }
+        return Promise.reject(new Error('Request canceled'));
     }
     if (error.response) {
-        // --- Handle 401 Unauthorized ---
         if (error.response.status === 401) {
             console.error('API Error: 401 Unauthorized detected. Logging out.');
-            // Clear auth state immediately
-            setAuthToken(null); // Use the exported function to clear header
+            setAuthToken(null);
             localStorage.removeItem('token');
             localStorage.removeItem('userEmail');
             localStorage.removeItem('saldo');
-
-            // Notify user and redirect
-            showNotification('Session expired or invalid. Please log in again.', 'error'); // Use error severity
-
-            // Use setTimeout to allow the notification to potentially display before redirect
+            showNotification('Session expired or invalid. Please log in again.', 'error');
             setTimeout(() => {
-               window.location.href = '/login'; // Force reload and redirect
+               window.location.href = '/login';
             }, 500);
-
-            // Return a new rejected promise to stop the original promise chain cleanly
             return Promise.reject(new Error("Unauthorized (401) - Redirecting to login."));
         }
-        // --- Handle 500 Internal Server Error ---
         if (error.response.status === 500) {
           console.error('API Error: 500 Internal Server Error.', error.response.data);
-          // Show a more specific error if available from the backend
           const serverMessage = error.response.data?.message || "An internal server error occurred. Please try again later.";
           showNotification(serverMessage, "error");
         }
@@ -64,25 +51,37 @@ API.interceptors.response.use(
         console.error('API Error: Request setup failed.', error.message);
         showNotification('An error occurred while sending the request.', 'error');
     }
-
-    // For non-401/500 or other errors, just reject the promise
     return Promise.reject(error);
   }
 );
 
-// Removed ApiProvider component from here
-
-// --- Refined api object ---
 const api = {
   // Conversations
   getConversation: (conversationId) => API.post(`/conversation/`, { conversationId }),
   deleteConversation: (conversationId) => API.delete(`/conversation/${conversationId}`),
   getConversations: (folder) => API.get(`/conversations/${folder}`),
-  // Update sendMessage to accept an AbortSignal and tokenLimit
+  // Updated sendMessage to accept imageFile
   sendMessage: async (messageData, options = {}) => {
-    // messageData should contain: message, folder, subFolders, selectedFiles, model, conversationId, tokenLimit
-    const { signal } = options;
-    return API.post('/call', messageData, { signal }); // Pass signal to axios config
+    const { signal, imageFile } = options;
+
+    if (imageFile) {
+      const formData = new FormData();
+      // Append all existing messageData fields
+      for (const key in messageData) {
+        formData.append(key, messageData[key]);
+      }
+      // Append the image file
+      formData.append('attachment', imageFile);
+
+      return API.post('/call', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        signal,
+      });
+    } else {
+      return API.post('/call', messageData, { signal });
+    }
   },
 
   // Account
@@ -115,4 +114,4 @@ const api = {
   getCallHistory: () => API.get('/call-history'),
 };
 
-export default api; // Export the api object
+export default api;
