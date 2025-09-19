@@ -19,8 +19,11 @@ export const chatService = {
         selectedFiles: string[],
         tokenLimit: number,
         existingConversationId?: string,
-        previousAssistantResponse?: string | null
-    ): Promise<{ response: string; conversationId?: string }> {
+        previousAssistantResponse?: string | null,
+        imagePath?: string | null // New parameter for image path
+    ) {
+
+
         return await callAgent(
             message,
             userId,
@@ -30,7 +33,8 @@ export const chatService = {
             selectedFiles,
             tokenLimit,
             existingConversationId,
-            previousAssistantResponse
+            previousAssistantResponse,
+            imagePath // Pass imagePath to langchain util
         );
     }
 };
