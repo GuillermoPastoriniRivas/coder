@@ -4,6 +4,7 @@ import { conversationRepository } from '../repositories/conversationRepository';
 import { spawn } from 'child_process';
 import path from 'path';
 import { User } from '../models/User';
+import { promises as fs } from 'fs'; // Import fs.promises for file operations
 
 export async function callAgent(
     query: string,
@@ -14,7 +15,8 @@ export async function callAgent(
     selectedFiles: string[],
     tokenLimit: number,
     existingConversationId?: string,
-    previousAssistantResponse?: string | null
+    previousAssistantResponse?: string | null,
+    imagePath?: string | null // New parameter for image path
 ): Promise<{ response: string; conversationId?: string }> {
     const user = await User.findById(userId);
     if (!user) {
@@ -28,7 +30,7 @@ export async function callAgent(
 
     let currentConversationId: string | undefined = existingConversationId;
 
-    if (!currentConversationId) {
+    if (!currentConversationId || currentConversationId === 'undefined') {
         const newConversation = {
             userId,
             folder,
@@ -52,7 +54,7 @@ export async function callAgent(
 
     const project = baseDir;
     const config = path.resolve(process.cwd(), 'sources', safeUserId, `${safeFolder}.json`);
-    console.log(`Executing Python script with project: ${project}, instruction: ${query}, config: ${config}`);
+    // console.log(`Executing Python script with project: ${project}, instruction: ${query}, config: ${config}`);
 
     let sanitizedResponseContent: string;
 
@@ -70,6 +72,13 @@ export async function callAgent(
 
     if (previousAssistantResponse) {
         pythonArgs.push('--previous-response', previousAssistantResponse);
+    }
+
+    // Pass image path to Python script if available
+    if (imagePath) {
+        // Resolve the absolute path to the image file on the server
+        const absoluteImagePath = path.resolve(process.cwd(), 'sources', imagePath);
+        pythonArgs.push('--imagePath', absoluteImagePath);
     }
 
     if (model === 'coder') {

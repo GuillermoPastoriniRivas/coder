@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { chatService } from '../services/chatService';
 import { conversationRepository } from '../repositories/conversationRepository';
+import path from 'path';
+import { promises as fs } from 'fs';
 
 export const postCall = async (req: Request, res: Response) => {
     const { message, folder, subFolders, model, selectedFiles, tokenLimit, conversationId } = req.body;
@@ -9,7 +11,7 @@ export const postCall = async (req: Request, res: Response) => {
         const userId = req.user.id;
 
         let previousAssistantResponse: string | null = null;
-        if (conversationId) {
+        if (conversationId && conversationId !== 'undefined') {
             const conversation = await conversationRepository.getConversation(conversationId);
             if (conversation) {
                 const lastAssistantMessage = conversation.messages
@@ -21,6 +23,23 @@ export const postCall = async (req: Request, res: Response) => {
             }
         }
 
+        let imagePath: string | null = null;
+        //@ts-ignore
+        if (req.file) {
+            //@ts-ignore
+            const uploadedFile = req.file;
+            const safeUserId = userId.replace(/[/\\]/g, '_');
+            const safeFolder = folder.replace(/[/\\]/g, '_');
+            const attachmentDir = path.join(process.cwd(), 'sources', safeUserId, safeFolder, 'attachments');
+            await fs.mkdir(attachmentDir, { recursive: true });
+
+            const newFilePath = path.join(attachmentDir, uploadedFile.filename);
+            await fs.rename(uploadedFile.path, newFilePath); // Move the file from temp to permanent location
+
+            // Store relative path from 'sources' directory for DB and UI access
+            imagePath = path.join(safeUserId, safeFolder, 'attachments', uploadedFile.filename).replace(/\\/g, '/');
+        }
+
         const { response: aiResponse, conversationId: updatedConversationId } = await chatService.callAgent(
             message,
             userId,
@@ -30,7 +49,8 @@ export const postCall = async (req: Request, res: Response) => {
             selectedFiles,
             tokenLimit,
             conversationId,
-            previousAssistantResponse
+            previousAssistantResponse,
+            imagePath // Pass the image path to chatService
         );
         res.json({ response: aiResponse, conversationId: updatedConversationId });
     } catch (error) {
