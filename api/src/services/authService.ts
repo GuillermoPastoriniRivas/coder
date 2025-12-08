@@ -41,7 +41,6 @@ export const authService = {
 
         // Generate JWT
         const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, {
-            expiresIn: '24h',
         });
 
         return token;

@@ -128,7 +128,7 @@ class CodeRAG:
                      abs_path = os.path.join(root, file).replace("\\", "/")
                      rel_path = os.path.relpath(abs_path, code_base_path).replace("\\", "/")
                      # Basic filtering (add more extensions if needed)
-                     if file.endswith(('.py', '.js', '.jsx', '.ts', '.tsx', '.html', '.css', '.java', '.c', '.cpp', '.h', '.cs', '.php', '.rb', '.go', '.rs', '.md')):
+                     if file.endswith(('.py', '.js', '.jsx', '.ts', '.tsx', '.html', '.css', '.java', '.c', '.cpp', '.h', '.cs', '.php', '.rb', '.go', '.rs', '.md', '.tf')):
                           # Apply selected files filter if present
                           if not self.selected_files or rel_path in self.selected_files:
                               files_to_process.append(rel_path)

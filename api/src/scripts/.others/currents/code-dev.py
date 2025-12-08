@@ -368,7 +368,7 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
         try:
             start_time = time.time() # Start timer
             response = client.models.generate_content(
-                model="gemini-2.5-pro-exp-03-25", contents=prompt
+                model="gemini-3-pro-preview", contents=prompt
             )
             end_time = time.time() # End timer
             duration = end_time - start_time # Calculate duration

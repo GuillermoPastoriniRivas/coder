@@ -20,7 +20,8 @@ export const chatService = {
         tokenLimit: number,
         existingConversationId?: string,
         previousAssistantResponse?: string | null,
-        imagePath?: string | null // New parameter for image path
+        imagePath?: string | null, // New parameter for image path
+        provider?: string | null // NEW: Add provider parameter
     ) {
 
 
@@ -34,7 +35,8 @@ export const chatService = {
             tokenLimit,
             existingConversationId,
             previousAssistantResponse,
-            imagePath // Pass imagePath to langchain util
+            imagePath,
+            provider // NEW: Pass provider to langchain util
         );
     }
 };

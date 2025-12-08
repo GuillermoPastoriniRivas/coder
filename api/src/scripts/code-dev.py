@@ -365,11 +365,11 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
 
         ### Strict Output Format:
         For EACH file you modify, use this exact structure:
-        --------------------
+        ####################
         [full/file/path/from/root]
         +++++
         [ENTIRE MODIFIED FILE CONTENT]
-        --------------------
+        ####################
 
         ### Coding Best Practices
             AVOID add comments to the code you write, unless the user asks you to.
@@ -394,7 +394,7 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
             *   Ensure all necessary imports/dependencies are present if the changes require them.
 
         4.  **Format Enforcement:**
-            *   Use exactly 20 dashes (`--------------------`) before and after each file block.
+            *   Use exactly 20 hastags (`####################`) before and after each file block.
             *   Use exactly 5 plus signs (`+++++`) to separate the file path and content.
             *   Output ONLY the file blocks in the specified format. NO introductory text, NO explanations, NO summaries, NO markdown code fences (```).
 
@@ -405,16 +405,16 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
             *   The output should be purely the modified code. It's not necesary to explain the changes or provide comments within the code.
 
         ### Example Output Structure:
-        --------------------
+        ####################
         api/src/utils/logger.ts
         +++++
         <ENTIRE NEW FILE CONTENT>
-        --------------------
-        --------------------
+        ####################
+        ####################
         ui/src/components/SearchBar.jsx
         +++++
         <ENTIRE NEW FILE CONTENT>
-        --------------------
+        ####################
 
         ### FINAL CHECK: Ensure your output strictly follows the format and contains only the necessary, minimal code changes requested by the user withput comments, preserving everything else.
     """
@@ -461,7 +461,7 @@ def obtener_cambios_openai(contexto, instruccion_usuario, coder_model, carpeta_p
 
 
             response = client.models.generate_content(
-                model="gemini-2.5-flash-preview-05-20", contents=gemini_contents # Use combined contents
+                model="gemini-3-pro-preview", contents=gemini_contents # Use combined contents
             )
             if response and response.text and response.usage_metadata.candidates_token_count:
                 content = response.text

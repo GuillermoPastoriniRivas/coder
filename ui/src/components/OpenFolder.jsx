@@ -166,7 +166,7 @@ const OpenFolder = () => {
     const getFilesFromDirectory = useCallback(async (currentHandle, basePath = '') => {
         const entries = [];
         const excludedNames = new Set(['.git', '.vscode', '.idea', 'node_modules', 'sources', 'build', 'dist', 'target', 'out', 'venv', 'coverage', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml']);
-        const allowedExtensions = new Set(['md', 'js', 'ts', 'tsx', 'jsx', 'json', 'css', 'scss', 'html', 'py', 'java', 'go', 'rb', 'php', 'swift', 'kt', 'yaml', 'yml', 'xml', 'sh', 'config', 'env', 'txt']);
+        const allowedExtensions = new Set(['md', 'js', 'ts', 'tsx', 'jsx', 'json', 'css', 'scss', 'html', 'py', 'java', 'go', 'rb', 'php', 'swift', 'kt', 'yaml', 'yml', 'xml', 'sh', 'config', 'env', 'txt', 'tf']);
 
         for await (const entry of currentHandle.values()) {
             if (entry.name.startsWith('.') || excludedNames.has(entry.name)) {

@@ -5,7 +5,7 @@ import path from 'path';
 import { promises as fs } from 'fs';
 
 export const postCall = async (req: Request, res: Response) => {
-    const { message, folder, subFolders, model, selectedFiles, tokenLimit, conversationId } = req.body;
+    const { message, folder, subFolders, model, selectedFiles, tokenLimit, conversationId, provider } = req.body;
     try {
         //@ts-ignore
         const userId = req.user.id;
@@ -50,7 +50,8 @@ export const postCall = async (req: Request, res: Response) => {
             tokenLimit,
             conversationId,
             previousAssistantResponse,
-            imagePath // Pass the image path to chatService
+            imagePath, // Pass the image path to chatService
+            provider
         );
         res.json({ response: aiResponse, conversationId: updatedConversationId });
     } catch (error) {

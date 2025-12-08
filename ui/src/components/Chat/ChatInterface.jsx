@@ -37,6 +37,7 @@ export default function ChatInterface({
     const resizerRef = useRef(null);
     const abortControllerRef = useRef(null);
     const lastUserMessageRef = useRef(null);
+    const audioRef = useRef(null); // Ref for the audio element
 
     const { folderHandle, setConversations } = useDirectory();
     const { saldo, updateSaldo } = useAuth();
@@ -51,6 +52,8 @@ export default function ChatInterface({
     const fileInputRef = useRef(null); // Ref for the hidden file input
 
     const models = ['coder', 'qa'];
+    const providers = ['gemini', 'gemini-pro', 'claude', 'openai']; // NEW: Define available providers
+    const [selectedProvider, setSelectedProvider] = useState('gemini'); // NEW: State for selected provider
 
     const fetchSaldoDebounced = useRef(debounce(async () => {
          if (!localStorage.getItem('token')) return;
@@ -64,6 +67,19 @@ export default function ChatInterface({
              }
         }
     }, 500)).current;
+
+    useEffect(() => {
+        // Initialize audio element
+        audioRef.current = new Audio('/audio.wav'); // Path to the audio file
+        audioRef.current.load(); // Preload audio
+
+        return () => {
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+            }
+        };
+    }, []); // Run only once on mount to initialize audio
 
     useEffect(() => {
         const loadInitialConversation = () => {
@@ -140,6 +156,7 @@ export default function ChatInterface({
                     subFolders: selectedSubFolders,
                     selectedFiles: selectedFiles,
                     model: selectedModel,
+                    provider: selectedProvider, // NEW: Pass the selected provider
                     conversationId: selectedConversation?._id,
                     tokenLimit: tokenLimit
                 },
@@ -224,6 +241,9 @@ export default function ChatInterface({
             setLoading(false);
             abortControllerRef.current = null;
             textareaRef.current?.focus();
+            if (audioRef.current) {
+                audioRef.current.play().catch(e => console.error("Error playing audio:", e));
+            }
         }
     };
 
@@ -291,6 +311,23 @@ export default function ChatInterface({
          setTokenLimit(newValue);
      };
 
+    const processImageFile = (file, fileNameForNotification) => {
+        if (file) {
+            if (file.type === 'image/jpeg' || file.type === 'image/png') {
+                setAttachedImage(file);
+                setAttachedImagePreviewUrl(URL.createObjectURL(file));
+                showNotification(`Image '${fileNameForNotification}' attached.`, 'info');
+                return true;
+            } else {
+                showNotification('Only JPG and PNG images are allowed.', 'error');
+                setAttachedImage(null);
+                setAttachedImagePreviewUrl(null);
+                return false;
+            }
+        }
+        return false;
+    };
+
     const handleAttachImageClick = () => {
         fileInputRef.current?.click();
     };
@@ -298,16 +335,25 @@ export default function ChatInterface({
     const handleImageChange = (event) => {
         const file = event.target.files[0];
         if (file) {
-            if (file.type === 'image/jpeg' || file.type === 'image/png') {
-                setAttachedImage(file);
-                setAttachedImagePreviewUrl(URL.createObjectURL(file));
-                showNotification(`Image '${file.name}' attached.`, 'info');
-            } else {
-                showNotification('Only JPG and PNG images are allowed.', 'error');
-                setAttachedImage(null);
-                setAttachedImagePreviewUrl(null);
+            processImageFile(file, file.name);
+        }
+    };
+
+    const handlePaste = (event) => {
+        const items = event.clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const file = items[i].getAsFile();
+                if (file) {
+                    const success = processImageFile(file, 'from clipboard');
+                    if (success) {
+                        event.preventDefault(); // Prevent default text paste
+                        return;
+                    }
+                }
             }
         }
+        // If no image is found or handled, let the default paste happen (e.g., text)
     };
 
     const handleClearImage = () => {
@@ -429,6 +475,7 @@ export default function ChatInterface({
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         onKeyDown={handleKeyDown}
+                        onPaste={handlePaste}
                         className="chat-input-textarea"
                         style={{ height: `${textareaHeight}px` }}
                         disabled={loading}
@@ -447,6 +494,25 @@ export default function ChatInterface({
                                  {models.map((model) => (
                                      <MenuItem key={model} value={model}>
                                          {model}
+                                     </MenuItem>
+                                 ))}
+                             </Select>
+
+                             {/* NEW: Selector de Proveedor */}
+                             <Select
+                                 value={selectedProvider}
+                                 onChange={(e) => {
+                                    setSelectedProvider(e.target.value)
+                                    console.log("Provider changed to:", selectedProvider);
+                                 }}
+                                 variant="outlined"
+                                 size="small"
+                                 disabled={loading || selectedModel === 'qa'} // Disable if model is QA, as providers are for 'coder'
+                                 sx={{ minWidth: 100, '& .MuiSelect-select': { py: 0.8 } }}
+                             >
+                                 {providers.map((provider) => (
+                                     <MenuItem key={provider} value={provider}>
+                                         {provider.charAt(0).toUpperCase() + provider.slice(1)} {/* Capitalize for display */}
                                      </MenuItem>
                                  ))}
                              </Select>
