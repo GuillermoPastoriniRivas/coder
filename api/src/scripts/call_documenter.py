@@ -1,6 +1,6 @@
 from aidoc import AIDocumenter
 import argparse
-api_key = "***REMOVED***"
+api_key = os.environ.get("OPENAI_API_KEY")
 
 def main():
     parser = argparse.ArgumentParser()

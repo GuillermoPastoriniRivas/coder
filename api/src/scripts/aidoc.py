@@ -12,7 +12,7 @@ class AIDocumenter:
         self.output_file = output_file
         self.encoder = tiktoken.get_encoding("cl100k_base")
         self.excluded_dirs = {'node_modules', 'dist', 'build', '__pycache__', '.git'}
-        self.client = genai.Client(api_key="***REMOVED***")
+        self.client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
         # Cargar o inicializar documentación
         if Path(output_file).exists():
             with open(output_file, 'r') as f:

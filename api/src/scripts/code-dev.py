@@ -17,14 +17,10 @@ from google import genai
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-# ***REMOVED***
-# ***REMOVED***
-# ***REMOVED*** previus
-# ***REMOVED***
-client = genai.Client(api_key="***REMOVED***")
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 # top_k = 50 # Removed top_k
 
-api_key_openai = "***REMOVED***"
+api_key_openai = os.environ.get("OPENAI_API_KEY")
 client_openai = OpenAI(api_key=api_key_openai)
 
 input_price_usd_per_M = 1.1
@@ -237,7 +233,7 @@ def generar_contexto(instruccion_usuario, carpeta_proyecto, json_path, sub_folde
 
 def _update_tokens_usage(prompt_tokens, completion_tokens, project_name, model, userId, duration):
     try:
-        mongo_uri = "***REMOVED***"
+        mongo_uri = os.environ.get("MONGODB_URI", "mongodb://localhost:27017/coder")
         if not mongo_uri:
             print("MongoDB URI is not set.")
             return
